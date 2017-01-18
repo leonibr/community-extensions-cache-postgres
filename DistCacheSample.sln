@@ -9,6 +9,17 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PostgreSqlCacheSample", "Po
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Extensions.Caching.PostgreSql", "Extensions.Caching.PostgreSql\Extensions.Caching.PostgreSql.csproj", "{9FD56156-CC11-4C49-9B1B-2FABC4137249}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "PostgreSqlScripts", "PostgreSqlScripts", "{DB294FFE-89B0-4E10-AD5E-587E89208A4D}"
+	ProjectSection(SolutionItems) = preProject
+		PostgreSqlScripts\Create_Function_DateDiff.sql = PostgreSqlScripts\Create_Function_DateDiff.sql
+		PostgreSqlScripts\Create_Function_DeleteCacheItemFormat.sql = PostgreSqlScripts\Create_Function_DeleteCacheItemFormat.sql
+		PostgreSqlScripts\Create_Function_DeleteExpiredCacheItemsFormat.sql = PostgreSqlScripts\Create_Function_DeleteExpiredCacheItemsFormat.sql
+		PostgreSqlScripts\Create_Function_GetCacheItemFormat.sql = PostgreSqlScripts\Create_Function_GetCacheItemFormat.sql
+		PostgreSqlScripts\Create_Function_SetCache.sql = PostgreSqlScripts\Create_Function_SetCache.sql
+		PostgreSqlScripts\Create_Function_UpdateCacheItemFormat.sql = PostgreSqlScripts\Create_Function_UpdateCacheItemFormat.sql
+		PostgreSqlScripts\Create_Table_DistCache.sql = PostgreSqlScripts\Create_Table_DistCache.sql
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
