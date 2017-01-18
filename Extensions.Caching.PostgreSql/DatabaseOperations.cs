@@ -112,7 +112,8 @@ namespace Extensions.Caching.PostgreSql
                 var upsertCommand = new NpgsqlCommand("setcache", connection);
                 upsertCommand.CommandType = CommandType.StoredProcedure;
                 upsertCommand.Parameters
-                    .AddParamWithValue("TableName", NpgsqlTypes.NpgsqlDbType.Text, "Test")
+                    .AddParamWithValue("SchemaName", NpgsqlTypes.NpgsqlDbType.Text, SchemaName)
+                    .AddParamWithValue("TableName", NpgsqlTypes.NpgsqlDbType.Text, TableName)                  
                     .AddCacheItemId(key)
                     .AddCacheItemValue(value)
                     .AddSlidingExpirationInSeconds(options.SlidingExpiration)
