@@ -70,7 +70,7 @@ namespace DistCacheSample
             byte[] val = Encoding.UTF8.GetBytes(serverStartTimeString);
             cache.Set("lastServerStartTime", val);
             
-            app.UseStartTimeHeader();
+           app.UseStartTimeHeader();
 
             app.Run(async (context) =>
             {

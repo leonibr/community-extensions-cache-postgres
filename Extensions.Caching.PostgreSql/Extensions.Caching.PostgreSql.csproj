@@ -75,13 +75,13 @@
   <ItemGroup>
     <Compile Include="Columns.cs" />
     <Compile Include="DatabaseOperations.cs" />
+    <Compile Include="Functions.cs" />
     <Compile Include="IDatabaseOperations.cs" />
     <Compile Include="PlatformHelper.cs" />
     <Compile Include="PostgreSqlCache.cs" />
     <Compile Include="PostgreSqlCacheOptions.cs" />
     <Compile Include="PostgreSqlCacheServiceCollectionExtensions.cs" />
     <Compile Include="PostgreSqlParameterCollectionExtensions.cs" />
-    <Compile Include="PostgreSqlQueries.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

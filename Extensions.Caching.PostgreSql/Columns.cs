@@ -19,10 +19,12 @@ namespace Extensions.Caching.PostgreSql
             // The value of the following index positions is dependent on how the SQL queries
             // are selecting the columns.
             public const int CacheItemIdIndex = 0;
-            public const int ExpiresAtTimeIndex = 1;
-            public const int SlidingExpirationInSecondsIndex = 2;
-            public const int AbsoluteExpirationIndex = 3;
-            public const int CacheItemValueIndex = 4;
+            public const int CacheItemValueIndex = 1;
+            public const int ExpiresAtTimeIndex = 2;
+            public const int SlidingExpirationInSecondsIndex = 3;
+            public const int AbsoluteExpirationIndex = 4;
+            
+
         }
     }
 }
