@@ -277,10 +277,10 @@ namespace Extensions.Caching.PostgreSql
                 var command = new NpgsqlCommand(Functions.Names.UpdateCacheItemFormat, connection);
                 command.CommandType = CommandType.StoredProcedure;
                 command.Parameters
-                    .AddParamWithValue("SchemaName", NpgsqlTypes.NpgsqlDbType.Text, SchemaName)
-                    .AddParamWithValue("TableName", NpgsqlTypes.NpgsqlDbType.Text, TableName)
-                    .AddCacheItemId(key)
-                    .AddWithValue("UtcNow", NpgsqlTypes.NpgsqlDbType.TimestampTZ, utcNow);
+                   .AddParamWithValue("SchemaName", NpgsqlTypes.NpgsqlDbType.Text, SchemaName)
+                   .AddParamWithValue("TableName", NpgsqlTypes.NpgsqlDbType.Text, TableName)
+                   .AddCacheItemId(key)
+                   .AddWithValue("UtcNow", NpgsqlTypes.NpgsqlDbType.TimestampTZ, utcNow);
 
                 await connection.OpenAsync();
                 await command.ExecuteNonQueryAsync();
@@ -303,6 +303,11 @@ namespace Extensions.Caching.PostgreSql
                     {
                         var id = await reader.GetFieldValueAsync<string>(Columns.Indexes.CacheItemIdIndex);
 
+                        if (includeValue)
+                        {
+                            value = await reader.GetFieldValueAsync<byte[]>(Columns.Indexes.CacheItemValueIndex);
+                        }
+
                         expirationTime = await reader.GetFieldValueAsync<DateTimeOffset>(
                             Columns.Indexes.ExpiresAtTimeIndex);
 
@@ -317,11 +322,7 @@ namespace Extensions.Caching.PostgreSql
                             absoluteExpiration = await reader.GetFieldValueAsync<DateTimeOffset>(
                                 Columns.Indexes.AbsoluteExpirationIndex);
                         }
-
-                        if (includeValue)
-                        {
-                            value = await reader.GetFieldValueAsync<byte[]>(Columns.Indexes.CacheItemValueIndex);
-                        }
+                       
                     }
                     else
                     {
