@@ -7,7 +7,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{306A
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PostgreSqlCacheSample", "PostgreSqlCacheSample\PostgreSqlCacheSample.csproj", "{F81A0E2C-2596-480C-AC3B-6FC1406AB99E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Extensions.Caching.PostgreSql", "PostgreSqlNetStandard\Extensions.Caching.PostgreSql.csproj", "{9FD56156-CC11-4C49-9B1B-2FABC4137249}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Extensions.Caching.PostgreSql", "Extensions.Caching.PostgreSql\Extensions.Caching.PostgreSql.csproj", "{9FD56156-CC11-4C49-9B1B-2FABC4137249}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

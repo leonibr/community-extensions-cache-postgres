@@ -20,6 +20,6 @@
     <PackageReference Include="Microsoft.NETCore.App" Version="1.0.1" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\PostgreSqlNetStandard\Extensions.Caching.PostgreSql.csproj" />
+    <ProjectReference Include="..\Extensions.Caching.PostgreSql\Extensions.Caching.PostgreSql.csproj" />
   </ItemGroup>
 </Project>
