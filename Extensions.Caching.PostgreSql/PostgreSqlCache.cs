@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Internal;
+using System.Threading;
 
 namespace Extensions.Caching.PostgreSql
 {
@@ -82,7 +83,7 @@ namespace Extensions.Caching.PostgreSql
             return value;
         }
 
-        public async Task<byte[]> GetAsync(string key)
+        public async Task<byte[]> GetAsync(string key, CancellationToken token = default(CancellationToken))
         {
             if (key == null)
             {
@@ -108,7 +109,7 @@ namespace Extensions.Caching.PostgreSql
             ScanForExpiredItemsIfRequired();
         }
 
-        public async Task RefreshAsync(string key)
+        public async Task RefreshAsync(string key, CancellationToken token = default(CancellationToken))
         {
             if (key == null)
             {
@@ -132,7 +133,7 @@ namespace Extensions.Caching.PostgreSql
             ScanForExpiredItemsIfRequired();
         }
 
-        public async Task RemoveAsync(string key)
+        public async Task RemoveAsync(string key, CancellationToken token = default(CancellationToken))
         {
             if (key == null)
             {
@@ -168,10 +169,7 @@ namespace Extensions.Caching.PostgreSql
             ScanForExpiredItemsIfRequired();
         }
 
-        public async Task SetAsync(
-            string key,
-            byte[] value,
-            DistributedCacheEntryOptions options)
+        public async Task SetAsync(string key, byte[] value, DistributedCacheEntryOptions options, CancellationToken token = default(CancellationToken))
         {
             if (key == null)
             {
