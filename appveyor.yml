@@ -1,0 +1,21 @@
+version: 1.0.{build}
+skip_tags: true
+image: Visual Studio 2017
+configuration: Release
+dotnet_csproj:
+  patch: true
+  file: 'Extensions.Caching.PostgreSql\*.csproj'
+  version: '{version}'
+  package_version: '{version}'
+  assembly_version: '{version}'
+  file_version: '{version}'
+  informational_version: '{version}'
+before_build:
+- cmd: nuget restore
+build:
+  publish_nuget: true
+  verbosity: minimal
+deploy:
+- provider: NuGet
+  api_key:
+    secure: VUAK3ld3rtum29qzHscPMtujdceb8nzS8JcYOpcKHMTBQdrLW7eAsxfUnWk1j7Mh
