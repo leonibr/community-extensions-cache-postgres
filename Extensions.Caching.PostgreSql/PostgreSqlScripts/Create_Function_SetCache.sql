@@ -2,7 +2,7 @@
 
 -- DROP FUNCTION public.setcache(text, text, text, bytea, double precision, timestamp with time zone, timestamp with time zone);
 
-CREATE OR REPLACE FUNCTION public.setcache(
+CREATE OR REPLACE FUNCTION [schemaName].setcache(
 	"SchemaName" text,
 	"TableName" text,
 	"DistCacheId" text,
@@ -31,11 +31,9 @@ BEGIN
  EXECUTE v_Query using "DistCacheValue", v_ExpiresAtTime, "DistCacheSlidingExpirationInSeconds", "DistCacheAbsoluteExpiration", "DistCacheId";
  
  GET DIAGNOSTICS v_RowCount := ROW_COUNT;
-
- IF(v_RowCount = 0) THEN INSERT INTO public."DistCache" ("Id", "Value", "ExpiresAtTime", "SlidingExpirationInSeconds", "AbsoluteExpiration") VALUES("DistCacheId", "DistCacheValue", v_ExpiresAtTime, "DistCacheSlidingExpirationInSeconds", "DistCacheAbsoluteExpiration"); END IF;
+ v_Query := format('INSERT INTO %I.%I ("Id", "Value", "ExpiresAtTime", "SlidingExpirationInSeconds", "AbsoluteExpiration") VALUES($1, $2, $3, $4, $5)', "SchemaName", "TableName");
+ 
+ IF(v_RowCount = 0) THEN EXECUTE v_Query using "DistCacheId", "DistCacheValue", v_ExpiresAtTime, "DistCacheSlidingExpirationInSeconds", "DistCacheAbsoluteExpiration"; END IF;
 END
 
 $function$;
-
-ALTER FUNCTION public.setcache(text, text, text, bytea, double precision, timestamp with time zone, timestamp with time zone)
-    OWNER TO postgres;

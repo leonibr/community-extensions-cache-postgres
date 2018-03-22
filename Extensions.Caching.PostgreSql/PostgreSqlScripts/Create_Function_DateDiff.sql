@@ -2,7 +2,7 @@
 
 -- DROP FUNCTION public.datediff(character varying, timestamp with time zone, timestamp with time zone);
 
-CREATE OR REPLACE FUNCTION public.datediff(
+CREATE OR REPLACE FUNCTION [schemaName].datediff(
 	units character varying,
 	start_t timestamp with time zone,
 	end_t timestamp with time zone)
@@ -58,10 +58,6 @@ AS $function$
      diff = diff * 60 + DATE_PART('second', diff_interval);
  
      RETURN diff;
-   END;
-   
+   END;   
 
 $function$;
-
-ALTER FUNCTION public.datediff(character varying, timestamp with time zone, timestamp with time zone)
-    OWNER TO postgres;

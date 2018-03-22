@@ -2,7 +2,7 @@
 
 -- DROP FUNCTION public.deleteexpiredcacheitemsformat(text, text, timestamp with time zone);
 
-CREATE OR REPLACE FUNCTION public.deleteexpiredcacheitemsformat(
+CREATE OR REPLACE FUNCTION [schemaName].deleteexpiredcacheitemsformat(
 	"SchemaName" text,
 	"TableName" text,
 	"UtcNow" timestamp with time zone)
@@ -23,5 +23,3 @@ END
 
 $function$;
 
-ALTER FUNCTION public.deleteexpiredcacheitemsformat(text, text, timestamp with time zone)
-    OWNER TO postgres;

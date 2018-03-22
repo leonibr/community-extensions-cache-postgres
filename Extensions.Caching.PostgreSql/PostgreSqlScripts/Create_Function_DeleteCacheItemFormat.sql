@@ -2,7 +2,7 @@
 
 -- DROP FUNCTION public.deletecacheitemformat(text, text, text);
 
-CREATE OR REPLACE FUNCTION public.deletecacheitemformat(
+CREATE OR REPLACE FUNCTION [schemaName].deletecacheitemformat(
 	"SchemaName" text,
 	"TableName" text,
 	"DistCacheId" text)
@@ -23,5 +23,3 @@ END
 
 $function$;
 
-ALTER FUNCTION public.deletecacheitemformat(text, text, text)
-    OWNER TO postgres;

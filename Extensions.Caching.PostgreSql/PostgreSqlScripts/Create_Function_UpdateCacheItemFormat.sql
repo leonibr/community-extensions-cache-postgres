@@ -2,7 +2,7 @@
 
 -- DROP FUNCTION public.updatecacheitemformat(text, text, text, timestamp with time zone);
 
-CREATE OR REPLACE FUNCTION public.updatecacheitemformat(
+CREATE OR REPLACE FUNCTION [schemaName].updatecacheitemformat(
 	"SchemaName" text,
 	"TableName" text,
 	"DistCacheId" text,
@@ -16,10 +16,10 @@ AS $function$
 DECLARE v_Query Text;
 BEGIN
 
-v_query := format('UPDATE %I.%I ' ||
+v_Query := format('UPDATE %I.%I ' ||
 				  'SET "ExpiresAtTime" = '
                   	'CASE ' ||
-                  		'WHEN (SELECT %I.DateDiff(''seconds''::varchar, $1, "AbsoluteExpiration")) <= "SlidingExpirationInSeconds" ' ||
+                  		'WHEN (SELECT %I.datediff(''seconds''::varchar, $1, "AbsoluteExpiration")) <= "SlidingExpirationInSeconds" ' ||
                   		'THEN "AbsoluteExpiration" ' ||
          		  		'ELSE $1 + "SlidingExpirationInSeconds" *  interval ''1 second'' ' ||
     			  	'END ' ||
@@ -30,8 +30,5 @@ v_query := format('UPDATE %I.%I ' ||
 EXECUTE v_Query using "UtcNow", "DistCacheId";                
 
 END
-
 $function$;
 
-ALTER FUNCTION public.updatecacheitemformat(text, text, text, timestamp with time zone)
-    OWNER TO postgres;

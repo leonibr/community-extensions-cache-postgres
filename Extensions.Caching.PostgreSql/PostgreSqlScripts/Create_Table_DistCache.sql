@@ -2,7 +2,7 @@
 
 -- DROP TABLE public."DistCache";
 
-CREATE TABLE public."DistCache"
+CREATE TABLE IF NOT EXISTS [schemaName].[tableName]
 (
     "Id" text COLLATE pg_catalog."default" NOT NULL,
     "Value" bytea,
@@ -15,6 +15,3 @@ WITH (
     OIDS = FALSE
 )
 TABLESPACE pg_default;
-
-ALTER TABLE public."DistCache"
-    OWNER to postgres;

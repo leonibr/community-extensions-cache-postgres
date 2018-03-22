@@ -7,6 +7,8 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Internal;
 using System.Threading;
+using System.IO;
+using Npgsql;
 
 namespace Extensions.Caching.PostgreSql
 {
@@ -55,7 +57,7 @@ namespace Extensions.Caching.PostgreSql
                     cacheOptions.DefaultSlidingExpiration,
                     "The sliding expiration value must be positive.");
             }
-
+            
             _systemClock = cacheOptions.SystemClock ?? new SystemClock();
             _expiredItemsDeletionInterval =
                 cacheOptions.ExpiredItemsDeletionInterval ?? DefaultExpiredItemsDeletionInterval;
@@ -68,6 +70,7 @@ namespace Extensions.Caching.PostgreSql
                    cacheOptions.TableName,
                    _systemClock);
         }
+
 
         public byte[] Get(string key)
         {

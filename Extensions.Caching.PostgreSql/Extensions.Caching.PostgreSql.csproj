@@ -2,6 +2,15 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="PostgreSqlScripts\Create_Function_DateDiff.sql" />
+    <EmbeddedResource Include="PostgreSqlScripts\Create_Function_DeleteCacheItemFormat.sql" />
+    <EmbeddedResource Include="PostgreSqlScripts\Create_Function_DeleteExpiredCacheItemsFormat.sql" />
+    <EmbeddedResource Include="PostgreSqlScripts\Create_Function_GetCacheItemFormat.sql" />
+    <EmbeddedResource Include="PostgreSqlScripts\Create_Function_SetCache.sql" />
+    <EmbeddedResource Include="PostgreSqlScripts\Create_Function_UpdateCacheItemFormat.sql" />
+    <EmbeddedResource Include="PostgreSqlScripts\Create_Table_DistCache.sql" />
+  </ItemGroup>
   <!--<ItemGroup>
     <Compile Include="**\*.cs" />
     <EmbeddedResource Include="**\*.resx" />

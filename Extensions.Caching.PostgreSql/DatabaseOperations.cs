@@ -8,6 +8,9 @@ using Npgsql;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Internal;
+using System.Reflection;
+using System.IO;
+using System.Text;
 
 namespace Extensions.Caching.PostgreSql
 {
@@ -25,7 +28,8 @@ namespace Extensions.Caching.PostgreSql
             ConnectionString = connectionString;
             SchemaName = schemaName;
             TableName = tableName;
-            SystemClock = systemClock;           
+            SystemClock = systemClock;
+            CreateTableIfNotExist();
         }
 
         protected string ConnectionString { get; }
@@ -36,11 +40,82 @@ namespace Extensions.Caching.PostgreSql
 
         protected ISystemClock SystemClock { get; }
 
+        private string ReadScript(string scriptName)
+        {
+            var assembly = Assembly.Load("Extensions.Caching.PostgreSql");
+            var resourceStream = assembly.GetManifestResourceStream($"Extensions.Caching.PostgreSql.PostgreSqlScripts.{scriptName}");
+            using (var reader = new StreamReader(resourceStream, Encoding.UTF8))
+            {
+               return reader.ReadToEnd();
+            }
+        }
+        /// <summary>
+        /// Replaces the schema and table names for the ones in config file
+        /// </summary>
+        /// <returns>The text</returns>
+        private string FormatName(string text)
+        {
+            return text
+                    .Replace("[schemaName]", SchemaName)
+                    .Replace("[tableName]", TableName);
+        }
+
+        private void CreateTableIfNotExist()
+        {
+            
+
+            var sql = (
+             table: ReadScript("Create_Table_DistCache.sql"),
+             funcDateDiff: ReadScript("Create_Function_DateDiff.sql"),
+             funcDeleteCacheItem: ReadScript("Create_Function_DeleteCacheItemFormat.sql"),
+             funcDeleteExpired: ReadScript("Create_Function_DeleteExpiredCacheItemsFormat.sql"),
+             funcGetCacheItem: ReadScript("Create_Function_GetCacheItemFormat.sql"),
+             funcSetCache: ReadScript("Create_Function_SetCache.sql"),
+             funcUpdateCache: ReadScript("Create_Function_UpdateCacheItemFormat.sql")
+             );
+
+            StringBuilder sb = new StringBuilder();
+            sb.Append(FormatName(sql.table));
+            sb.Append(FormatName(sql.funcDateDiff));
+            sb.Append(FormatName(sql.funcGetCacheItem));
+            sb.Append(FormatName(sql.funcSetCache));
+            sb.Append(FormatName(sql.funcUpdateCache));
+            sb.Append(FormatName(sql.funcDeleteCacheItem));
+            sb.Append(FormatName(sql.funcDeleteExpired));
+
+            using (var cn = new NpgsqlConnection(ConnectionString))
+            {
+                cn.Open();
+                using (var transaction = cn.BeginTransaction())
+                {
+                    try
+                    {
+                        NpgsqlCommand cmd = new NpgsqlCommand(
+                            cmdText: sb.ToString(),
+                            connection: cn,
+                            transaction: transaction);
+                        cmd.ExecuteNonQuery();
+                        transaction.Commit();
+                    }
+                    catch (Exception ex)
+                    {
+                        //
+                        transaction.Rollback();
+
+                    }
+                }
+                cn.Close();
+            }
+
+        }
+
+
+
         public void DeleteCacheItem(string key)
         {
             using (var connection = new NpgsqlConnection(ConnectionString))
             {
-                var command = new NpgsqlCommand(Functions.Names.DeleteCacheItemFormat, connection);
+                var command = new NpgsqlCommand($"{SchemaName}.{Functions.Names.DeleteCacheItemFormat}", connection);
                 command.CommandType = CommandType.StoredProcedure;
                 command.Parameters
                     .AddParamWithValue("SchemaName", NpgsqlTypes.NpgsqlDbType.Text, SchemaName)
@@ -57,7 +132,7 @@ namespace Extensions.Caching.PostgreSql
         {
             using (var connection = new NpgsqlConnection(ConnectionString))
             {
-                var command = new NpgsqlCommand(Functions.Names.DeleteCacheItemFormat, connection);
+                var command = new NpgsqlCommand($"{SchemaName}.{Functions.Names.DeleteCacheItemFormat}", connection);
                 command.CommandType = CommandType.StoredProcedure;
                 command.Parameters
                     .AddParamWithValue("SchemaName", NpgsqlTypes.NpgsqlDbType.Text, SchemaName)
@@ -96,7 +171,7 @@ namespace Extensions.Caching.PostgreSql
 
             using (var connection = new NpgsqlConnection(ConnectionString))
             {
-                var command = new NpgsqlCommand(Functions.Names.DeleteExpiredCacheItemsFormat, connection);
+                var command = new NpgsqlCommand($"{SchemaName}.{Functions.Names.DeleteExpiredCacheItemsFormat}", connection);
                 command.CommandType = CommandType.StoredProcedure;
                 command.Parameters
                     .AddParamWithValue("SchemaName", NpgsqlTypes.NpgsqlDbType.Text, SchemaName)
@@ -118,7 +193,7 @@ namespace Extensions.Caching.PostgreSql
 
             using (var connection = new NpgsqlConnection(ConnectionString))
             {
-                var upsertCommand = new NpgsqlCommand(Functions.Names.SetCache, connection);
+                var upsertCommand = new NpgsqlCommand($"{SchemaName}.{Functions.Names.SetCache}", connection);
                 upsertCommand.CommandType = CommandType.StoredProcedure;
                 upsertCommand.Parameters
                     .AddParamWithValue("SchemaName", NpgsqlTypes.NpgsqlDbType.Text, SchemaName)
@@ -159,7 +234,7 @@ namespace Extensions.Caching.PostgreSql
 
             using (var connection = new NpgsqlConnection(ConnectionString))
             {
-                var upsertCommand = new NpgsqlCommand(Functions.Names.SetCache, connection);
+                var upsertCommand = new NpgsqlCommand($"{SchemaName}.{Functions.Names.SetCache}", connection);
                 upsertCommand.CommandType = CommandType.StoredProcedure;
                 upsertCommand.Parameters
                     .AddParamWithValue("SchemaName", NpgsqlTypes.NpgsqlDbType.Text, SchemaName)
@@ -204,7 +279,7 @@ namespace Extensions.Caching.PostgreSql
             DateTimeOffset expirationTime;
             using (var connection = new NpgsqlConnection(ConnectionString))
             {
-                var command = new NpgsqlCommand(Functions.Names.UpdateCacheItemFormat, connection);
+                var command = new NpgsqlCommand($"{SchemaName}.{Functions.Names.UpdateCacheItemFormat}", connection);
                 command.CommandType = CommandType.StoredProcedure;
                 command.Parameters
                     .AddParamWithValue("SchemaName", NpgsqlTypes.NpgsqlDbType.Text, SchemaName)
@@ -274,7 +349,7 @@ namespace Extensions.Caching.PostgreSql
             DateTimeOffset expirationTime;
             using (var connection = new NpgsqlConnection(ConnectionString))
             {
-                var command = new NpgsqlCommand(Functions.Names.UpdateCacheItemFormat, connection);
+                var command = new NpgsqlCommand($"{SchemaName}.{Functions.Names.UpdateCacheItemFormat}", connection);
                 command.CommandType = CommandType.StoredProcedure;
                 command.Parameters
                    .AddParamWithValue("SchemaName", NpgsqlTypes.NpgsqlDbType.Text, SchemaName)
@@ -287,7 +362,7 @@ namespace Extensions.Caching.PostgreSql
 
                 if (includeValue)
                 {
-                    command = new NpgsqlCommand(Functions.Names.GetCacheItemFormat, connection);
+                    command = new NpgsqlCommand($"{SchemaName}.{Functions.Names.GetCacheItemFormat}", connection);
                     command.CommandType = CommandType.StoredProcedure;
                     command.Parameters
                         .AddParamWithValue("SchemaName", NpgsqlTypes.NpgsqlDbType.Text, SchemaName)

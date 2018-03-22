@@ -2,12 +2,12 @@
 
 -- DROP FUNCTION public.getcacheitemformat(text, text, text, timestamp with time zone);
 
-CREATE OR REPLACE FUNCTION public.getcacheitemformat(
+CREATE OR REPLACE FUNCTION [schemaName].getcacheitemformat(
 	"SchemaName" text,
 	"TableName" text,
 	"DistCacheId" text,
 	"UtcNow" timestamp with time zone)
-    RETURNS SETOF "TABLE(distcache_id text, distcache_value bytea, distcache_expiresattime timestamp with time zone, distcache_slidingexpirationinseconds bigint, distcache_absoluteexpiration timestamp with time zone)"
+    RETURNS TABLE(distcache_id text, distcache_value bytea, distcache_expiresattime timestamp with time zone, distcache_slidingexpirationinseconds bigint, distcache_absoluteexpiration timestamp with time zone)
     LANGUAGE 'plpgsql'
     COST 100.0
     VOLATILE NOT LEAKPROOF 
@@ -35,5 +35,3 @@ END
 
 $function$;
 
-ALTER FUNCTION public.getcacheitemformat(text, text, text, timestamp with time zone)
-    OWNER TO postgres;

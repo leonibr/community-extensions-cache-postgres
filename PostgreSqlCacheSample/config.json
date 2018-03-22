@@ -1,5 +1,5 @@
 {
-  "ConnectionString": "host=192.168.205.21;database=neos;password=Azerty1234;username=postgres",
-  "SchemaName": "public",
-  "TableName": "DistCache"
+  "ConnectionString": "host=127.0.0.1;database=cache_test;password=t3st;username=cache_test",
+  "SchemaName": "name1",
+  "TableName": "tbl_cache"
 }
