@@ -8,7 +8,7 @@ This implemantation uses PostgreSQL as distributed cache.
 ## Getting Started
 1. Install the package into your project
 ```
-dotnet add package Communit.Microsoft.Extensions.Caching.PostgreSQL
+dotnet add package Community.Microsoft.Extensions.Caching.PostgreSql
 ```
 2. Add the following line to the `Startup`  `Configure` method.
 ```c#
