@@ -68,6 +68,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
                    cacheOptions.ConnectionString,
                    cacheOptions.SchemaName,
                    cacheOptions.TableName,
+				   cacheOptions.CreateInfrastructure,
                    _systemClock);
         }
 

@@ -22,13 +22,16 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
             "Connection string: {2}";
 
         public DatabaseOperations(
-            string connectionString, string schemaName, string tableName, ISystemClock systemClock)
+            string connectionString, string schemaName, string tableName, bool createInfrastructure, ISystemClock systemClock)
         {
             ConnectionString = connectionString;
             SchemaName = schemaName;
             TableName = tableName;
             SystemClock = systemClock;
-            CreateTableIfNotExist();
+			if (createInfrastructure)
+			{
+				CreateTableIfNotExist();
+			}
         }
 
         protected string ConnectionString { get; }
@@ -267,10 +270,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
 
         protected virtual byte[] GetCacheItem(string key, bool includeValue)
         {
-            var utcNow = SystemClock.UtcNow;
-
-            string function;
-           
+            var utcNow = SystemClock.UtcNow;          
 
             byte[] value = null;
             TimeSpan? slidingExpiration = null;
@@ -339,8 +339,6 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
         protected virtual async Task<byte[]> GetCacheItemAsync(string key, bool includeValue)
         {
             var utcNow = SystemClock.UtcNow;
-
-            string function;          
 
             byte[] value = null;
             TimeSpan? slidingExpiration = null;
