@@ -5,18 +5,7 @@ VisualStudioVersion = 15.0.26730.3
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{306A63CC-5797-4D63-86A1-94025CF8C98A}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Extensions.Caching.PostgreSql", "Extensions.Caching.PostgreSql\Extensions.Caching.PostgreSql.csproj", "{9FD56156-CC11-4C49-9B1B-2FABC4137249}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "PostgreSqlScripts", "PostgreSqlScripts", "{DB294FFE-89B0-4E10-AD5E-587E89208A4D}"
-	ProjectSection(SolutionItems) = preProject
-		PostgreSqlScripts\Create_Function_DateDiff.sql = PostgreSqlScripts\Create_Function_DateDiff.sql
-		PostgreSqlScripts\Create_Function_DeleteCacheItemFormat.sql = PostgreSqlScripts\Create_Function_DeleteCacheItemFormat.sql
-		PostgreSqlScripts\Create_Function_DeleteExpiredCacheItemsFormat.sql = PostgreSqlScripts\Create_Function_DeleteExpiredCacheItemsFormat.sql
-		PostgreSqlScripts\Create_Function_GetCacheItemFormat.sql = PostgreSqlScripts\Create_Function_GetCacheItemFormat.sql
-		PostgreSqlScripts\Create_Function_SetCache.sql = PostgreSqlScripts\Create_Function_SetCache.sql
-		PostgreSqlScripts\Create_Function_UpdateCacheItemFormat.sql = PostgreSqlScripts\Create_Function_UpdateCacheItemFormat.sql
-		PostgreSqlScripts\Create_Table_DistCache.sql = PostgreSqlScripts\Create_Table_DistCache.sql
-	EndProjectSection
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Community.Microsoft.Extensions.Caching.PostgreSql", "Extensions.Caching.PostgreSql\Community.Microsoft.Extensions.Caching.PostgreSql.csproj", "{9FD56156-CC11-4C49-9B1B-2FABC4137249}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PostgreSqlCacheSample", "PostgreSqlCacheSample\PostgreSqlCacheSample.csproj", "{0F7E59EB-EE75-494D-8051-4B2BFF3A48FC}"
 EndProject

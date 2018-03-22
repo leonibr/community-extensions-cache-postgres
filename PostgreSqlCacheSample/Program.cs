@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Configuration;
-using Extensions.Caching.PostgreSql;
+using Community.Microsoft.Extensions.Caching.PostgreSql;
 using Microsoft.Extensions.Caching.Distributed;
 
 namespace PostgreSqlCacheSample

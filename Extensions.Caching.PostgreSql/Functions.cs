@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Extensions.Caching.PostgreSql
+namespace Community.Microsoft.Extensions.Caching.PostgreSql
 {
     internal static class Functions
     {

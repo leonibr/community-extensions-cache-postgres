@@ -10,7 +10,7 @@ using System.Threading;
 using System.IO;
 using Npgsql;
 
-namespace Extensions.Caching.PostgreSql
+namespace Community.Microsoft.Extensions.Caching.PostgreSql
 {
     public class PostgreSqlCache : IDistributedCache
     {

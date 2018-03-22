@@ -2,8 +2,6 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
-using System.Linq;
-using System.Data;
 using Npgsql;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Caching.Distributed;
@@ -11,8 +9,9 @@ using Microsoft.Extensions.Internal;
 using System.Reflection;
 using System.IO;
 using System.Text;
+using System.Data;
 
-namespace Extensions.Caching.PostgreSql
+namespace Community.Microsoft.Extensions.Caching.PostgreSql
 {
     internal class DatabaseOperations : IDatabaseOperations
     {
@@ -42,8 +41,8 @@ namespace Extensions.Caching.PostgreSql
 
         private string ReadScript(string scriptName)
         {
-            var assembly = Assembly.Load("Extensions.Caching.PostgreSql");
-            var resourceStream = assembly.GetManifestResourceStream($"Extensions.Caching.PostgreSql.PostgreSqlScripts.{scriptName}");
+            var assembly = Assembly.Load("Community.Microsoft.Extensions.Caching.PostgreSql");
+            var resourceStream = assembly.GetManifestResourceStream($"Community.Microsoft.Extensions.Caching.PostgreSql.PostgreSqlScripts.{scriptName}");
             using (var reader = new StreamReader(resourceStream, Encoding.UTF8))
             {
                return reader.ReadToEnd();

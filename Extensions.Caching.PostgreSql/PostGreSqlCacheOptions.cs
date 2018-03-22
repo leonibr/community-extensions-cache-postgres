@@ -2,7 +2,7 @@
 using Microsoft.Extensions.Options;
 using System;
 
-namespace Extensions.Caching.PostgreSql
+namespace Community.Microsoft.Extensions.Caching.PostgreSql
 {
     public class PostgreSqlCacheOptions : IOptions<PostgreSqlCacheOptions>
     {

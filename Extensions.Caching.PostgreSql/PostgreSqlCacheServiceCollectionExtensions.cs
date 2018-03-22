@@ -5,7 +5,7 @@ using System;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Caching.Distributed;
 
-namespace Extensions.Caching.PostgreSql
+namespace Community.Microsoft.Extensions.Caching.PostgreSql
 {
     /// <summary>
     /// Extension methods for setting up PostgreSql distributed cache services in an <see cref="IServiceCollection" />.

@@ -19,6 +19,6 @@
     <PackageReference Include="Microsoft.Extensions.Options" Version="2.0.0" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Extensions.Caching.PostgreSql\Extensions.Caching.PostgreSql.csproj" />
+    <ProjectReference Include="..\Extensions.Caching.PostgreSql\Community.Microsoft.Extensions.Caching.PostgreSql.csproj" />
   </ItemGroup>
 </Project>

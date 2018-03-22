@@ -4,7 +4,7 @@
 using System.Threading.Tasks;
 using Microsoft.Extensions.Caching.Distributed;
 
-namespace Extensions.Caching.PostgreSql
+namespace Community.Microsoft.Extensions.Caching.PostgreSql
 {
     internal interface IDatabaseOperations
     {

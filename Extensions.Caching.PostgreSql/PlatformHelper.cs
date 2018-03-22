@@ -3,7 +3,7 @@
 
 using System;
 
-namespace Extensions.Caching.PostgreSql
+namespace Community.Microsoft.Extensions.Caching.PostgreSql
 {
     internal static class PlatformHelper
     {
