@@ -4,11 +4,13 @@
     <AssemblyName>Community.Microsoft.Extensions.Caching.PostgreSql</AssemblyName>
     <RootNamespace>Community.Microsoft.Extensions.Caching.PostgreSql</RootNamespace>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
-    <Version>1.0.4</Version>
+    <Version>1.0.5</Version>
     <Authors>Ashley Marques</Authors>
     <Company />
     <Description>DistributedCache using postgres</Description>
-    <PackageReleaseNotes>Dependencies updates to the latest</PackageReleaseNotes>
+    <PackageReleaseNotes>Dependencies updates to the latest
+Readme update
+Github keys to publish artifacts</PackageReleaseNotes>
     <PackageProjectUrl>https://github.com/leonibr/community-extensions-cache-postgres</PackageProjectUrl>
     <RepositoryUrl>https://github.com/leonibr/community-extensions-cache-postgres.git</RepositoryUrl>
     <RepositoryType>Github</RepositoryType>
