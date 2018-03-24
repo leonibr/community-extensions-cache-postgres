@@ -291,8 +291,8 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
 
                 if (includeValue)
                 {
-                    command = new NpgsqlCommand(Functions.Names.GetCacheItemFormat, connection);
-                    command.CommandType = CommandType.StoredProcedure;
+                    command = new NpgsqlCommand($"{SchemaName}.{Functions.Names.GetCacheItemFormat}", connection);
+					command.CommandType = CommandType.StoredProcedure;
                     command.Parameters
                         .AddParamWithValue("SchemaName", NpgsqlTypes.NpgsqlDbType.Text, SchemaName)
                         .AddParamWithValue("TableName", NpgsqlTypes.NpgsqlDbType.Text, TableName)
