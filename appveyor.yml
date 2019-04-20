@@ -11,8 +11,8 @@ dotnet_csproj:
   file_version: '{version}'
   informational_version: '{version}'
 before_build:
-- cmd: nuget restore
-- cmd: dotnet restore
+  cmd: nuget restore
+  cmd: dotnet restore
 build:
   publish_nuget: true
   verbosity: minimal
