@@ -53,7 +53,7 @@ prepare-database.cmd -erase
 ```
 ## Change Log
 
-1. v1.0.8 - Update to latest dependencies
+1. v1.0.8 - Update to latest dependencies -
 
 
 # License
