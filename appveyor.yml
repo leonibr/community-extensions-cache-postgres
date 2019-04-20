@@ -1,32 +1,32 @@
 version: 1.0.{build}
-skip_tags: true
+skip_tags: false
 image: Visual Studio 2017
 configuration: Release
 dotnet_csproj:
-  patch: true
-  file: 'Extensions.Caching.PostgreSql\*.csproj'
-  version: '{version}'
-  package_version: '{version}'
-  assembly_version: '{version}'
-  file_version: '{version}'
-  informational_version: '{version}'
+    patch: true
+    file: '**\*.csproj'
+    version: '{version}'
+    package_version: '{version}'
+    assembly_version: '{version}'
+    file_version: '{version}'
+    informational_version: '{version}'
 before_build:
-  cmd: ECHO This is a teste.....
-  cmd: dotnet restore
+    cmd: ECHO This is a teste...
+    cmd: dotnet restore
 build:
-  publish_nuget: true
-  verbosity: minimal
+    publish_nuget: true
+    verbosity: minimal
 deploy:
-- provider: NuGet
-  api_key:
-    secure: VUAK3ld3rtum29qzHscPMtujdceb8nzS8JcYOpcKHMTBQdrLW7eAsxfUnWk1j7Mh
-  on:
-    branch: master
-- provider: GitHub
-  tag: v$(appveyor_build_version)
-  release: v$(appveyor_build_version)
-  auth_token:
-    secure: 0ofkZKnAq+DImExQ0oDYJkPsnMQYo3ue9fsMYBB8WfJLY5g+o1AT7t9XNlKGlMR2
-  artifact: /.*\.nupkg/
-  on:
-    branch: master
+  - provider: NuGet
+    api_key:
+      secure: VUAK3ld3rtum29qzHscPMtujdceb8nzS8JcYOpcKHMTBQdrLW7eAsxfUnWk1j7Mh
+    on:
+      branch: master
+  - provider: GitHub
+    tag: v$(appveyor_build_version)
+    release: v$(appveyor_build_version)
+    auth_token:
+      secure: 0ofkZKnAq+DImExQ0oDYJkPsnMQYo3ue9fsMYBB8WfJLY5g+o1AT7t9XNlKGlMR2
+    artifact: /.*\.nupkg/
+    on:
+      branch: master
