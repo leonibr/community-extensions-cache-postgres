@@ -58,12 +58,12 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
             if (utcTime.HasValue)
             {
                 return parameters.AddParamWithValue(
-                    Columns.Names.AbsoluteExpiration, NpgsqlTypes.NpgsqlDbType.TimestampTZ, utcTime.Value);
+                    Columns.Names.AbsoluteExpiration, NpgsqlTypes.NpgsqlDbType.TimestampTz, utcTime.Value);
             }
             else
             {
                 return parameters.AddParamWithValue(
-                    Columns.Names.AbsoluteExpiration, NpgsqlTypes.NpgsqlDbType.TimestampTZ, DBNull.Value);
+                    Columns.Names.AbsoluteExpiration, NpgsqlTypes.NpgsqlDbType.TimestampTz, DBNull.Value);
             }
         }
 

@@ -117,8 +117,10 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
         {
             using (var connection = new NpgsqlConnection(ConnectionString))
             {
-                var command = new NpgsqlCommand($"{SchemaName}.{Functions.Names.DeleteCacheItemFormat}", connection);
-                command.CommandType = CommandType.StoredProcedure;
+                var command = new NpgsqlCommand($"{SchemaName}.{Functions.Names.DeleteCacheItemFormat}", connection)
+                {
+                    CommandType = CommandType.StoredProcedure
+                };
                 command.Parameters
                     .AddParamWithValue("SchemaName", NpgsqlTypes.NpgsqlDbType.Text, SchemaName)
                     .AddParamWithValue("TableName", NpgsqlTypes.NpgsqlDbType.Text, TableName)
@@ -178,7 +180,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
                 command.Parameters
                     .AddParamWithValue("SchemaName", NpgsqlTypes.NpgsqlDbType.Text, SchemaName)
                     .AddParamWithValue("TableName", NpgsqlTypes.NpgsqlDbType.Text, TableName)
-                    .AddWithValue("UtcNow", NpgsqlTypes.NpgsqlDbType.TimestampTZ, utcNow);
+                    .AddWithValue("UtcNow", NpgsqlTypes.NpgsqlDbType.TimestampTz, utcNow);
 
                 connection.Open();
 
@@ -204,7 +206,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
                     .AddCacheItemValue(value)
                     .AddSlidingExpirationInSeconds(options.SlidingExpiration)
                     .AddAbsoluteExpiration(absoluteExpiration)
-                    .AddParamWithValue("UtcNow", NpgsqlTypes.NpgsqlDbType.TimestampTZ, utcNow);  
+                    .AddParamWithValue("UtcNow", NpgsqlTypes.NpgsqlDbType.TimestampTz, utcNow);  
 
                 connection.Open();
 
@@ -245,7 +247,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
                     .AddCacheItemValue(value)
                     .AddSlidingExpirationInSeconds(options.SlidingExpiration)
                     .AddAbsoluteExpiration(absoluteExpiration)
-                    .AddParamWithValue("UtcNow", NpgsqlTypes.NpgsqlDbType.TimestampTZ, utcNow);
+                    .AddParamWithValue("UtcNow", NpgsqlTypes.NpgsqlDbType.TimestampTz, utcNow);
 
                 await connection.OpenAsync();
 
@@ -284,7 +286,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
                     .AddParamWithValue("SchemaName", NpgsqlTypes.NpgsqlDbType.Text, SchemaName)
                     .AddParamWithValue("TableName", NpgsqlTypes.NpgsqlDbType.Text, TableName)
                     .AddCacheItemId(key)
-                    .AddWithValue("UtcNow", NpgsqlTypes.NpgsqlDbType.TimestampTZ, utcNow);
+                    .AddWithValue("UtcNow", NpgsqlTypes.NpgsqlDbType.TimestampTz, utcNow);
 
                 connection.Open();
                 command.ExecuteNonQuery();
@@ -297,7 +299,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
                         .AddParamWithValue("SchemaName", NpgsqlTypes.NpgsqlDbType.Text, SchemaName)
                         .AddParamWithValue("TableName", NpgsqlTypes.NpgsqlDbType.Text, TableName)
                         .AddCacheItemId(key)
-                        .AddWithValue("UtcNow", NpgsqlTypes.NpgsqlDbType.TimestampTZ, utcNow);
+                        .AddWithValue("UtcNow", NpgsqlTypes.NpgsqlDbType.TimestampTz, utcNow);
 
                     var reader = command.ExecuteReader(
                         CommandBehavior.SequentialAccess | CommandBehavior.SingleRow | CommandBehavior.SingleResult);
@@ -352,7 +354,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
                    .AddParamWithValue("SchemaName", NpgsqlTypes.NpgsqlDbType.Text, SchemaName)
                    .AddParamWithValue("TableName", NpgsqlTypes.NpgsqlDbType.Text, TableName)
                    .AddCacheItemId(key)
-                   .AddWithValue("UtcNow", NpgsqlTypes.NpgsqlDbType.TimestampTZ, utcNow);
+                   .AddWithValue("UtcNow", NpgsqlTypes.NpgsqlDbType.TimestampTz, utcNow);
 
                 await connection.OpenAsync();
                 await command.ExecuteNonQueryAsync();
@@ -365,7 +367,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
                         .AddParamWithValue("SchemaName", NpgsqlTypes.NpgsqlDbType.Text, SchemaName)
                         .AddParamWithValue("TableName", NpgsqlTypes.NpgsqlDbType.Text, TableName)
                         .AddCacheItemId(key)
-                        .AddWithValue("UtcNow", NpgsqlTypes.NpgsqlDbType.TimestampTZ, utcNow);
+                        .AddWithValue("UtcNow", NpgsqlTypes.NpgsqlDbType.TimestampTz, utcNow);
 
 
                     var reader = await command.ExecuteReaderAsync(

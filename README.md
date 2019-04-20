@@ -26,6 +26,15 @@ services.AddDistributedPostgreSqlCache(setup =>
 ## What it does to my database:
 
 Creates a table and six functions, see scripts folder for more details.
+```
+[schemaName].datediff
+[schemaName].deletecacheitemformat
+[schemaName].deleteexpiredcacheitemsformat
+[schemaName].getcacheitemformat
+[schemaName].setcache
+[schemaName].updatecacheitemformat
+
+```
 
 ## Runing the sample
 You will need a local postgresql server with this configuration:
@@ -42,6 +51,10 @@ Then you can delete the database with:
 ```
 prepare-database.cmd -erase
 ```
+## Change Log
+
+1. v1.0.8 - Update to latest dependencies
+
 
 # License
 * MIT

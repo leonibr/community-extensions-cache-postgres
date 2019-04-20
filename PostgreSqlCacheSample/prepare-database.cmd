@@ -10,6 +10,7 @@ echo 2^. Create a role also called 'cache_test'
 echo 3^. Connects to database and create a schema 'name1'
 	psql -U postgres -f create-sample-database.sql
 )
+echo Done.
 
 
 
