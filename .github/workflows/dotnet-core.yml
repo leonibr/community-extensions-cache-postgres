@@ -1,4 +1,4 @@
-name: Deploy to GitHub
+name: Deploy to Nuget
 
 on:
   release:
