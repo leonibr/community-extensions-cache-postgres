@@ -28,4 +28,6 @@ jobs:
       uses: actions/upload-artifact@v1
       with:
         name: Extensions.Caching.PostgreSql
-        path: ./Extensions.Caching.PostgreSql/bin/Release/Extensions.Caching.PostgreSql.${{ github.event.release.tag_name }}.nupkg
+        path: ./Extensions.Caching.PostgreSql/bin/Release/Community.Microsoft.Extensions.Caching.PostgreSql.${{ github.event.release.tag_name }}.nupkg
+    - name: Deploy to Nuget
+      run: dotnet nuget push **/*.nupkg --api-key ${{ secrets.nuget_api_key }} --source https://api.nuget.org/v3/index.json --no-symbols true
