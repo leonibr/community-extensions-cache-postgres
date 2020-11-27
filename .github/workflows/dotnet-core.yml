@@ -2,8 +2,10 @@ name: Deploy to Nuget
 
 on:
   release:
-    branches: [ leonibr-patch-2 ]
-
+    branches: [ leonibr-patch-2, master ]
+    types:
+      - published
+    
 jobs:
   build:
 
