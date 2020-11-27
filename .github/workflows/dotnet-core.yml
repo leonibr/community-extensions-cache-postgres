@@ -22,7 +22,7 @@ jobs:
     - name: Install dependencies
       run: dotnet restore
     - name: Packing Nuget
-      run: dotnet pack --configuration Release --no-restore /p:Version=${{ github.event.release.tag_name }} /p:PackageReleaseNotes="See https://github.com/AspNetMonsters/ApplicationInsights/releases/tag/${{ github.event.release.tag_name }}"
+      run: dotnet pack --configuration Release --no-restore /p:Version=${{ github.event.release.tag_name }} /p:PackageReleaseNotes="See https://github.com/leonibr/community-extensions-cache-postgres/releases/tag/${{ github.event.release.tag_name }}"
       working-directory: ./Extensions.Caching.PostgreSql/
     - name: Archive NuGet Package
       uses: actions/upload-artifact@v1
