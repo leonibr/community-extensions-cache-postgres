@@ -42,17 +42,19 @@ You will need a local postgresql server with this configuration:
 1. The password of your `postgres` account, if not attached already to your user.
 1. Clone this repo.
 1. Run the following commands inside `PostgreSqlCacheSample`:
-```
+```shell
 dotnet restore
 prepare-database.cmd -create
 dotnet run
 ```
+![S](sample_project.gif)
+
 Then you can delete the database with:
 ```
 prepare-database.cmd -erase
 ```
 ## Change Log
-
+1. v2.0.x - Update everything to net5.0, more detailed sample project.
 1. v1.0.8 - Update to latest dependencies -
 
 
