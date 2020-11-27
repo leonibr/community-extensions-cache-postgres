@@ -9,7 +9,7 @@ using Microsoft.Extensions.Configuration;
 using Community.Microsoft.Extensions.Caching.PostgreSql;
 using Microsoft.Extensions.Caching.Distributed;
 using System.Threading;
-using Nito.AsyncEx;
+using System.Diagnostics;
 
 namespace PostgreSqlCacheSample
 {
@@ -20,9 +20,9 @@ namespace PostgreSqlCacheSample
     /// </summary>
     public class Program
     {
-        public static void Main()
+        public static async Task Main()
         {
-            AsyncContext.Run(() => RunSampleAsync());
+            await RunSampleAsync();
         }
 
         public static async Task RunSampleAsync()
@@ -34,7 +34,7 @@ namespace PostgreSqlCacheSample
                 .Build();
 
             var key = Guid.NewGuid().ToString();
-            var message = "Hello, World!";
+            var message = "Hello AbsoluteExpiration Value!";
             var value = Encoding.UTF8.GetBytes(message);
 
             Console.WriteLine("Connecting to cache");
@@ -45,53 +45,91 @@ namespace PostgreSqlCacheSample
                 TableName = configuration["TableName"],
             });
 
-            Console.WriteLine("Connected");
+            Console.WriteLine("Connected\n");
 
-            Console.WriteLine("Cache item key: {0}", key);
-            Console.WriteLine($"Setting value '{message}' in cache for 7 seconds");
+            Console.WriteLine($"Cache item key: {key}\nSetting value '{message}' in cache for 7 seconds [AbsoluteExpiration]");
+            await cache.SetAsync(
+                key,
+                value,
+                new DistributedCacheEntryOptions().SetAbsoluteExpiration(TimeSpan.FromSeconds(7)));
+            Console.WriteLine("Value stored!\n");
+
+            async Task getKeyStatement()
+            {
+                Stopwatch sp = new Stopwatch();
+                Console.Write($"\tGetting Key: {key}\n\t");
+                sp.Start();
+                byte[] rawBytes = await cache.GetAsync(key);
+                if (rawBytes != null)
+                {
+                    Console.WriteLine($"Retrieved ({sp.ElapsedMilliseconds}ms): {Encoding.UTF8.GetString(rawBytes, 0, rawBytes.Length)}\n");
+                }
+                else
+                {
+                    Console.WriteLine($"Not Found({sp.ElapsedMilliseconds}ms)\n");
+                }
+            }
+            async Task waitFor(int seconds)
+            {
+                Console.WriteLine($"Waits {seconds} seconds\n");
+                await Task.Delay(TimeSpan.FromSeconds(seconds));
+            }
+
+            await getKeyStatement();
+            await waitFor(4);
+            await getKeyStatement();
+            await waitFor(5);
+            await getKeyStatement();
+            Console.Write("Removing value from cache...");
+            await cache.RemoveAsync(key);
+            Console.WriteLine("Removed");
+
+            key = Guid.NewGuid().ToString();
+            message = "Hello SlidingExpiration Value!";
+            value = Encoding.UTF8.GetBytes(message);
+
+            Console.WriteLine($"\n\nCache item key: {key}\nSetting value '{message}' in cache for 7 seconds [SlidingExpiration]");
             await cache.SetAsync(
                 key,
                 value,
                 new DistributedCacheEntryOptions().SetSlidingExpiration(TimeSpan.FromSeconds(7)));
-            Console.WriteLine("Set");
-            bool getFromCache = true;
-            while (getFromCache)
-            {
-                var text = await cache.GetStringAsync(key);
-                Console.WriteLine($"Getting value from cache: {text ?? "[NULL]"}");
-                getFromCache = (text != null);
-
-                await Task.Delay(10000);
-            }
-            value = await cache.GetAsync(key);
-            if (value != null)
-            {
-                Console.WriteLine("Retrieved: " + Encoding.UTF8.GetString(value, 0, value.Length));
-            }
-            else
-            {
-                Console.WriteLine("Not Found");
-            }
-
-            Console.WriteLine("Refreshing value in cache");
+            Console.WriteLine("Value stored!\n");
+            await getKeyStatement();
+            await waitFor(2);
+            Console.Write("Refreshing value ...");
             await cache.RefreshAsync(key);
-            Console.WriteLine("Refreshed");
+            Console.WriteLine("Refreshed\n");
+            await getKeyStatement();
+            await waitFor(6);
+            await getKeyStatement();
 
-            Console.WriteLine("Removing value from cache");
+
+            await getKeyStatement();
+
+            Console.Write("Removing value from cache...");
             await cache.RemoveAsync(key);
             Console.WriteLine("Removed");
-
-            Console.WriteLine("Getting value from cache again");
-            value = await cache.GetAsync(key);
-            if (value != null)
+            await getKeyStatement();
+            Console.WriteLine("\nList all keys from database");
+            using var conn = new Npgsql.NpgsqlConnection(configuration["ConnectionString"]);
+            using var cmd = new Npgsql.NpgsqlCommand($"select \"Id\" from {configuration["SchemaName"]}.{configuration["TableName"]}", conn);
+            conn.Open();
+            var reader = cmd.ExecuteReader();
+            if (reader.HasRows)
             {
-                Console.WriteLine("Retrieved: " + Encoding.UTF8.GetString(value, 0, value.Length));
+                while (reader.Read())
+                {
+                    Console.WriteLine($"\t{reader["Id"]}");
+                }
+
             }
             else
             {
-                Console.WriteLine("Not Found");
+                Console.WriteLine("\tNo data.");
             }
-
+            reader.Close();
+            conn.Close();
+            Console.WriteLine("Sample project executed!");
             Console.ReadLine();
         }
     }
