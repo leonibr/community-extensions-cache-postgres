@@ -2,9 +2,9 @@ name: .NET Core
 
 on:
   push:
-    branches: [ master ]
+    branches: [ leonibr-patch-2 ]
   pull_request:
-    branches: [ master ]
+    branches: [ leonibr-patch-2 ]
 
 jobs:
   build:
