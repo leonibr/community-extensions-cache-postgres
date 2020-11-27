@@ -1,8 +1,8 @@
-name: .NET Core
+name: Deploy to GitHub
 
 on:
   release:
-    branches: [ leonibr-patch-2 ]
+    branches: [ leonibr-patch-2, master ]
   #push:
   #  branches: [ leonibr-patch-2 ]
   #pull_request:
