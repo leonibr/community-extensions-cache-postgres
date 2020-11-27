@@ -19,7 +19,11 @@ jobs:
         dotnet-version: 5.0.100
     - name: Install dependencies
       run: dotnet restore
-    - name: Build
-      run: dotnet build --configuration Release --no-restore
-    - name: Test
-      run: dotnet test --no-restore --verbosity normal
+    - name: Packing Nuget
+      run: dotnet pack --configuration Release --no-restore /p:Version=${{ github.event.release.tag_name }} /p:PackageReleaseNotes="See https://github.com/AspNetMonsters/ApplicationInsights/releases/tag/${{ github.event.release.tag_name }}"
+      working-directory: ./Extensions.Caching.PostgreSql/
+    - name: Archive NuGet Package
+      uses: actions/upload-artifact@v1
+      with:
+        name: Extensions.Caching.PostgreSql
+        path: ./Extensions.Caching.PostgreSql/bin/Release/Extensions.Caching.PostgreSql.${{ github.event.release.tag_name }}.nupkg
