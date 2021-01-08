@@ -4,7 +4,7 @@ using System;
 
 namespace Community.Microsoft.Extensions.Caching.PostgreSql
 {
-    public class PostgreSqlCacheOptions : IOptions<PostgreSqlCacheOptions>
+	public class PostgreSqlCacheOptions : IOptions<PostgreSqlCacheOptions>
     {
         /// <summary>
         /// An abstraction to represent the clock of a machine in order to enable unit testing.
