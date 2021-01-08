@@ -6,7 +6,7 @@ using Microsoft.Extensions.Internal;
 
 namespace Community.Microsoft.Extensions.Caching.PostgreSql
 {
-    public class DatabaseExpiredItemsRemoverLoop
+    internal class DatabaseExpiredItemsRemoverLoop
     {
         private readonly ISystemClock _systemClock;
         private readonly TimeSpan _expiredItemsDeletionInterval;
