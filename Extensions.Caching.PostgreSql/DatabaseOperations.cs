@@ -169,7 +169,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
             await GetCacheItemAsync(key, includeValue: false);
         }
 
-        public virtual void DeleteExpiredCacheItems()
+        public virtual async Task DeleteExpiredCacheItemsAsync()
         {
             var utcNow = SystemClock.UtcNow;
 
@@ -182,9 +182,9 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
                     .AddParamWithValue("TableName", NpgsqlTypes.NpgsqlDbType.Text, TableName)
                     .AddWithValue("UtcNow", NpgsqlTypes.NpgsqlDbType.TimestampTz, utcNow);
 
-                connection.Open();
+                await connection.OpenAsync();
 
-                var effectedRowCount = command.ExecuteNonQuery();
+                _ = await command.ExecuteNonQueryAsync();
             }
         }
 

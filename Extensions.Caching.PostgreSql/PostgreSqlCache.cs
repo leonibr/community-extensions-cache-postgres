@@ -173,11 +173,6 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
 			return _dbOperations.SetCacheItemAsync(key, value, options);
 		}
 
-		private void DeleteExpiredCacheItems()
-		{
-			_dbOperations.DeleteExpiredCacheItems();
-		}
-
 		private void GetOptions(ref DistributedCacheEntryOptions options)
 		{
 			if (!options.AbsoluteExpiration.HasValue

@@ -24,6 +24,6 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
 
         Task SetCacheItemAsync(string key, byte[] value, DistributedCacheEntryOptions options);
 
-        void DeleteExpiredCacheItems();
+        Task DeleteExpiredCacheItemsAsync();
     }
 }
