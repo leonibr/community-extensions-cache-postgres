@@ -10,6 +10,7 @@ using System.Reflection;
 using System.IO;
 using System.Text;
 using System.Data;
+using System.Threading;
 
 namespace Community.Microsoft.Extensions.Caching.PostgreSql
 {
@@ -132,7 +133,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
             }
         }
 
-        public async Task DeleteCacheItemAsync(string key)
+        public async Task DeleteCacheItemAsync(string key, CancellationToken cancellationToken)
         {
             using (var connection = new NpgsqlConnection(ConnectionString))
             {
@@ -143,9 +144,9 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
                     .AddParamWithValue("TableName", NpgsqlTypes.NpgsqlDbType.Text, TableName)
                     .AddCacheItemId(key);
 
-                await connection.OpenAsync();
+                await connection.OpenAsync(cancellationToken);
 
-                await command.ExecuteNonQueryAsync();
+                await command.ExecuteNonQueryAsync(cancellationToken);
             }
         }
 
@@ -154,9 +155,9 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
             return GetCacheItem(key, includeValue: true);
         }
 
-        public virtual async Task<byte[]> GetCacheItemAsync(string key)
+        public virtual async Task<byte[]> GetCacheItemAsync(string key, CancellationToken cancellationToken)
         {
-            return await GetCacheItemAsync(key, includeValue: true);
+            return await GetCacheItemAsync(key, includeValue: true, cancellationToken);
         }
 
         public void RefreshCacheItem(string key)
@@ -164,12 +165,12 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
             GetCacheItem(key, includeValue: false);
         }
 
-        public async Task RefreshCacheItemAsync(string key)
+        public async Task RefreshCacheItemAsync(string key, CancellationToken cancellationToken)
         {
-            await GetCacheItemAsync(key, includeValue: false);
+            await GetCacheItemAsync(key, includeValue: false, cancellationToken);
         }
 
-        public virtual async Task DeleteExpiredCacheItemsAsync()
+        public virtual async Task DeleteExpiredCacheItemsAsync(CancellationToken cancellationToken)
         {
             var utcNow = SystemClock.UtcNow;
 
@@ -182,9 +183,9 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
                     .AddParamWithValue("TableName", NpgsqlTypes.NpgsqlDbType.Text, TableName)
                     .AddWithValue("UtcNow", NpgsqlTypes.NpgsqlDbType.TimestampTz, utcNow);
 
-                await connection.OpenAsync();
+                await connection.OpenAsync(cancellationToken);
 
-                _ = await command.ExecuteNonQueryAsync();
+                _ = await command.ExecuteNonQueryAsync(cancellationToken);
             }
         }
 
@@ -229,7 +230,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
             }
         }
 
-        public virtual async Task SetCacheItemAsync(string key, byte[] value, DistributedCacheEntryOptions options)
+        public virtual async Task SetCacheItemAsync(string key, byte[] value, DistributedCacheEntryOptions options, CancellationToken cancellationToken)
         {
             var utcNow = SystemClock.UtcNow;
 
@@ -249,11 +250,11 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
                     .AddAbsoluteExpiration(absoluteExpiration)
                     .AddParamWithValue("UtcNow", NpgsqlTypes.NpgsqlDbType.TimestampTz, utcNow);
 
-                await connection.OpenAsync();
+                await connection.OpenAsync(cancellationToken);
 
                 try
                 {
-                    await upsertCommand.ExecuteNonQueryAsync();
+                    await upsertCommand.ExecuteNonQueryAsync(cancellationToken);
                 }
                 catch (PostgresException ex)
                 {
@@ -338,7 +339,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
             return value;
         }
 
-        protected virtual async Task<byte[]> GetCacheItemAsync(string key, bool includeValue)
+        protected virtual async Task<byte[]> GetCacheItemAsync(string key, bool includeValue, CancellationToken cancellationToken)
         {
             var utcNow = SystemClock.UtcNow;
 
@@ -356,8 +357,8 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
                    .AddCacheItemId(key)
                    .AddWithValue("UtcNow", NpgsqlTypes.NpgsqlDbType.TimestampTz, utcNow);
 
-                await connection.OpenAsync();
-                await command.ExecuteNonQueryAsync();
+                await connection.OpenAsync(cancellationToken);
+                await command.ExecuteNonQueryAsync(cancellationToken);
 
                 if (includeValue)
                 {
@@ -371,30 +372,30 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
 
 
                     var reader = await command.ExecuteReaderAsync(
-                        CommandBehavior.SequentialAccess | CommandBehavior.SingleRow | CommandBehavior.SingleResult);
+                        CommandBehavior.SequentialAccess | CommandBehavior.SingleRow | CommandBehavior.SingleResult, 
+                        cancellationToken);
 
-                    if (await reader.ReadAsync())
+                    if (await reader.ReadAsync(cancellationToken))
                     {
-                        var id = await reader.GetFieldValueAsync<string>(Columns.Indexes.CacheItemIdIndex);
+                        var id = await reader.GetFieldValueAsync<string>(Columns.Indexes.CacheItemIdIndex, cancellationToken);
 
                         if (includeValue)
                         {
-                            value = await reader.GetFieldValueAsync<byte[]>(Columns.Indexes.CacheItemValueIndex);
+                            value = await reader.GetFieldValueAsync<byte[]>(Columns.Indexes.CacheItemValueIndex, cancellationToken);
                         }
 
                         expirationTime = await reader.GetFieldValueAsync<DateTimeOffset>(
-                            Columns.Indexes.ExpiresAtTimeIndex);
+                            Columns.Indexes.ExpiresAtTimeIndex, cancellationToken);
 
-                        if (!await reader.IsDBNullAsync(Columns.Indexes.SlidingExpirationInSecondsIndex))
+                        if (!await reader.IsDBNullAsync(Columns.Indexes.SlidingExpirationInSecondsIndex, cancellationToken))
                         {
                             slidingExpiration = TimeSpan.FromSeconds(
-                                await reader.GetFieldValueAsync<long>(Columns.Indexes.SlidingExpirationInSecondsIndex));
+                                await reader.GetFieldValueAsync<long>(Columns.Indexes.SlidingExpirationInSecondsIndex, cancellationToken));
                         }
 
-                        if (!await reader.IsDBNullAsync(Columns.Indexes.AbsoluteExpirationIndex))
+                        if (!await reader.IsDBNullAsync(Columns.Indexes.AbsoluteExpirationIndex, cancellationToken))
                         {
-                            absoluteExpiration = await reader.GetFieldValueAsync<DateTimeOffset>(
-                                Columns.Indexes.AbsoluteExpirationIndex);
+                            absoluteExpiration = await reader.GetFieldValueAsync<DateTimeOffset>(Columns.Indexes.AbsoluteExpirationIndex, cancellationToken);
                         }
                        
                     }

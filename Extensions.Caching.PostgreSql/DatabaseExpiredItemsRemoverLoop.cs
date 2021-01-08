@@ -12,7 +12,6 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
         private readonly TimeSpan _expiredItemsDeletionInterval;
         private DateTimeOffset _lastExpirationScan;
         private readonly IDatabaseOperations _databaseOperations;
-        private volatile bool _stop;
         private readonly CancellationTokenSource _cancellationTokenSource;
 
         internal DatabaseExpiredItemsRemoverLoop(
@@ -31,21 +30,24 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
 
         private void OnShutdown()
         {
-            _stop = true;
             _cancellationTokenSource.Cancel();
         }
 
         private async Task DeleteExpiredCacheItems()
         {
-            while (!_stop)
+            while (true)
             {
                 var utcNow = _systemClock.UtcNow;
                 if ((utcNow - _lastExpirationScan) > _expiredItemsDeletionInterval)
                 {
                     try
                     {
-                        await _databaseOperations.DeleteExpiredCacheItemsAsync();
+                        await _databaseOperations.DeleteExpiredCacheItemsAsync(_cancellationTokenSource.Token);
                         _lastExpirationScan = utcNow;
+                    }
+                    catch (TaskCanceledException)
+                    {
+                        break;
                     }
                     catch (Exception)
                     {
@@ -63,6 +65,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
                 {
                     // ignore: Task.Delay throws this exception when ct.IsCancellationRequested = true
                     // In this case, we only want to stop polling and finish this async Task.
+                    break;
                 }
             }
         }
