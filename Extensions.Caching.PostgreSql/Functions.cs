@@ -1,22 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Community.Microsoft.Extensions.Caching.PostgreSql
+﻿namespace Community.Microsoft.Extensions.Caching.PostgreSql
 {
     internal static class Functions
     {
-        public static class Names
+        internal static class Names
         {
-            public const string SetCache = "SetCache";
-            public const string DeleteCacheItemFormat = "DeleteCacheItemFormat";
-            public const string UpdateCacheItemFormat = "UpdateCacheItemFormat";
-            public const string DeleteExpiredCacheItemsFormat = "DeleteExpiredCacheItemsFormat";
-            public const string GetCacheItemFormat = "GetCacheItemFormat";
-
-
+            internal const string SetCache = "SetCache";
+            internal const string DeleteCacheItemFormat = "DeleteCacheItemFormat";
+            internal const string UpdateCacheItemFormat = "UpdateCacheItemFormat";
+            internal const string DeleteExpiredCacheItemsFormat = "DeleteExpiredCacheItemsFormat";
+            internal const string GetCacheItemFormat = "GetCacheItemFormat";
         }
     }
 }

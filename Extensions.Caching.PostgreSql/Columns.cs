@@ -5,26 +5,24 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
 {
     internal static class Columns
     {
-        public static class Names
+        internal static class Names
         {
-            public const string CacheItemId = "DistCacheId";
-            public const string CacheItemValue = "DistCacheValue";
-            public const string ExpiresAtTime = "DistCacheExpiresAtTime";
-            public const string SlidingExpirationInSeconds = "DistCacheSlidingExpirationInSeconds";
-            public const string AbsoluteExpiration = "DistCacheAbsoluteExpiration";
+            internal const string CacheItemId = "DistCacheId";
+            internal const string CacheItemValue = "DistCacheValue";
+            internal const string ExpiresAtTime = "DistCacheExpiresAtTime";
+            internal const string SlidingExpirationInSeconds = "DistCacheSlidingExpirationInSeconds";
+            internal const string AbsoluteExpiration = "DistCacheAbsoluteExpiration";
         }
 
-        public static class Indexes
+        internal static class Indexes
         {
             // The value of the following index positions is dependent on how the SQL queries
             // are selecting the columns.
-            public const int CacheItemIdIndex = 0;
-            public const int CacheItemValueIndex = 1;
-            public const int ExpiresAtTimeIndex = 2;
-            public const int SlidingExpirationInSecondsIndex = 3;
-            public const int AbsoluteExpirationIndex = 4;
-            
-
+            internal const int CacheItemIdIndex = 0;
+            internal const int CacheItemValueIndex = 1;
+            internal const int ExpiresAtTimeIndex = 2;
+            internal const int SlidingExpirationInSecondsIndex = 3;
+            internal const int AbsoluteExpirationIndex = 4;
         }
     }
 }

@@ -7,7 +7,7 @@ using Microsoft.Extensions.Caching.Distributed;
 
 namespace Community.Microsoft.Extensions.Caching.PostgreSql
 {
-    internal interface IDatabaseOperations
+    public interface IDatabaseOperations
     {
         byte[] GetCacheItem(string key);
 

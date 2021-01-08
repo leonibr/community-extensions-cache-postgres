@@ -3,28 +3,44 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Internal;
+using Microsoft.Extensions.Options;
 
 namespace Community.Microsoft.Extensions.Caching.PostgreSql
 {
-    internal class DatabaseExpiredItemsRemoverLoop
+    internal sealed class DatabaseExpiredItemsRemoverLoop : IDatabaseExpiredItemsRemoverLoop
     {
-        private readonly ISystemClock _systemClock;
+        private static readonly TimeSpan MinimumExpiredItemsDeletionInterval = TimeSpan.FromMinutes(5);
+        private static readonly TimeSpan DefaultExpiredItemsDeletionInterval = TimeSpan.FromMinutes(30);
         private readonly TimeSpan _expiredItemsDeletionInterval;
         private DateTimeOffset _lastExpirationScan;
         private readonly IDatabaseOperations _databaseOperations;
         private readonly CancellationTokenSource _cancellationTokenSource;
+        private readonly ISystemClock _systemClock;
 
-        internal DatabaseExpiredItemsRemoverLoop(
-            ISystemClock systemClock,
+        public DatabaseExpiredItemsRemoverLoop(
+            IOptions<PostgreSqlCacheOptions> options,
             IDatabaseOperations databaseOperations,
-            TimeSpan expiredItemsDeletionInterval,
             IHostApplicationLifetime applicationLifetime)
         {
+            var cacheOptions = options.Value;
+
+            if (cacheOptions.ExpiredItemsDeletionInterval.HasValue &&
+                cacheOptions.ExpiredItemsDeletionInterval.Value < MinimumExpiredItemsDeletionInterval)
+            {
+                throw new ArgumentException(
+                    $"{nameof(PostgreSqlCacheOptions.ExpiredItemsDeletionInterval)} cannot be less the minimum " +
+                    $"value of {MinimumExpiredItemsDeletionInterval.TotalMinutes} minutes.");
+            }
+
+            _systemClock = cacheOptions.SystemClock;
             _cancellationTokenSource = new CancellationTokenSource();
             applicationLifetime.ApplicationStopping.Register(OnShutdown);
             _databaseOperations = databaseOperations;
-            _systemClock = systemClock;
-            _expiredItemsDeletionInterval = expiredItemsDeletionInterval;
+            _expiredItemsDeletionInterval = cacheOptions.ExpiredItemsDeletionInterval ?? DefaultExpiredItemsDeletionInterval;
+        }
+
+        public void Start()
+        {
             Task.Run(DeleteExpiredCacheItems);
         }
 

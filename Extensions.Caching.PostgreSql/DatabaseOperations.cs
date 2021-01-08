@@ -11,37 +11,49 @@ using System.IO;
 using System.Text;
 using System.Data;
 using System.Threading;
+using Microsoft.Extensions.Options;
 
 namespace Community.Microsoft.Extensions.Caching.PostgreSql
 {
-    internal class DatabaseOperations : IDatabaseOperations
+    internal sealed class DatabaseOperations : IDatabaseOperations
     {
-     
-        protected const string GetTableSchemaErrorText =
-            "Could not retrieve information of table with schema '{0}' and " +
-            "name '{1}'. Make sure you have the table setup and try again. " +
-            "Connection string: {2}";
-
-        public DatabaseOperations(
-            string connectionString, string schemaName, string tableName, bool createInfrastructure, ISystemClock systemClock)
+        public DatabaseOperations(IOptions<PostgreSqlCacheOptions> options)
         {
-            ConnectionString = connectionString;
-            SchemaName = schemaName;
-            TableName = tableName;
-            SystemClock = systemClock;
-			if (createInfrastructure)
-			{
-				CreateTableIfNotExist();
-			}
+            var cacheOptions = options.Value;
+
+            if (string.IsNullOrEmpty(cacheOptions.ConnectionString))
+            {
+                throw new ArgumentException(
+                    $"{nameof(PostgreSqlCacheOptions.ConnectionString)} cannot be empty or null.");
+            }
+            if (string.IsNullOrEmpty(cacheOptions.SchemaName))
+            {
+                throw new ArgumentException(
+                    $"{nameof(PostgreSqlCacheOptions.SchemaName)} cannot be empty or null.");
+            }
+            if (string.IsNullOrEmpty(cacheOptions.TableName))
+            {
+                throw new ArgumentException(
+                    $"{nameof(PostgreSqlCacheOptions.TableName)} cannot be empty or null.");
+            }
+
+            ConnectionString = cacheOptions.ConnectionString;
+            SchemaName = cacheOptions.SchemaName;
+            TableName = cacheOptions.TableName;
+            SystemClock = cacheOptions.SystemClock;
+            if (cacheOptions.CreateInfrastructure)
+            {
+                CreateTableIfNotExist();
+            }
         }
 
-        protected string ConnectionString { get; }
+        private string ConnectionString { get; }
 
-        protected string SchemaName { get; }
+        private string SchemaName { get; }
 
-        protected string TableName { get; }
+        private string TableName { get; }
 
-        protected ISystemClock SystemClock { get; }
+        private ISystemClock SystemClock { get; }
 
         private string ReadScript(string scriptName)
         {
@@ -49,7 +61,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
             var resourceStream = assembly.GetManifestResourceStream($"Community.Microsoft.Extensions.Caching.PostgreSql.PostgreSqlScripts.{scriptName}");
             using (var reader = new StreamReader(resourceStream, Encoding.UTF8))
             {
-               return reader.ReadToEnd();
+                return reader.ReadToEnd();
             }
         }
         /// <summary>
@@ -65,8 +77,6 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
 
         private void CreateTableIfNotExist()
         {
-            
-
             var sql = (
              table: ReadScript("Create_Table_DistCache.sql"),
              funcDateDiff: ReadScript("Create_Function_DateDiff.sql"),
@@ -77,14 +87,14 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
              funcUpdateCache: ReadScript("Create_Function_UpdateCacheItemFormat.sql")
              );
 
-            StringBuilder sb = new StringBuilder();
-            sb.Append(FormatName(sql.table));
-            sb.Append(FormatName(sql.funcDateDiff));
-            sb.Append(FormatName(sql.funcGetCacheItem));
-            sb.Append(FormatName(sql.funcSetCache));
-            sb.Append(FormatName(sql.funcUpdateCache));
-            sb.Append(FormatName(sql.funcDeleteCacheItem));
-            sb.Append(FormatName(sql.funcDeleteExpired));
+            var sb = new StringBuilder()
+                .Append(FormatName(sql.table))
+                .Append(FormatName(sql.funcDateDiff))
+                .Append(FormatName(sql.funcGetCacheItem))
+                .Append(FormatName(sql.funcSetCache))
+                .Append(FormatName(sql.funcUpdateCache))
+                .Append(FormatName(sql.funcDeleteCacheItem))
+                .Append(FormatName(sql.funcDeleteExpired));
 
             using (var cn = new NpgsqlConnection(ConnectionString))
             {
@@ -93,7 +103,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
                 {
                     try
                     {
-                        NpgsqlCommand cmd = new NpgsqlCommand(
+                        var cmd = new NpgsqlCommand(
                             cmdText: sb.ToString(),
                             connection: cn,
                             transaction: transaction);
@@ -111,8 +121,6 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
             }
 
         }
-
-
 
         public void DeleteCacheItem(string key)
         {
@@ -137,8 +145,10 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
         {
             using (var connection = new NpgsqlConnection(ConnectionString))
             {
-                var command = new NpgsqlCommand($"{SchemaName}.{Functions.Names.DeleteCacheItemFormat}", connection);
-                command.CommandType = CommandType.StoredProcedure;
+                var command = new NpgsqlCommand($"{SchemaName}.{Functions.Names.DeleteCacheItemFormat}", connection)
+                {
+                    CommandType = CommandType.StoredProcedure
+                };
                 command.Parameters
                     .AddParamWithValue("SchemaName", NpgsqlTypes.NpgsqlDbType.Text, SchemaName)
                     .AddParamWithValue("TableName", NpgsqlTypes.NpgsqlDbType.Text, TableName)
@@ -150,12 +160,12 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
             }
         }
 
-        public virtual byte[] GetCacheItem(string key)
+        public byte[] GetCacheItem(string key)
         {
             return GetCacheItem(key, includeValue: true);
         }
 
-        public virtual async Task<byte[]> GetCacheItemAsync(string key, CancellationToken cancellationToken)
+        public async Task<byte[]> GetCacheItemAsync(string key, CancellationToken cancellationToken)
         {
             return await GetCacheItemAsync(key, includeValue: true, cancellationToken);
         }
@@ -170,14 +180,16 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
             await GetCacheItemAsync(key, includeValue: false, cancellationToken);
         }
 
-        public virtual async Task DeleteExpiredCacheItemsAsync(CancellationToken cancellationToken)
+        public async Task DeleteExpiredCacheItemsAsync(CancellationToken cancellationToken)
         {
             var utcNow = SystemClock.UtcNow;
 
             using (var connection = new NpgsqlConnection(ConnectionString))
             {
-                var command = new NpgsqlCommand($"{SchemaName}.{Functions.Names.DeleteExpiredCacheItemsFormat}", connection);
-                command.CommandType = CommandType.StoredProcedure;
+                var command = new NpgsqlCommand($"{SchemaName}.{Functions.Names.DeleteExpiredCacheItemsFormat}", connection)
+                {
+                    CommandType = CommandType.StoredProcedure
+                };
                 command.Parameters
                     .AddParamWithValue("SchemaName", NpgsqlTypes.NpgsqlDbType.Text, SchemaName)
                     .AddParamWithValue("TableName", NpgsqlTypes.NpgsqlDbType.Text, TableName)
@@ -189,7 +201,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
             }
         }
 
-        public virtual void SetCacheItem(string key, byte[] value, DistributedCacheEntryOptions options)
+        public void SetCacheItem(string key, byte[] value, DistributedCacheEntryOptions options)
         {
             var utcNow = SystemClock.UtcNow;
 
@@ -198,22 +210,24 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
 
             using (var connection = new NpgsqlConnection(ConnectionString))
             {
-                var upsertCommand = new NpgsqlCommand($"{SchemaName}.{Functions.Names.SetCache}", connection);
-                upsertCommand.CommandType = CommandType.StoredProcedure;
-                upsertCommand.Parameters
+                var command = new NpgsqlCommand($"{SchemaName}.{Functions.Names.SetCache}", connection)
+                {
+                    CommandType = CommandType.StoredProcedure
+                };
+                command.Parameters
                     .AddParamWithValue("SchemaName", NpgsqlTypes.NpgsqlDbType.Text, SchemaName)
-                    .AddParamWithValue("TableName", NpgsqlTypes.NpgsqlDbType.Text, TableName)                  
+                    .AddParamWithValue("TableName", NpgsqlTypes.NpgsqlDbType.Text, TableName)
                     .AddCacheItemId(key)
                     .AddCacheItemValue(value)
                     .AddSlidingExpirationInSeconds(options.SlidingExpiration)
                     .AddAbsoluteExpiration(absoluteExpiration)
-                    .AddParamWithValue("UtcNow", NpgsqlTypes.NpgsqlDbType.TimestampTz, utcNow);  
+                    .AddParamWithValue("UtcNow", NpgsqlTypes.NpgsqlDbType.TimestampTz, utcNow);
 
                 connection.Open();
 
                 try
                 {
-                    upsertCommand.ExecuteNonQuery();
+                    command.ExecuteNonQuery();
                 }
                 catch (PostgresException ex)
                 {
@@ -230,7 +244,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
             }
         }
 
-        public virtual async Task SetCacheItemAsync(string key, byte[] value, DistributedCacheEntryOptions options, CancellationToken cancellationToken)
+        public async Task SetCacheItemAsync(string key, byte[] value, DistributedCacheEntryOptions options, CancellationToken cancellationToken)
         {
             var utcNow = SystemClock.UtcNow;
 
@@ -239,9 +253,11 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
 
             using (var connection = new NpgsqlConnection(ConnectionString))
             {
-                var upsertCommand = new NpgsqlCommand($"{SchemaName}.{Functions.Names.SetCache}", connection);
-                upsertCommand.CommandType = CommandType.StoredProcedure;
-                upsertCommand.Parameters
+                var command = new NpgsqlCommand($"{SchemaName}.{Functions.Names.SetCache}", connection)
+                {
+                    CommandType = CommandType.StoredProcedure
+                };
+                command.Parameters
                     .AddParamWithValue("SchemaName", NpgsqlTypes.NpgsqlDbType.Text, SchemaName)
                     .AddParamWithValue("TableName", NpgsqlTypes.NpgsqlDbType.Text, TableName)
                     .AddCacheItemId(key)
@@ -254,7 +270,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
 
                 try
                 {
-                    await upsertCommand.ExecuteNonQueryAsync(cancellationToken);
+                    await command.ExecuteNonQueryAsync(cancellationToken);
                 }
                 catch (PostgresException ex)
                 {
@@ -271,18 +287,17 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
             }
         }
 
-        protected virtual byte[] GetCacheItem(string key, bool includeValue)
+        private byte[] GetCacheItem(string key, bool includeValue)
         {
-            var utcNow = SystemClock.UtcNow;          
+            var utcNow = SystemClock.UtcNow;
 
             byte[] value = null;
-            TimeSpan? slidingExpiration = null;
-            DateTimeOffset? absoluteExpiration = null;
-            DateTimeOffset expirationTime;
             using (var connection = new NpgsqlConnection(ConnectionString))
             {
-                var command = new NpgsqlCommand($"{SchemaName}.{Functions.Names.UpdateCacheItemFormat}", connection);
-                command.CommandType = CommandType.StoredProcedure;
+                var command = new NpgsqlCommand($"{SchemaName}.{Functions.Names.UpdateCacheItemFormat}", connection)
+                {
+                    CommandType = CommandType.StoredProcedure
+                };
                 command.Parameters
                     .AddParamWithValue("SchemaName", NpgsqlTypes.NpgsqlDbType.Text, SchemaName)
                     .AddParamWithValue("TableName", NpgsqlTypes.NpgsqlDbType.Text, TableName)
@@ -294,40 +309,36 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
 
                 if (includeValue)
                 {
-                    command = new NpgsqlCommand($"{SchemaName}.{Functions.Names.GetCacheItemFormat}", connection);
-					command.CommandType = CommandType.StoredProcedure;
+                    command = new NpgsqlCommand($"{SchemaName}.{Functions.Names.GetCacheItemFormat}", connection)
+                    {
+                        CommandType = CommandType.StoredProcedure
+                    };
                     command.Parameters
                         .AddParamWithValue("SchemaName", NpgsqlTypes.NpgsqlDbType.Text, SchemaName)
                         .AddParamWithValue("TableName", NpgsqlTypes.NpgsqlDbType.Text, TableName)
                         .AddCacheItemId(key)
                         .AddWithValue("UtcNow", NpgsqlTypes.NpgsqlDbType.TimestampTz, utcNow);
 
-                    var reader = command.ExecuteReader(
-                        CommandBehavior.SequentialAccess | CommandBehavior.SingleRow | CommandBehavior.SingleResult);
+                    var reader = command.ExecuteReader(CommandBehavior.SequentialAccess | CommandBehavior.SingleRow | CommandBehavior.SingleResult);
 
                     if (reader.Read())
                     {
                         var id = reader.GetFieldValue<string>(Columns.Indexes.CacheItemIdIndex);
 
-                        if (includeValue)
-                        {
-                            value = reader.GetFieldValue<byte[]>(Columns.Indexes.CacheItemValueIndex);
-                        }
+                        value = reader.GetFieldValue<byte[]>(Columns.Indexes.CacheItemValueIndex);
 
-                        expirationTime = reader.GetFieldValue<DateTimeOffset>(Columns.Indexes.ExpiresAtTimeIndex);
+                        _ = reader.GetFieldValue<DateTimeOffset>(Columns.Indexes.ExpiresAtTimeIndex);
 
                         if (!reader.IsDBNull(Columns.Indexes.SlidingExpirationInSecondsIndex))
                         {
-                            slidingExpiration = TimeSpan.FromSeconds(
-                                reader.GetFieldValue<long>(Columns.Indexes.SlidingExpirationInSecondsIndex));
+                            _ = reader.GetFieldValue<long>(Columns.Indexes.SlidingExpirationInSecondsIndex);
                         }
 
                         if (!reader.IsDBNull(Columns.Indexes.AbsoluteExpirationIndex))
                         {
-                            absoluteExpiration = reader.GetFieldValue<DateTimeOffset>(
-                                Columns.Indexes.AbsoluteExpirationIndex);
+                            _ = reader.GetFieldValue<DateTimeOffset>(Columns.Indexes.AbsoluteExpirationIndex);
                         }
-                       
+
                     }
                     else
                     {
@@ -339,18 +350,17 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
             return value;
         }
 
-        protected virtual async Task<byte[]> GetCacheItemAsync(string key, bool includeValue, CancellationToken cancellationToken)
+        private async Task<byte[]> GetCacheItemAsync(string key, bool includeValue, CancellationToken cancellationToken)
         {
             var utcNow = SystemClock.UtcNow;
 
             byte[] value = null;
-            TimeSpan? slidingExpiration = null;
-            DateTimeOffset? absoluteExpiration = null;
-            DateTimeOffset expirationTime;
             using (var connection = new NpgsqlConnection(ConnectionString))
             {
-                var command = new NpgsqlCommand($"{SchemaName}.{Functions.Names.UpdateCacheItemFormat}", connection);
-                command.CommandType = CommandType.StoredProcedure;
+                var command = new NpgsqlCommand($"{SchemaName}.{Functions.Names.UpdateCacheItemFormat}", connection)
+                {
+                    CommandType = CommandType.StoredProcedure
+                };
                 command.Parameters
                    .AddParamWithValue("SchemaName", NpgsqlTypes.NpgsqlDbType.Text, SchemaName)
                    .AddParamWithValue("TableName", NpgsqlTypes.NpgsqlDbType.Text, TableName)
@@ -362,8 +372,10 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
 
                 if (includeValue)
                 {
-                    command = new NpgsqlCommand($"{SchemaName}.{Functions.Names.GetCacheItemFormat}", connection);
-                    command.CommandType = CommandType.StoredProcedure;
+                    command = new NpgsqlCommand($"{SchemaName}.{Functions.Names.GetCacheItemFormat}", connection)
+                    {
+                        CommandType = CommandType.StoredProcedure
+                    };
                     command.Parameters
                         .AddParamWithValue("SchemaName", NpgsqlTypes.NpgsqlDbType.Text, SchemaName)
                         .AddParamWithValue("TableName", NpgsqlTypes.NpgsqlDbType.Text, TableName)
@@ -372,32 +384,27 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
 
 
                     var reader = await command.ExecuteReaderAsync(
-                        CommandBehavior.SequentialAccess | CommandBehavior.SingleRow | CommandBehavior.SingleResult, 
+                        CommandBehavior.SequentialAccess | CommandBehavior.SingleRow | CommandBehavior.SingleResult,
                         cancellationToken);
 
                     if (await reader.ReadAsync(cancellationToken))
                     {
-                        var id = await reader.GetFieldValueAsync<string>(Columns.Indexes.CacheItemIdIndex, cancellationToken);
+                        _ = await reader.GetFieldValueAsync<string>(Columns.Indexes.CacheItemIdIndex, cancellationToken);
 
-                        if (includeValue)
-                        {
-                            value = await reader.GetFieldValueAsync<byte[]>(Columns.Indexes.CacheItemValueIndex, cancellationToken);
-                        }
+                        value = await reader.GetFieldValueAsync<byte[]>(Columns.Indexes.CacheItemValueIndex, cancellationToken);
 
-                        expirationTime = await reader.GetFieldValueAsync<DateTimeOffset>(
-                            Columns.Indexes.ExpiresAtTimeIndex, cancellationToken);
+                        _ = await reader.GetFieldValueAsync<DateTimeOffset>(Columns.Indexes.ExpiresAtTimeIndex, cancellationToken);
 
                         if (!await reader.IsDBNullAsync(Columns.Indexes.SlidingExpirationInSecondsIndex, cancellationToken))
                         {
-                            slidingExpiration = TimeSpan.FromSeconds(
-                                await reader.GetFieldValueAsync<long>(Columns.Indexes.SlidingExpirationInSecondsIndex, cancellationToken));
+                            _ = await reader.GetFieldValueAsync<long>(Columns.Indexes.SlidingExpirationInSecondsIndex, cancellationToken);
                         }
 
                         if (!await reader.IsDBNullAsync(Columns.Indexes.AbsoluteExpirationIndex, cancellationToken))
                         {
-                            absoluteExpiration = await reader.GetFieldValueAsync<DateTimeOffset>(Columns.Indexes.AbsoluteExpirationIndex, cancellationToken);
+                            _ = await reader.GetFieldValueAsync<DateTimeOffset>(Columns.Indexes.AbsoluteExpirationIndex, cancellationToken);
                         }
-                       
+
                     }
                     else
                     {
@@ -409,12 +416,12 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
             return value;
         }
 
-        protected bool IsDuplicateKeyException(PostgresException ex)
+        private bool IsDuplicateKeyException(PostgresException ex)
         {
             return ex.SqlState == "23505";
         }
 
-        protected DateTimeOffset? GetAbsoluteExpiration(DateTimeOffset utcNow, DistributedCacheEntryOptions options)
+        private DateTimeOffset? GetAbsoluteExpiration(DateTimeOffset utcNow, DistributedCacheEntryOptions options)
         {
             // calculate absolute expiration
             DateTimeOffset? absoluteExpiration = null;
@@ -434,7 +441,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
             return absoluteExpiration;
         }
 
-        protected void ValidateOptions(TimeSpan? slidingExpiration, DateTimeOffset? absoluteExpiration)
+        private void ValidateOptions(TimeSpan? slidingExpiration, DateTimeOffset? absoluteExpiration)
         {
             if (!slidingExpiration.HasValue && !absoluteExpiration.HasValue)
             {
