@@ -11,7 +11,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
 {
 	public class PostgreSqlCache : IDistributedCache
 	{
-		private static readonly TimeSpan MinimumExpiredItemsDeletionInterval = TimeSpan.FromSeconds(1);
+		private static readonly TimeSpan MinimumExpiredItemsDeletionInterval = TimeSpan.FromMinutes(5);
 		private static readonly TimeSpan DefaultExpiredItemsDeletionInterval = TimeSpan.FromMinutes(30);
 
 		private readonly IDatabaseOperations _dbOperations;

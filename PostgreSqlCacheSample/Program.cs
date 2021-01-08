@@ -26,7 +26,6 @@ namespace PostgreSqlCacheSample
 						setup.SchemaName = configuration["SchemaName"];
 						setup.TableName = configuration["TableName"];
 						setup.CreateInfrastructure = !string.IsNullOrWhiteSpace(configuration["CreateInfrastructure"]);
-						setup.ExpiredItemsDeletionInterval = TimeSpan.FromSeconds(2);
 						// CreateInfrastructure is optional, default is TRUE
 						// This means que every time starts the application the 
 						// creation of table and database functions will be verified.
