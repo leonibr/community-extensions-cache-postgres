@@ -9,6 +9,14 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Community.Microsoft.Extensi
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PostgreSqlCacheSample", "PostgreSqlCacheSample\PostgreSqlCacheSample.csproj", "{248946AE-B9BF-4E27-BB8B-B8967C703981}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebSample", "WebSample\WebSample.csproj", "{CA8FFB11-C327-48C1-94BA-24B9D61021FD}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{548EB70F-C803-4B22-A992-131B9A5E1446}"
+	ProjectSection(SolutionItems) = preProject
+		README.md = README.md
+		sample_project.gif = sample_project.gif
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -43,12 +51,25 @@ Global
 		{248946AE-B9BF-4E27-BB8B-B8967C703981}.Release|x64.Build.0 = Release|Any CPU
 		{248946AE-B9BF-4E27-BB8B-B8967C703981}.Release|x86.ActiveCfg = Release|Any CPU
 		{248946AE-B9BF-4E27-BB8B-B8967C703981}.Release|x86.Build.0 = Release|Any CPU
+		{CA8FFB11-C327-48C1-94BA-24B9D61021FD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CA8FFB11-C327-48C1-94BA-24B9D61021FD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CA8FFB11-C327-48C1-94BA-24B9D61021FD}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{CA8FFB11-C327-48C1-94BA-24B9D61021FD}.Debug|x64.Build.0 = Debug|Any CPU
+		{CA8FFB11-C327-48C1-94BA-24B9D61021FD}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{CA8FFB11-C327-48C1-94BA-24B9D61021FD}.Debug|x86.Build.0 = Debug|Any CPU
+		{CA8FFB11-C327-48C1-94BA-24B9D61021FD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CA8FFB11-C327-48C1-94BA-24B9D61021FD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CA8FFB11-C327-48C1-94BA-24B9D61021FD}.Release|x64.ActiveCfg = Release|Any CPU
+		{CA8FFB11-C327-48C1-94BA-24B9D61021FD}.Release|x64.Build.0 = Release|Any CPU
+		{CA8FFB11-C327-48C1-94BA-24B9D61021FD}.Release|x86.ActiveCfg = Release|Any CPU
+		{CA8FFB11-C327-48C1-94BA-24B9D61021FD}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{248946AE-B9BF-4E27-BB8B-B8967C703981} = {306A63CC-5797-4D63-86A1-94025CF8C98A}
+		{CA8FFB11-C327-48C1-94BA-24B9D61021FD} = {306A63CC-5797-4D63-86A1-94025CF8C98A}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {D00EB11C-F086-49F7-B7EC-21CC98017753}
