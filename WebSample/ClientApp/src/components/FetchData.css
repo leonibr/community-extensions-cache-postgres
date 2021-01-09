@@ -1,0 +1,11 @@
+﻿
+pre.console {
+    background-color: #333;
+    color: #00ff21;
+    font-size: 0.6rem;
+    padding: 8px;
+    overflow-y: scroll;
+    max-height: 150px;
+    border-radius: 8px;
+}
+
