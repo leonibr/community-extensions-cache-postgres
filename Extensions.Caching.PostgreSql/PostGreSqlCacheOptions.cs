@@ -4,12 +4,12 @@ using System;
 
 namespace Community.Microsoft.Extensions.Caching.PostgreSql
 {
-    public class PostgreSqlCacheOptions : IOptions<PostgreSqlCacheOptions>
+	public class PostgreSqlCacheOptions : IOptions<PostgreSqlCacheOptions>
     {
         /// <summary>
         /// An abstraction to represent the clock of a machine in order to enable unit testing.
         /// </summary>
-        public ISystemClock SystemClock { get; set; }
+        public ISystemClock SystemClock { get; set; } = new SystemClock();
 
         /// <summary>
         /// The periodic interval to scan and delete expired items in the cache. Default is 30 minutes.
@@ -42,12 +42,6 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
 		/// </summary>
 		public TimeSpan DefaultSlidingExpiration { get; set; } = TimeSpan.FromMinutes(20);
 
-        PostgreSqlCacheOptions IOptions<PostgreSqlCacheOptions>.Value
-        {
-            get
-            {
-                return this;
-            }
-        }
+        PostgreSqlCacheOptions IOptions<PostgreSqlCacheOptions>.Value => this;
     }
 }

@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading.Tasks;
 using Npgsql;
 
 namespace Community.Microsoft.Extensions.Caching.PostgreSql
@@ -10,9 +7,9 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
     {
         // For all values where the length is less than the below value, try setting the size of the
         // parameter for better performance.
-        public const int DefaultValueColumnWidth = 8000;
+        private const int DefaultValueColumnWidth = 8000;
 
-        public const int CacheItemIdColumnWidth = 449;
+        private const int CacheItemIdColumnWidth = 449;
 
         public static NpgsqlParameterCollection AddCacheItemId(this NpgsqlParameterCollection parameters, string value)
         {

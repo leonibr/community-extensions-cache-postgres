@@ -1,55 +1,27 @@
 ﻿using Microsoft.Extensions.Caching.Distributed;
 using System;
 using Microsoft.Extensions.Options;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Internal;
 using System.Threading;
-using System.IO;
-using Npgsql;
 
 namespace Community.Microsoft.Extensions.Caching.PostgreSql
 {
-    public class PostgreSqlCache : IDistributedCache
+    internal sealed class PostgreSqlCache : IDistributedCache
     {
-        private static readonly TimeSpan MinimumExpiredItemsDeletionInterval = TimeSpan.FromMinutes(5);
-        private static readonly TimeSpan DefaultExpiredItemsDeletionInterval = TimeSpan.FromMinutes(30);
-
         private readonly IDatabaseOperations _dbOperations;
-        private readonly ISystemClock _systemClock;
-        private readonly TimeSpan _expiredItemsDeletionInterval;
-        private DateTimeOffset _lastExpirationScan;
-        private readonly Action _deleteExpiredCachedItemsDelegate;
         private readonly TimeSpan _defaultSlidingExpiration;
 
-        public PostgreSqlCache(IOptions<PostgreSqlCacheOptions> options)
+        public PostgreSqlCache(
+            IOptions<PostgreSqlCacheOptions> options,
+            IDatabaseOperations databaseOperations,
+            IDatabaseExpiredItemsRemoverLoop loop)
         {
-            var cacheOptions = options.Value;
+            _dbOperations = databaseOperations ?? throw new ArgumentNullException(nameof(databaseOperations));
 
-            if (string.IsNullOrEmpty(cacheOptions.ConnectionString))
-            {
-                throw new ArgumentException(
-                    $"{nameof(PostgreSqlCacheOptions.ConnectionString)} cannot be empty or null.");
-            }
-            if (string.IsNullOrEmpty(cacheOptions.SchemaName))
-            {
-                throw new ArgumentException(
-                    $"{nameof(PostgreSqlCacheOptions.SchemaName)} cannot be empty or null.");
-            }
-            if (string.IsNullOrEmpty(cacheOptions.TableName))
-            {
-                throw new ArgumentException(
-                    $"{nameof(PostgreSqlCacheOptions.TableName)} cannot be empty or null.");
-            }
-            if (cacheOptions.ExpiredItemsDeletionInterval.HasValue &&
-                cacheOptions.ExpiredItemsDeletionInterval.Value < MinimumExpiredItemsDeletionInterval)
-            {
-                throw new ArgumentException(
-                    $"{nameof(PostgreSqlCacheOptions.ExpiredItemsDeletionInterval)} cannot be less the minimum " +
-                    $"value of {MinimumExpiredItemsDeletionInterval.TotalMinutes} minutes.");
-            }
+            _ = loop ?? throw new ArgumentNullException(nameof(loop));
+
+            var cacheOptions = options?.Value ?? throw new ArgumentNullException(nameof(options));
+
             if (cacheOptions.DefaultSlidingExpiration <= TimeSpan.Zero)
             {
                 throw new ArgumentOutOfRangeException(
@@ -57,21 +29,11 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
                     cacheOptions.DefaultSlidingExpiration,
                     "The sliding expiration value must be positive.");
             }
-            
-            _systemClock = cacheOptions.SystemClock ?? new SystemClock();
-            _expiredItemsDeletionInterval =
-                cacheOptions.ExpiredItemsDeletionInterval ?? DefaultExpiredItemsDeletionInterval;
-            _deleteExpiredCachedItemsDelegate = DeleteExpiredCacheItems;
+
             _defaultSlidingExpiration = cacheOptions.DefaultSlidingExpiration;
 
-            _dbOperations = new DatabaseOperations(
-                   cacheOptions.ConnectionString,
-                   cacheOptions.SchemaName,
-                   cacheOptions.TableName,
-				   cacheOptions.CreateInfrastructure,
-                   _systemClock);
+            loop.Start();
         }
-
 
         public byte[] Get(string key)
         {
@@ -80,25 +42,17 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
                 throw new ArgumentNullException(nameof(key));
             }
 
-            var value = _dbOperations.GetCacheItem(key);
-
-            ScanForExpiredItemsIfRequired();
-
-            return value;
+            return _dbOperations.GetCacheItem(key);
         }
 
-        public async Task<byte[]> GetAsync(string key, CancellationToken token = default(CancellationToken))
+        public Task<byte[]> GetAsync(string key, CancellationToken token)
         {
             if (key == null)
             {
                 throw new ArgumentNullException(nameof(key));
             }
 
-            var value = await _dbOperations.GetCacheItemAsync(key);
-
-            ScanForExpiredItemsIfRequired();
-
-            return value;
+            return _dbOperations.GetCacheItemAsync(key, token);
         }
 
         public void Refresh(string key)
@@ -109,20 +63,16 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
             }
 
             _dbOperations.RefreshCacheItem(key);
-
-            ScanForExpiredItemsIfRequired();
         }
 
-        public async Task RefreshAsync(string key, CancellationToken token = default(CancellationToken))
+        public async Task RefreshAsync(string key, CancellationToken token)
         {
             if (key == null)
             {
                 throw new ArgumentNullException(nameof(key));
             }
 
-            await _dbOperations.RefreshCacheItemAsync(key);
-
-            ScanForExpiredItemsIfRequired();
+            await _dbOperations.RefreshCacheItemAsync(key, token);
         }
 
         public void Remove(string key)
@@ -133,20 +83,16 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
             }
 
             _dbOperations.DeleteCacheItem(key);
-
-            ScanForExpiredItemsIfRequired();
         }
 
-        public async Task RemoveAsync(string key, CancellationToken token = default(CancellationToken))
+        public Task RemoveAsync(string key, CancellationToken token)
         {
             if (key == null)
             {
                 throw new ArgumentNullException(nameof(key));
             }
 
-            await _dbOperations.DeleteCacheItemAsync(key);
-
-            ScanForExpiredItemsIfRequired();
+            return _dbOperations.DeleteCacheItemAsync(key, token);
         }
 
         public void Set(string key, byte[] value, DistributedCacheEntryOptions options)
@@ -169,11 +115,9 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
             GetOptions(ref options);
 
             _dbOperations.SetCacheItem(key, value, options);
-
-            ScanForExpiredItemsIfRequired();
         }
 
-        public async Task SetAsync(string key, byte[] value, DistributedCacheEntryOptions options, CancellationToken token = default(CancellationToken))
+        public Task SetAsync(string key, byte[] value, DistributedCacheEntryOptions options, CancellationToken token)
         {
             if (key == null)
             {
@@ -192,27 +136,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
 
             GetOptions(ref options);
 
-            await _dbOperations.SetCacheItemAsync(key, value, options);
-
-            ScanForExpiredItemsIfRequired();
-        }
-
-        // Called by multiple actions to see how long it's been since we last checked for expired items.
-        // If sufficient time has elapsed then a scan is initiated on a background task.
-        private void ScanForExpiredItemsIfRequired()
-        {
-            var utcNow = _systemClock.UtcNow;
-            // TODO: Multiple threads could trigger this scan which leads to multiple calls to database.
-            if ((utcNow - _lastExpirationScan) > _expiredItemsDeletionInterval)
-            {
-                _lastExpirationScan = utcNow;
-                Task.Run(_deleteExpiredCachedItemsDelegate);
-            }
-        }
-
-        private void DeleteExpiredCacheItems()
-        {
-            _dbOperations.DeleteExpiredCacheItems();
+            return _dbOperations.SetCacheItemAsync(key, value, options, token);
         }
 
         private void GetOptions(ref DistributedCacheEntryOptions options)

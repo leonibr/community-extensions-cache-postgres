@@ -1,5 +1,0 @@
-{
-  "ConnectionString": "host=127.0.0.1;database=cache_test;password=t3st;username=cache_test",
-  "SchemaName": "name1",
-  "TableName": "tbl_cache"
-}

@@ -38,9 +38,11 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
 		}
 
 		// to enable unit testing
-		internal static void AddPostgreSqlCacheServices(IServiceCollection services)
+        private static void AddPostgreSqlCacheServices(IServiceCollection services)
 		{
-			services.Add(ServiceDescriptor.Singleton<IDistributedCache, PostgreSqlCache>());
+            services.AddSingleton<IDatabaseOperations, DatabaseOperations>();
+			services.AddSingleton<IDatabaseExpiredItemsRemoverLoop, DatabaseExpiredItemsRemoverLoop>();
+			services.AddSingleton<IDistributedCache, PostgreSqlCache>();
 		}
 	}
 }
