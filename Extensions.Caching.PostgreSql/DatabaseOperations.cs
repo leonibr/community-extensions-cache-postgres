@@ -110,7 +110,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
                         cmd.ExecuteNonQuery();
                         transaction.Commit();
                     }
-                    catch (Exception ex)
+                    catch (Exception)
                     {
                         //
                         transaction.Rollback();
