@@ -11,6 +11,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
         private readonly IDatabaseOperations _dbOperations;
         private readonly TimeSpan _defaultSlidingExpiration;
 
+        [Obsolete("Do not use constructor directly instead pull IDistributedCache from DI. For this add 'services.AddDistributedPostgreSqlCache'")]
         public PostgreSqlCache(
             IOptions<PostgreSqlCacheOptions> options,
             IDatabaseOperations databaseOperations,

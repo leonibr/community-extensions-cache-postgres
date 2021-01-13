@@ -23,6 +23,17 @@ services.AddDistributedPostgreSqlCache(setup =>
 	// creation of table and database functions will be verified.
 })
 ```
+3. Then pull from DI like any other service
+
+```c#
+    private readonly IDistributedCache _cache;
+
+    public WeatherForecastController(IDistributedCache cache)
+    {
+        _cache = cache;
+    }
+
+```
 ## What it does to my database:
 
 Creates a table and six functions, see scripts folder for more details.
@@ -36,7 +47,7 @@ Creates a table and six functions, see scripts folder for more details.
 
 ```
 
-## Runing the sample
+## Runing the console sample
 You will need a local postgresql server with this configuration:
 1. Server listening to port 5432 at localhost
 1. The password of your `postgres` account, if not attached already to your user.
@@ -54,6 +65,9 @@ Then you can delete the database with:
 prepare-database.cmd -erase
 ```
 ## Change Log
+1. v3.0
+   1. [BREAKING CHANGE] - Direct instantiation not preferred
+   2. Single thread loop remover
 1. v2.0.x - Update everything to net5.0, more detailed sample project.
 1. v1.0.8 - Update to latest dependencies -
 
