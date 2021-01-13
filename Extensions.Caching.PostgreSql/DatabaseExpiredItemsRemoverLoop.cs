@@ -16,6 +16,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
         private readonly IDatabaseOperations _databaseOperations;
         private readonly CancellationTokenSource _cancellationTokenSource;
         private readonly ISystemClock _systemClock;
+        private readonly bool _disabled;
 
         public DatabaseExpiredItemsRemoverLoop(
             IOptions<PostgreSqlCacheOptions> options,
@@ -24,8 +25,14 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
         {
             var cacheOptions = options.Value;
 
+            if ((_disabled = cacheOptions.Disabled) == true)
+            {
+                //No need to configure anything
+                return;
+            }
+
             if (cacheOptions.ExpiredItemsDeletionInterval.HasValue &&
-                cacheOptions.ExpiredItemsDeletionInterval.Value < MinimumExpiredItemsDeletionInterval)
+            cacheOptions.ExpiredItemsDeletionInterval.Value < MinimumExpiredItemsDeletionInterval)
             {
                 throw new ArgumentException(
                     $"{nameof(PostgreSqlCacheOptions.ExpiredItemsDeletionInterval)} cannot be less the minimum " +
@@ -41,6 +48,11 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
 
         public void Start()
         {
+            if (_disabled)
+            {
+                return;
+            }
+
             Task.Run(DeleteExpiredCacheItems);
         }
 
