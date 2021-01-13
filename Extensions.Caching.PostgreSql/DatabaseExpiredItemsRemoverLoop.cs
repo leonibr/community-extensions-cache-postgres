@@ -32,7 +32,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
             }
 
             if (cacheOptions.ExpiredItemsDeletionInterval.HasValue &&
-            cacheOptions.ExpiredItemsDeletionInterval.Value < MinimumExpiredItemsDeletionInterval)
+                cacheOptions.ExpiredItemsDeletionInterval.Value < MinimumExpiredItemsDeletionInterval)
             {
                 throw new ArgumentException(
                     $"{nameof(PostgreSqlCacheOptions.ExpiredItemsDeletionInterval)} cannot be less the minimum " +
