@@ -43,9 +43,11 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
 		public TimeSpan DefaultSlidingExpiration { get; set; } = TimeSpan.FromMinutes(20);
 
         /// <summary>
-        /// If set to true this instance of the cache will not remove expired items.
+        /// If set to true this instance of the cache will not remove expired items. 
+        /// Maybe on multiple instances scenario sharing the same database another instance will be responsable for remove expired itens.
+        /// Default value is false.
         /// </summary>
-        public bool Disabled { get; set; }
+        public bool DisableRemoveExpired { get; set; } = false;
 
         PostgreSqlCacheOptions IOptions<PostgreSqlCacheOptions>.Value => this;
     }

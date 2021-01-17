@@ -17,6 +17,8 @@ services.AddDistributedPostgreSqlCache(setup =>
 	ConnectionString = configuration["ConnectionString"], 
 	SchemaName = configuration["SchemaName"],
 	TableName = configuration["TableName"],
+	RemoveExpiredDisabled = configuration["RemoveExpiredDisabled"],
+    // Optional - RemoveExpiredDisabled default is FALSE
 	CreateInfrastructure = configuration["CreateInfrastructure"] 
 	// CreateInfrastructure is optional, default is TRUE
 	// This means que every time starts the application the 
@@ -65,6 +67,7 @@ Then you can delete the database with:
 prepare-database.cmd -erase
 ```
 ## Change Log
+1. v3.0.1 - `DisableRemoveExpired` configuration added; If `TRUE` the cache instance won`t delete expired items.
 1. v3.0
    1. [BREAKING CHANGE] - Direct instantiation not preferred
    2. Single thread loop remover

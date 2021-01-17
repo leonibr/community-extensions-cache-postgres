@@ -25,7 +25,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
         {
             var cacheOptions = options.Value;
 
-            if ((_disabled = cacheOptions.Disabled) == true)
+            if ((_disabled = cacheOptions.DisableRemoveExpired) == true)
             {
                 //No need to configure anything
                 return;
