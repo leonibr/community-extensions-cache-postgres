@@ -14,17 +14,22 @@ dotnet add package Community.Microsoft.Extensions.Caching.PostgreSql
 ```c#
 services.AddDistributedPostgreSqlCache(setup => 
 {
-	ConnectionString = configuration["ConnectionString"], 
-	SchemaName = configuration["SchemaName"],
-	TableName = configuration["TableName"],
-	RemoveExpiredDisabled = configuration["RemoveExpiredDisabled"],
-    // Optional - RemoveExpiredDisabled default is FALSE
-	CreateInfrastructure = configuration["CreateInfrastructure"] 
+	setup.ConnectionString = configuration["ConnectionString"];
+	setup.SchemaName = configuration["SchemaName"];
+	setup.TableName = configuration["TableName"];
+	setup.DisableRemoveExpired = configuration["DisableRemoveExpired"];
+    // Optional - DisableRemoveExpired default is FALSE
+	setup.CreateInfrastructure = configuration["CreateInfrastructure"];
 	// CreateInfrastructure is optional, default is TRUE
 	// This means que every time starts the application the 
 	// creation of table and database functions will be verified.
 })
 ```
+### `DisableRemoveExpired = True` use case:
+When you have 2 or more instances/microservices/processes and you just to leave one of them removing expired items. 
+* Note 1: This is not mandatory, see if it fits in you cenario.
+* Note 2: Even if you set to `True` and the expired items will not be auto-removed, when you call `GetItem` those expired items are filtred out. In that case you are responsable to manually remove the expired key or update it
+
 3. Then pull from DI like any other service
 
 ```c#
