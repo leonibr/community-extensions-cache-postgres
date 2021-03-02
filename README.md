@@ -14,12 +14,12 @@ dotnet add package Community.Microsoft.Extensions.Caching.PostgreSql
 ```c#
 services.AddDistributedPostgreSqlCache(setup => 
 {
-	setup.ConnectionString = configuration["ConnectionString"], 
-	setup.SchemaName = configuration["SchemaName"],
-	setup.TableName = configuration["TableName"],
-	setup.DisableRemoveExpired = configuration["DisableRemoveExpired"],
+	setup.ConnectionString = configuration["ConnectionString"];
+	setup.SchemaName = configuration["SchemaName"];
+	setup.TableName = configuration["TableName"];
+	setup.DisableRemoveExpired = configuration["DisableRemoveExpired"];
     // Optional - DisableRemoveExpired default is FALSE
-	setup.CreateInfrastructure = configuration["CreateInfrastructure"] 
+	setup.CreateInfrastructure = configuration["CreateInfrastructure"];
 	// CreateInfrastructure is optional, default is TRUE
 	// This means que every time starts the application the 
 	// creation of table and database functions will be verified.
