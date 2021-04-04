@@ -1,6 +1,7 @@
--- Table: public."DistCache"
+-- Table: [schemaName]."DistCache"
 
--- DROP TABLE public."DistCache";
+
+CREATE SCHEMA IF NOT EXISTS [schemaName];
 
 CREATE TABLE IF NOT EXISTS [schemaName].[tableName]
 (
