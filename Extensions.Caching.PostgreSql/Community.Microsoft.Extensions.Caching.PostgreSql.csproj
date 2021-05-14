@@ -30,6 +30,6 @@
     <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="5.0.0" />
     <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="5.0.0" />
     <PackageReference Include="Microsoft.Extensions.Options" Version="5.0.0" />
-    <PackageReference Include="Npgsql" Version="5.0.0" />
+    <PackageReference Include="Npgsql" Version="5.0.5" />
   </ItemGroup>
 </Project>
