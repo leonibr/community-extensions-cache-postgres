@@ -54,8 +54,12 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
         {
             if (utcTime.HasValue)
             {
+                // https://www.npgsql.org/doc/types/datetime.html
+                // TimestampTz must be in UTC. 
+                // The Offset component of DateTimeOffset is discarded in npgsql <6.0.0
+                // In npgsql >= 6.0.0 this throws an InvalidCastException using DateTimeOffset with Offset != 0.
                 return parameters.AddParamWithValue(
-                    Columns.Names.AbsoluteExpiration, NpgsqlTypes.NpgsqlDbType.TimestampTz, utcTime.Value);
+                    Columns.Names.AbsoluteExpiration, NpgsqlTypes.NpgsqlDbType.TimestampTz, utcTime.Value.UtcDateTime);
             }
             else
             {
