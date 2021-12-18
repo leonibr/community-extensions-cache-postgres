@@ -14,6 +14,7 @@ CREATE OR REPLACE FUNCTION [schemaName].updatecacheitemformat(
 AS $function$
 
 DECLARE v_Query Text;
+DECLARE v_RowCount int;
 BEGIN
 
 v_Query := format('UPDATE %I.%I ' ||
@@ -27,8 +28,9 @@ v_Query := format('UPDATE %I.%I ' ||
   				  'AND $1 <= "ExpiresAtTime" ' ||
   				  'AND "SlidingExpirationInSeconds" IS NOT NULL ' ||
   				  'AND ("AbsoluteExpiration" IS NULL OR "AbsoluteExpiration" <> "ExpiresAtTime")', "SchemaName", "TableName", "SchemaName");
-EXECUTE v_Query using "UtcNow", "DistCacheId";                
-
+EXECUTE v_Query using "UtcNow", "DistCacheId";   
+GET DIAGNOSTICS v_RowCount := ROW_COUNT;
+RAISE NOTICE '[schemaName].updatecacheitemformat UPDATED % entries for Id: %', v_RowCount, "DistCacheId";
 END
 $function$;
 

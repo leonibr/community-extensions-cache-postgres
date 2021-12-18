@@ -20,7 +20,7 @@ DECLARE v_ExpiresAtTime TIMESTAMP(6) WITH TIME ZONE;
 DECLARE v_RowCount INT;
 DECLARE v_Query Text;
 BEGIN
-
+RAISE NOTICE '[schemaName].setcache starting...';
  CASE 
 	 WHEN ("DistCacheSlidingExpirationInSeconds" IS NUll)
      THEN  v_ExpiresAtTime := "DistCacheAbsoluteExpiration"; 
@@ -33,7 +33,13 @@ BEGIN
  GET DIAGNOSTICS v_RowCount := ROW_COUNT;
  v_Query := format('INSERT INTO %I.%I ("Id", "Value", "ExpiresAtTime", "SlidingExpirationInSeconds", "AbsoluteExpiration") VALUES($1, $2, $3, $4, $5)', "SchemaName", "TableName");
  
- IF(v_RowCount = 0) THEN EXECUTE v_Query using "DistCacheId", "DistCacheValue", v_ExpiresAtTime, "DistCacheSlidingExpirationInSeconds", "DistCacheAbsoluteExpiration"; END IF;
+IF(v_RowCount = 0) THEN 
+	EXECUTE v_Query using "DistCacheId", "DistCacheValue", v_ExpiresAtTime, "DistCacheSlidingExpirationInSeconds", "DistCacheAbsoluteExpiration";
+	RAISE NOTICE '[schemaName].setcache - INSERTED - Id: %, ExpiresAtTime: %, SlideSeconds: %, AbsoluteExpiration: %', "DistCacheId", v_ExpiresAtTime, "DistCacheSlidingExpirationInSeconds", "DistCacheAbsoluteExpiration";
+ELSE
+	RAISE NOTICE '[schemaName].setcache - UPDATED - Id: %, ExpiresAtTime: %, SlideSeconds: %, AbsoluteExpiration: %', "DistCacheId", v_ExpiresAtTime, "DistCacheSlidingExpirationInSeconds", "DistCacheAbsoluteExpiration";
+	
+END IF;
 END
 
 $function$;
