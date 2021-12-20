@@ -94,7 +94,7 @@ Then you can delete the database with:
 prepare-database.cmd -erase
 ```
 ## Change Log
-1. v3.0.3 - Added log messages on `Debug` Level, multitarget .net5 and .net6, dropped support to netstandard2.0, fix sample to match multitarget, and sample database.
+1. v3.1.0 - Added log messages on `Debug` Level, multitarget .net5 and .net6, dropped support to netstandard2.0, fix sample to match multitarget, and sample database.
 1. v3.0.2 - `CreateInfrastructure` also creates the schema issue #8 
 1. v3.0.1 - `DisableRemoveExpired` configuration added; If `TRUE` the cache instance won`t delete expired items.
 1. v3.0
