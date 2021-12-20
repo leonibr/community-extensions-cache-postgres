@@ -1,4 +1,4 @@
-
+﻿
 # Community.Microsoft.Extensions.Caching.PostgreSQL
 
 ## Description
@@ -23,16 +23,23 @@ services.AddDistributedPostgreSqlCache(setup =>
 	// CreateInfrastructure is optional, default is TRUE
 	// This means que every time starts the application the 
 	// creation of table and database functions will be verified.
+	setup.ExpiredItemsDeletionInterval = TimeSpan.FromMinutes(30)
+	// ExpiredItemsDeletionInterval is optional
+    // This is the periodic interval to scan and delete expired items in the cache. Default is 30 minutes. 
+    // Minimum allowed is 5 minutes. - If you need less than this please share your use case 😁, just for curiosity...
 })
 ```
 ### `DisableRemoveExpired = True` use case:
 When you have 2 or more instances/microservices/processes and you just to leave one of them removing expired items. 
 * Note 1: This is not mandatory, see if it fits in you cenario.
-* Note 2: Even if you set to `True` and the expired items will not be auto-removed, when you call `GetItem` those expired items are filtred out. In that case you are responsable to manually remove the expired key or update it
+* Note 2: If you have only one instance and set to `True`, all the expired items will not be auto-removed, when you call `GetItem` those expired items are filtred out.
+In that case you are responsable to manually remove the expired key or update it
 
 3. Then pull from DI like any other service
 
 ```c#
+    /// this is extracted from the React+WebApi WebSample
+
     private readonly IDistributedCache _cache;
 
     public WeatherForecastController(IDistributedCache cache)
@@ -41,7 +48,7 @@ When you have 2 or more instances/microservices/processes and you just to leave 
     }
 
 ```
-## What it does to my database:
+## What it does to my database 🐘: 
 
 Creates a table and six functions, see scripts folder for more details.
 ```
@@ -67,11 +74,27 @@ dotnet run
 ```
 ![S](sample_project.gif)
 
+
+## Runing the React+WebApi WebSample project
+You will need a local postgresql server with this configuration:
+1. Server listening to port 5432 at localhost
+1. The password of your `postgres` account, if not attached already to your user.
+1. You also need `npm` and `node` installed on your dev machine
+1. Clone this repo.
+1. Run the following commands inside `WebSample`:
+```shell
+dotnet restore
+prepare-database.cmd -create
+dotnet run
+```
+It takes some time to `npm` retore the packages, grab a ☕ while waiting...
+
 Then you can delete the database with:
 ```
 prepare-database.cmd -erase
 ```
 ## Change Log
+1. v3.0.3 - Added log messages on `Debug` Level, multitarget .net5 and .net6, dropped support to netstandard2.0, fix sample to match multitarget, and sample database.
 1. v3.0.2 - `CreateInfrastructure` also creates the schema issue #8 
 1. v3.0.1 - `DisableRemoveExpired` configuration added; If `TRUE` the cache instance won`t delete expired items.
 1. v3.0
