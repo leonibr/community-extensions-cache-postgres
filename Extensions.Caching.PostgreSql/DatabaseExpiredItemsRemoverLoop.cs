@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Internal;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace Community.Microsoft.Extensions.Caching.PostgreSql
@@ -13,6 +14,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
         private static readonly TimeSpan DefaultExpiredItemsDeletionInterval = TimeSpan.FromMinutes(30);
         private readonly TimeSpan _expiredItemsDeletionInterval;
         private DateTimeOffset _lastExpirationScan;
+        private readonly ILogger<DatabaseExpiredItemsRemoverLoop> _logger;
         private readonly IDatabaseOperations _databaseOperations;
         private readonly CancellationTokenSource _cancellationTokenSource;
         private readonly ISystemClock _systemClock;
@@ -21,8 +23,10 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
         public DatabaseExpiredItemsRemoverLoop(
             IOptions<PostgreSqlCacheOptions> options,
             IDatabaseOperations databaseOperations,
-            IHostApplicationLifetime applicationLifetime)
+            IHostApplicationLifetime applicationLifetime,
+            ILogger<DatabaseExpiredItemsRemoverLoop> logger)
         {
+            this._logger = logger;
             var cacheOptions = options.Value;
 
             if ((_disabled = cacheOptions.DisableRemoveExpired) == true)
@@ -42,7 +46,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
             _systemClock = cacheOptions.SystemClock;
             _cancellationTokenSource = new CancellationTokenSource();
             applicationLifetime.ApplicationStopping.Register(OnShutdown);
-            _databaseOperations = databaseOperations;
+            this._databaseOperations = databaseOperations;
             _expiredItemsDeletionInterval = cacheOptions.ExpiredItemsDeletionInterval ?? DefaultExpiredItemsDeletionInterval;
         }
 
@@ -70,11 +74,14 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
                 {
                     try
                     {
+                        _logger.LogDebug($"DeleteExpiredCacheItems executing");
                         await _databaseOperations.DeleteExpiredCacheItemsAsync(_cancellationTokenSource.Token);
                         _lastExpirationScan = utcNow;
+                        _logger.LogDebug($"DeleteExpiredCacheItems executed at {utcNow}");
                     }
                     catch (TaskCanceledException)
                     {
+                        _logger.LogDebug($"DeleteExpiredCacheItems was cancelled at {utcNow}");
                         break;
                     }
                     catch (Exception)
@@ -85,14 +92,17 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
 
                 try
                 {
+                    _logger.LogDebug($"Task Delay interval will sleep for {_expiredItemsDeletionInterval}s");
                     await Task
                             .Delay(_expiredItemsDeletionInterval, _cancellationTokenSource.Token)
                             .ConfigureAwait(true);
+                    _logger.LogDebug($"Task Delay interval resumed after {_expiredItemsDeletionInterval}s");
                 }
                 catch (TaskCanceledException)
                 {
                     // ignore: Task.Delay throws this exception when ct.IsCancellationRequested = true
                     // In this case, we only want to stop polling and finish this async Task.
+                    _logger.LogDebug("Task Delay interval Cancelled.");
                     break;
                 }
             }

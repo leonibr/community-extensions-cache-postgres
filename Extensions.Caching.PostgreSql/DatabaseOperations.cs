@@ -12,12 +12,15 @@ using System.Text;
 using System.Data;
 using System.Threading;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Logging;
 
 namespace Community.Microsoft.Extensions.Caching.PostgreSql
 {
     internal sealed class DatabaseOperations : IDatabaseOperations
     {
-        public DatabaseOperations(IOptions<PostgreSqlCacheOptions> options)
+        private readonly ILogger<DatabaseOperations> logger;
+
+        public DatabaseOperations(IOptions<PostgreSqlCacheOptions> options, ILogger<DatabaseOperations> logger)
         {
             var cacheOptions = options.Value;
 
@@ -41,10 +44,13 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
             SchemaName = cacheOptions.SchemaName;
             TableName = cacheOptions.TableName;
             SystemClock = cacheOptions.SystemClock;
+            this.logger = logger;
             if (cacheOptions.CreateInfrastructure)
             {
                 CreateTableIfNotExist();
             }
+
+
         }
 
         private string ConnectionString { get; }
@@ -99,6 +105,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
             using (var cn = new NpgsqlConnection(ConnectionString))
             {
                 cn.Open();
+                cn.Notice += LogNotice;
                 using (var transaction = cn.BeginTransaction())
                 {
                     try
@@ -110,17 +117,21 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
                         cmd.ExecuteNonQuery();
                         transaction.Commit();
                     }
-                    catch (Exception)
+                    catch (Exception ex)
                     {
-                        //
+                        logger.LogError(exception: ex, "CreateTableIfNotExist failed.");
                         transaction.Rollback();
 
                     }
                 }
+                cn.Notice -= LogNotice;
                 cn.Close();
+                logger.LogDebug("CreateTableIfNotExist executed");
             }
 
         }
+
+        private void LogNotice(object sender, NpgsqlNoticeEventArgs e) => logger.LogDebug($"PGSQL: {e.Notice.MessageText}");
 
         public void DeleteCacheItem(string key)
         {
@@ -135,9 +146,12 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
                     .AddParamWithValue("TableName", NpgsqlTypes.NpgsqlDbType.Text, TableName)
                     .AddCacheItemId(key);
 
+                connection.Notice += LogNotice;
                 connection.Open();
-
                 command.ExecuteNonQuery();
+                connection.Close();
+                connection.Notice += LogNotice;
+                logger.LogDebug($"Cache key deleted: {key}");
             }
         }
 
@@ -154,9 +168,12 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
                     .AddParamWithValue("TableName", NpgsqlTypes.NpgsqlDbType.Text, TableName)
                     .AddCacheItemId(key);
 
+                connection.Notice += LogNotice;
                 await connection.OpenAsync(cancellationToken);
-
                 await command.ExecuteNonQueryAsync(cancellationToken);
+                await connection.CloseAsync();
+                connection.Notice += LogNotice;
+                logger.LogDebug($"Cache key deleted: {key}");
             }
         }
 
@@ -186,6 +203,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
 
             using (var connection = new NpgsqlConnection(ConnectionString))
             {
+                connection.Notice += LogNotice;
                 var command = new NpgsqlCommand($"{SchemaName}.{Functions.Names.DeleteExpiredCacheItemsFormat}", connection)
                 {
                     CommandType = CommandType.StoredProcedure
@@ -197,7 +215,10 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
 
                 await connection.OpenAsync(cancellationToken);
 
-                _ = await command.ExecuteNonQueryAsync(cancellationToken);
+                await command.ExecuteNonQueryAsync(cancellationToken);
+
+                await connection.CloseAsync();
+                connection.Notice -= LogNotice;
             }
         }
 
@@ -235,6 +256,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
                     {
                         // There is a possibility that multiple requests can try to add the same item to the cache, in
                         // which case we receive a 'duplicate key' exception on the primary key column.
+                        logger.LogError(exception: ex, $"Duplicate key, it already exists key: {key}");
                     }
                     else
                     {
@@ -278,9 +300,11 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
                     {
                         // There is a possibility that multiple requests can try to add the same item to the cache, in
                         // which case we receive a 'duplicate key' exception on the primary key column.
+                        logger.LogError(exception: ex, $"Duplicate key: {key}");
                     }
                     else
                     {
+                        logger.LogError(exception: ex, $"SetCacheItemAsync with key: {key} could not be stored");
                         throw;
                     }
                 }
@@ -294,6 +318,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
             byte[] value = null;
             using (var connection = new NpgsqlConnection(ConnectionString))
             {
+                connection.Notice += LogNotice;
                 var command = new NpgsqlCommand($"{SchemaName}.{Functions.Names.UpdateCacheItemFormat}", connection)
                 {
                     CommandType = CommandType.StoredProcedure
@@ -340,13 +365,11 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
                         }
 
                     }
-                    else
-                    {
-                        return null;
-                    }
-                }
-            }
 
+                }
+                connection.Notice -= LogNotice;
+                connection.Close();
+            }
             return value;
         }
 
@@ -357,6 +380,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
             byte[] value = null;
             using (var connection = new NpgsqlConnection(ConnectionString))
             {
+                connection.Notice += LogNotice;
                 var command = new NpgsqlCommand($"{SchemaName}.{Functions.Names.UpdateCacheItemFormat}", connection)
                 {
                     CommandType = CommandType.StoredProcedure
@@ -406,11 +430,10 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
                         }
 
                     }
-                    else
-                    {
-                        return null;
-                    }
                 }
+                await connection.CloseAsync();
+                connection.Notice -= LogNotice;
+
             }
 
             return value;
@@ -431,7 +454,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
             }
             else if (options.AbsoluteExpiration.HasValue)
             {
-                if (options.AbsoluteExpiration.Value <= utcNow)
+                if (options.AbsoluteExpiration.Value.ToUniversalTime() <= utcNow.ToUniversalTime())
                 {
                     throw new InvalidOperationException("The absolute expiration value must be in the future.");
                 }

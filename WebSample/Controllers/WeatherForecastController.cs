@@ -45,7 +45,7 @@ namespace WebSample.Controllers
                 })
                 .ToArray();
 
-                _cache.Set(cacheKey, response.Serialize(), new DistributedCacheEntryOptions()
+                await _cache.SetAsync(cacheKey, response.Serialize(), new DistributedCacheEntryOptions()
                 {
                     AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(15)
                 });
@@ -54,7 +54,7 @@ namespace WebSample.Controllers
                 // There is cache! so deserialize it.
                 response = cacheData.DeSerialize<WeatherForecast[]>();
             }
-            await Task.Delay(350);  // simulate network delay
+           // await Task.Delay(350);  // simulate network delay
             return response;
 
 

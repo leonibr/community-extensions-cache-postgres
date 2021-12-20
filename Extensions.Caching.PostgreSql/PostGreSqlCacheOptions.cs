@@ -12,7 +12,8 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
         public ISystemClock SystemClock { get; set; } = new SystemClock();
 
         /// <summary>
-        /// The periodic interval to scan and delete expired items in the cache. Default is 30 minutes.
+        /// The periodic interval to scan and delete expired items in the cache. Default is 30 minutes. 
+        /// Minimum allowed is 5 minutes.
         /// </summary>
         public TimeSpan? ExpiredItemsDeletionInterval { get; set; }
 

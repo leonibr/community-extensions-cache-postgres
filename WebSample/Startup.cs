@@ -26,6 +26,7 @@ namespace WebSample
                 setup.SchemaName = Configuration["PgCache:SchemaName"];
                 setup.TableName = Configuration["PgCache:TableName"];
                 setup.CreateInfrastructure = !string.IsNullOrWhiteSpace(Configuration["PgCache:CreateInfrastructure"]);
+                setup.ExpiredItemsDeletionInterval = System.TimeSpan.FromSeconds(6);
                 // CreateInfrastructure is optional, default is TRUE
                 // This means que every time starts the application the 
                 // creation of table and database functions will be verified.
