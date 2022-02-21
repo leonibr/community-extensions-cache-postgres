@@ -28,7 +28,7 @@ v_Query := format('UPDATE %I.%I ' ||
   				  'AND "SlidingExpirationInSeconds" IS NOT NULL ' ||
   				  'AND ("AbsoluteExpiration" IS NULL OR "AbsoluteExpiration" <> "ExpiresAtTime")', "SchemaName", "TableName", "SchemaName");
 EXECUTE v_Query using "UtcNow", "DistCacheId";   
-RAISE NOTICE '[schemaName].updatecacheitemformat UPDATED entry for Id: ', "DistCacheId";
+RAISE NOTICE '[schemaName].updatecacheitemformat UPDATED entry for Id: %', "DistCacheId";
 END
 $function$;
 
