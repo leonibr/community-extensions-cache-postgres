@@ -1,6 +1,8 @@
-﻿namespace Community.Microsoft.Extensions.Caching.PostgreSql
+﻿using System;
+
+namespace Community.Microsoft.Extensions.Caching.PostgreSql
 {
-    internal interface IDatabaseExpiredItemsRemoverLoop
+    internal interface IDatabaseExpiredItemsRemoverLoop : IDisposable
     {
         void Start();
     }

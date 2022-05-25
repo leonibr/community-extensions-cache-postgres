@@ -14,11 +14,21 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
         private static readonly TimeSpan DefaultExpiredItemsDeletionInterval = TimeSpan.FromMinutes(30);
         private readonly TimeSpan _expiredItemsDeletionInterval;
         private DateTimeOffset _lastExpirationScan;
+        private bool disposedValue;
         private readonly ILogger<DatabaseExpiredItemsRemoverLoop> _logger;
         private readonly IDatabaseOperations _databaseOperations;
         private readonly CancellationTokenSource _cancellationTokenSource;
         private readonly ISystemClock _systemClock;
         private readonly bool _disabled;
+
+        public DatabaseExpiredItemsRemoverLoop(
+            IOptions<PostgreSqlCacheOptions> options,
+            IDatabaseOperations databaseOperations,
+            ILogger<DatabaseExpiredItemsRemoverLoop> logger) : this(options, databaseOperations, null, logger)
+        {
+            logger.LogDebug("IHostApplicationLifetime NOT FOUND ON THIS PLATFORM");
+
+        }
 
         public DatabaseExpiredItemsRemoverLoop(
             IOptions<PostgreSqlCacheOptions> options,
@@ -45,7 +55,10 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
 
             _systemClock = cacheOptions.SystemClock;
             _cancellationTokenSource = new CancellationTokenSource();
-            applicationLifetime.ApplicationStopping.Register(OnShutdown);
+            if (applicationLifetime != null)
+            {
+                applicationLifetime.ApplicationStopping.Register(OnShutdown);
+            }
             this._databaseOperations = databaseOperations;
             _expiredItemsDeletionInterval = cacheOptions.ExpiredItemsDeletionInterval ?? DefaultExpiredItemsDeletionInterval;
         }
@@ -106,6 +119,26 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
                     break;
                 }
             }
+        }
+
+        private void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    _cancellationTokenSource.Cancel();
+                }
+                disposedValue = true;
+            }
+        }
+
+
+
+        public void Dispose()
+        {
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
         }
     }
 }
