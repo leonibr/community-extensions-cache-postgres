@@ -127,7 +127,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
             {
                 if (disposing)
                 {
-                    _cancellationTokenSource.Cancel();
+                    _cancellationTokenSource?.Cancel();
                 }
                 disposedValue = true;
             }
