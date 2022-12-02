@@ -2,7 +2,7 @@
 
 -- DROP FUNCTION public.setcache(text, text, text, bytea, double precision, timestamp with time zone, timestamp with time zone);
 
-CREATE OR REPLACE FUNCTION [schemaName].setcache(
+CREATE OR REPLACE PROCEDURE [schemaName].setcache(
 	"SchemaName" text,
 	"TableName" text,
 	"DistCacheId" text,
@@ -10,11 +10,8 @@ CREATE OR REPLACE FUNCTION [schemaName].setcache(
 	"DistCacheSlidingExpirationInSeconds" double precision,
 	"DistCacheAbsoluteExpiration" timestamp with time zone,
 	"UtcNow" timestamp with time zone)
-    RETURNS void
     LANGUAGE 'plpgsql'
-    COST 100.0
-    VOLATILE NOT LEAKPROOF 
-AS $function$
+AS $$
 
 DECLARE v_ExpiresAtTime TIMESTAMP(6) WITH TIME ZONE;
 DECLARE v_RowCount INT;
@@ -42,4 +39,4 @@ ELSE
 END IF;
 END
 
-$function$;
+$$;

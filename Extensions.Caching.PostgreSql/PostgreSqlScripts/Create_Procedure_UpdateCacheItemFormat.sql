@@ -2,16 +2,13 @@
 
 -- DROP FUNCTION public.updatecacheitemformat(text, text, text, timestamp with time zone);
 
-CREATE OR REPLACE FUNCTION [schemaName].updatecacheitemformat(
+CREATE OR REPLACE PROCEDURE [schemaName].updatecacheitemformat(
 	"SchemaName" text,
 	"TableName" text,
 	"DistCacheId" text,
 	"UtcNow" timestamp with time zone)
-    RETURNS void
     LANGUAGE 'plpgsql'
-    COST 100.0
-    VOLATILE NOT LEAKPROOF 
-AS $function$
+AS $$
 
 DECLARE v_Query Text;
 BEGIN
@@ -30,5 +27,5 @@ v_Query := format('UPDATE %I.%I ' ||
 EXECUTE v_Query using "UtcNow", "DistCacheId";   
 RAISE NOTICE '[schemaName].updatecacheitemformat UPDATED entry for Id: %', "DistCacheId";
 END
-$function$;
+$$;
 

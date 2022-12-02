@@ -2,15 +2,12 @@
 
 -- DROP FUNCTION public.deleteexpiredcacheitemsformat(text, text, timestamp with time zone);
 
-CREATE OR REPLACE FUNCTION [schemaName].deleteexpiredcacheitemsformat(
+CREATE OR REPLACE PROCEDURE [schemaName].deleteexpiredcacheitemsformat(
 	"SchemaName" text,
 	"TableName" text,
 	"UtcNow" timestamp with time zone)
-    RETURNS void
     LANGUAGE 'plpgsql'
-    COST 100.0
-    VOLATILE NOT LEAKPROOF 
-AS $function$
+AS $$
 
 DECLARE v_Query Text;
 DECLARE v_RowCount INT;
@@ -23,5 +20,5 @@ RAISE NOTICE '[schemaName].deleteexpiredcacheitemsformat - DELETED - % entreis',
     
 END
 
-$function$;
+$$;
 

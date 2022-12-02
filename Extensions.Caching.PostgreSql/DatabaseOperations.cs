@@ -86,21 +86,21 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
             var sql = (
              table: ReadScript("Create_Table_DistCache.sql"),
              funcDateDiff: ReadScript("Create_Function_DateDiff.sql"),
-             funcDeleteCacheItem: ReadScript("Create_Function_DeleteCacheItemFormat.sql"),
-             funcDeleteExpired: ReadScript("Create_Function_DeleteExpiredCacheItemsFormat.sql"),
              funcGetCacheItem: ReadScript("Create_Function_GetCacheItemFormat.sql"),
-             funcSetCache: ReadScript("Create_Function_SetCache.sql"),
-             funcUpdateCache: ReadScript("Create_Function_UpdateCacheItemFormat.sql")
+             procDeleteCacheItem: ReadScript("Create_Procedure_DeleteCacheItemFormat.sql"),
+             procDeleteExpired: ReadScript("Create_Procedure_DeleteExpiredCacheItemsFormat.sql"),
+             procSetCache: ReadScript("Create_Procedure_SetCache.sql"),
+             procUpdateCache: ReadScript("Create_Procedure_UpdateCacheItemFormat.sql")
              );
 
             var sb = new StringBuilder()
                 .Append(FormatName(sql.table))
                 .Append(FormatName(sql.funcDateDiff))
                 .Append(FormatName(sql.funcGetCacheItem))
-                .Append(FormatName(sql.funcSetCache))
-                .Append(FormatName(sql.funcUpdateCache))
-                .Append(FormatName(sql.funcDeleteCacheItem))
-                .Append(FormatName(sql.funcDeleteExpired));
+                .Append(FormatName(sql.procSetCache))
+                .Append(FormatName(sql.procUpdateCache))
+                .Append(FormatName(sql.procDeleteCacheItem))
+                .Append(FormatName(sql.procDeleteExpired));
 
             using (var cn = new NpgsqlConnection(ConnectionString))
             {
@@ -137,10 +137,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
         {
             using (var connection = new NpgsqlConnection(ConnectionString))
             {
-                var command = new NpgsqlCommand($"{SchemaName}.{Functions.Names.DeleteCacheItemFormat}", connection)
-                {
-                    CommandType = CommandType.StoredProcedure
-                };
+                var command = CreateProcedureCallCommand(Functions.Names.DeleteCacheItemFormat, connection);
                 command.Parameters
                     .AddParamWithValue("SchemaName", NpgsqlTypes.NpgsqlDbType.Text, SchemaName)
                     .AddParamWithValue("TableName", NpgsqlTypes.NpgsqlDbType.Text, TableName)
@@ -159,10 +156,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
         {
             using (var connection = new NpgsqlConnection(ConnectionString))
             {
-                var command = new NpgsqlCommand($"{SchemaName}.{Functions.Names.DeleteCacheItemFormat}", connection)
-                {
-                    CommandType = CommandType.StoredProcedure
-                };
+                var command = CreateProcedureCallCommand(Functions.Names.DeleteCacheItemFormat, connection);
                 command.Parameters
                     .AddParamWithValue("SchemaName", NpgsqlTypes.NpgsqlDbType.Text, SchemaName)
                     .AddParamWithValue("TableName", NpgsqlTypes.NpgsqlDbType.Text, TableName)
@@ -204,10 +198,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
             using (var connection = new NpgsqlConnection(ConnectionString))
             {
                 connection.Notice += LogNotice;
-                var command = new NpgsqlCommand($"{SchemaName}.{Functions.Names.DeleteExpiredCacheItemsFormat}", connection)
-                {
-                    CommandType = CommandType.StoredProcedure
-                };
+                var command = CreateProcedureCallCommand(Functions.Names.DeleteExpiredCacheItemsFormat, connection);
                 command.Parameters
                     .AddParamWithValue("SchemaName", NpgsqlTypes.NpgsqlDbType.Text, SchemaName)
                     .AddParamWithValue("TableName", NpgsqlTypes.NpgsqlDbType.Text, TableName)
@@ -231,10 +222,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
 
             using (var connection = new NpgsqlConnection(ConnectionString))
             {
-                var command = new NpgsqlCommand($"{SchemaName}.{Functions.Names.SetCache}", connection)
-                {
-                    CommandType = CommandType.StoredProcedure
-                };
+                var command = CreateProcedureCallCommand(Functions.Names.SetCache, connection);
                 command.Parameters
                     .AddParamWithValue("SchemaName", NpgsqlTypes.NpgsqlDbType.Text, SchemaName)
                     .AddParamWithValue("TableName", NpgsqlTypes.NpgsqlDbType.Text, TableName)
@@ -256,7 +244,6 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
                     {
                         // There is a possibility that multiple requests can try to add the same item to the cache, in
                         // which case we receive a 'duplicate key' exception on the primary key column.
-                        logger.LogError(exception: ex, $"Duplicate key, it already exists key: {key}");
                     }
                     else
                     {
@@ -275,10 +262,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
 
             using (var connection = new NpgsqlConnection(ConnectionString))
             {
-                var command = new NpgsqlCommand($"{SchemaName}.{Functions.Names.SetCache}", connection)
-                {
-                    CommandType = CommandType.StoredProcedure
-                };
+                var command = CreateProcedureCallCommand(Functions.Names.SetCache, connection);
                 command.Parameters
                     .AddParamWithValue("SchemaName", NpgsqlTypes.NpgsqlDbType.Text, SchemaName)
                     .AddParamWithValue("TableName", NpgsqlTypes.NpgsqlDbType.Text, TableName)
@@ -319,10 +303,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
             using (var connection = new NpgsqlConnection(ConnectionString))
             {
                 connection.Notice += LogNotice;
-                var command = new NpgsqlCommand($"{SchemaName}.{Functions.Names.UpdateCacheItemFormat}", connection)
-                {
-                    CommandType = CommandType.StoredProcedure
-                };
+                var command = CreateProcedureCallCommand(Functions.Names.UpdateCacheItemFormat, connection);
                 command.Parameters
                     .AddParamWithValue("SchemaName", NpgsqlTypes.NpgsqlDbType.Text, SchemaName)
                     .AddParamWithValue("TableName", NpgsqlTypes.NpgsqlDbType.Text, TableName)
@@ -334,10 +315,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
 
                 if (includeValue)
                 {
-                    command = new NpgsqlCommand($"{SchemaName}.{Functions.Names.GetCacheItemFormat}", connection)
-                    {
-                        CommandType = CommandType.StoredProcedure
-                    };
+                    command = CreateGetCacheItemFunctionCallCommand(connection);
                     command.Parameters
                         .AddParamWithValue("SchemaName", NpgsqlTypes.NpgsqlDbType.Text, SchemaName)
                         .AddParamWithValue("TableName", NpgsqlTypes.NpgsqlDbType.Text, TableName)
@@ -381,10 +359,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
             using (var connection = new NpgsqlConnection(ConnectionString))
             {
                 connection.Notice += LogNotice;
-                var command = new NpgsqlCommand($"{SchemaName}.{Functions.Names.UpdateCacheItemFormat}", connection)
-                {
-                    CommandType = CommandType.StoredProcedure
-                };
+                var command = CreateProcedureCallCommand(Functions.Names.UpdateCacheItemFormat, connection);
                 command.Parameters
                    .AddParamWithValue("SchemaName", NpgsqlTypes.NpgsqlDbType.Text, SchemaName)
                    .AddParamWithValue("TableName", NpgsqlTypes.NpgsqlDbType.Text, TableName)
@@ -396,16 +371,12 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
 
                 if (includeValue)
                 {
-                    command = new NpgsqlCommand($"{SchemaName}.{Functions.Names.GetCacheItemFormat}", connection)
-                    {
-                        CommandType = CommandType.StoredProcedure
-                    };
+                    command = CreateGetCacheItemFunctionCallCommand(connection);
                     command.Parameters
                         .AddParamWithValue("SchemaName", NpgsqlTypes.NpgsqlDbType.Text, SchemaName)
                         .AddParamWithValue("TableName", NpgsqlTypes.NpgsqlDbType.Text, TableName)
                         .AddCacheItemId(key)
                         .AddWithValue("UtcNow", NpgsqlTypes.NpgsqlDbType.TimestampTz, utcNow);
-
 
                     var reader = await command.ExecuteReaderAsync(
                         CommandBehavior.SequentialAccess | CommandBehavior.SingleRow | CommandBehavior.SingleResult,
@@ -471,6 +442,23 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
                 throw new InvalidOperationException("Either absolute or sliding expiration needs " +
                     "to be provided.");
             }
+        }
+
+        private NpgsqlCommand CreateProcedureCallCommand(
+            string functionName,
+            NpgsqlConnection connection)
+        {
+            return new NpgsqlCommand($"{SchemaName}.{functionName}", connection)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
+        }
+
+        private NpgsqlCommand CreateGetCacheItemFunctionCallCommand(NpgsqlConnection connection)
+        {
+            return new NpgsqlCommand(
+                $"SELECT * FROM {SchemaName}.{Functions.Names.GetCacheItemFormat}(@SchemaName, @TableName, @{Columns.Names.CacheItemId}, @UtcNow)",
+                connection);
         }
     }
 }

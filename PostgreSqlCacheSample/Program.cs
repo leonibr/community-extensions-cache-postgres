@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Community.Microsoft.Extensions.Caching.PostgreSql;
+using Microsoft.Extensions.Configuration;
 
 namespace PostgreSqlCacheSample
 {
@@ -20,7 +21,8 @@ namespace PostgreSqlCacheSample
 						setup.ConnectionString = configuration["ConnectionString"];
 						setup.SchemaName = configuration["SchemaName"];
 						setup.TableName = configuration["TableName"];
-                        // CreateInfrastructure is optional, default is TRUE
+						setup.CreateInfrastructure = configuration.GetValue<bool>("CreateInfrastructure");
+						// CreateInfrastructure is optional, default is TRUE
 						// This means que every time starts the application the 
 						// creation of table and database functions will be verified.
 					})
