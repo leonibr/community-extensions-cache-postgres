@@ -14,17 +14,17 @@ dotnet add package Community.Microsoft.Extensions.Caching.PostgreSql
 ```c#
 services.AddDistributedPostgreSqlCache(setup => 
 {
-	setup.ConnectionString = configuration["ConnectionString"];
-	setup.SchemaName = configuration["SchemaName"];
-	setup.TableName = configuration["TableName"];
-	setup.DisableRemoveExpired = configuration["DisableRemoveExpired"];
+    setup.ConnectionString = configuration["ConnectionString"];
+    setup.SchemaName = configuration["SchemaName"];
+    setup.TableName = configuration["TableName"];
+    setup.DisableRemoveExpired = configuration["DisableRemoveExpired"];
     // Optional - DisableRemoveExpired default is FALSE
-	setup.CreateInfrastructure = configuration["CreateInfrastructure"];
-	// CreateInfrastructure is optional, default is TRUE
-	// This means que every time starts the application the 
-	// creation of table and database functions will be verified.
-	setup.ExpiredItemsDeletionInterval = TimeSpan.FromMinutes(30)
-	// ExpiredItemsDeletionInterval is optional
+    setup.CreateInfrastructure = configuration["CreateInfrastructure"];
+    // CreateInfrastructure is optional, default is TRUE
+    // This means que every time starts the application the 
+    // creation of table and database functions will be verified.
+    setup.ExpiredItemsDeletionInterval = TimeSpan.FromMinutes(30)
+    // ExpiredItemsDeletionInterval is optional
     // This is the periodic interval to scan and delete expired items in the cache. Default is 30 minutes. 
     // Minimum allowed is 5 minutes. - If you need less than this please share your use case 😁, just for curiosity...
 })
@@ -50,16 +50,21 @@ In that case you are responsable to manually remove the expired key or update it
 ```
 ## What it does to my database 🐘: 
 
-Creates a table and six functions, see scripts folder for more details.
+1) Creates a table (name is configurable)
+2) Creates two functions
 ```
 [schemaName].datediff
+[schemaName].getcacheitemformat
+```
+3) Creates four stored procedures
+```
 [schemaName].deletecacheitemformat
 [schemaName].deleteexpiredcacheitemsformat
-[schemaName].getcacheitemformat
 [schemaName].setcache
 [schemaName].updatecacheitemformat
-
 ```
+
+For additional details please check the [scripts folder](./Extensions.Caching.PostgreSql/PostgreSqlScripts).
 
 ## Runing the console sample
 You will need a local postgresql server with this configuration:
