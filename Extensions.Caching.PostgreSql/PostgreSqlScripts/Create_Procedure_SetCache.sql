@@ -1,6 +1,6 @@
--- FUNCTION: public.setcache(text, text, text, bytea, double precision, timestamp with time zone, timestamp with time zone)
+-- PROCEDURE: public.setcache(text, text, text, bytea, double precision, timestamp with time zone, timestamp with time zone)
 
--- DROP FUNCTION public.setcache(text, text, text, bytea, double precision, timestamp with time zone, timestamp with time zone);
+-- DROP PROCEDURE public.setcache(text, text, text, bytea, double precision, timestamp with time zone, timestamp with time zone);
 
 CREATE OR REPLACE PROCEDURE [schemaName].setcache(
 	"SchemaName" text,

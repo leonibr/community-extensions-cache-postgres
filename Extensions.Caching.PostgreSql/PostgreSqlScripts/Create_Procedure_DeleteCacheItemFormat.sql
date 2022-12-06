@@ -1,6 +1,6 @@
--- FUNCTION: public.deletecacheitemformat(text, text, text)
+-- PROCEDURE: public.deletecacheitemformat(text, text, text)
 
--- DROP FUNCTION public.deletecacheitemformat(text, text, text);
+-- DROP PROCEDURE public.deletecacheitemformat(text, text, text);
 
 CREATE OR REPLACE PROCEDURE [schemaName].deletecacheitemformat(
 	"SchemaName" text,

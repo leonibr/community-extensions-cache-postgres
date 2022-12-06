@@ -1,6 +1,6 @@
--- FUNCTION: public.deleteexpiredcacheitemsformat(text, text, timestamp with time zone)
+-- PROCEDURE: public.deleteexpiredcacheitemsformat(text, text, timestamp with time zone)
 
--- DROP FUNCTION public.deleteexpiredcacheitemsformat(text, text, timestamp with time zone);
+-- DROP PROCEDURE public.deleteexpiredcacheitemsformat(text, text, timestamp with time zone);
 
 CREATE OR REPLACE PROCEDURE [schemaName].deleteexpiredcacheitemsformat(
 	"SchemaName" text,

@@ -1,6 +1,6 @@
--- FUNCTION: public.updatecacheitemformat(text, text, text, timestamp with time zone)
+-- PROCEDURE: public.updatecacheitemformat(text, text, text, timestamp with time zone)
 
--- DROP FUNCTION public.updatecacheitemformat(text, text, text, timestamp with time zone);
+-- DROP PROCEDURE public.updatecacheitemformat(text, text, text, timestamp with time zone);
 
 CREATE OR REPLACE PROCEDURE [schemaName].updatecacheitemformat(
 	"SchemaName" text,
