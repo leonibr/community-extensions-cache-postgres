@@ -123,7 +123,7 @@ prepare-database.cmd -erase
 
 ## Change Log
 
-1. v4.0.0 - Add suport to .net 7
+1. v4.0.1 - Add suport to .net 7
    1. [BREAKING CHANGE] - Drop suport to .net 5
    1. [BREAKING CHANGE] - Make use of procedures (won't work with PostgreSQL <= 10, use version 3)
 1. v3.1.2 - removed dependency for `IHostApplicationLifetime` if not supported on the platform: `AWS` for instance - issue #28
