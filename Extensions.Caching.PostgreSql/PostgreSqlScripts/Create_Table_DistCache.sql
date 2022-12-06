@@ -1,4 +1,4 @@
--- Table: [schemaName]."DistCache"
+-- Table: [schemaName].[tableName]
 
 
 CREATE SCHEMA IF NOT EXISTS [schemaName];

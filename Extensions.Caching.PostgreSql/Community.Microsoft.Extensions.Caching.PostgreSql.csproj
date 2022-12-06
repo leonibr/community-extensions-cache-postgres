@@ -1,43 +1,36 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk" ToolsVersion="16.0">
   <PropertyGroup>
-    <TargetFrameworks>net5.0;net6.0</TargetFrameworks>
+    <TargetFramework>netstandard2.0</TargetFramework>
     <AssemblyName>Community.Microsoft.Extensions.Caching.PostgreSql</AssemblyName>
     <RootNamespace>Community.Microsoft.Extensions.Caching.PostgreSql</RootNamespace>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
-    <Version>3.1.1</Version>
+    <Version>4.0.0</Version>
     <Authors>Ashley Marques</Authors>
     <Company />
     <Description>DistributedCache using postgres</Description>
-    <PackageReleaseNotes>Dependencies updated to latest and now multitarget .net5 and .net6</PackageReleaseNotes>
+    <PackageReleaseNotes>Dependencies updated to latest and now multitarget netstandard2.0 and .net7</PackageReleaseNotes>
     <PackageProjectUrl>https://github.com/leonibr/community-extensions-cache-postgres</PackageProjectUrl>
     <RepositoryUrl>https://github.com/leonibr/community-extensions-cache-postgres.git</RepositoryUrl>
     <RepositoryType>Github</RepositoryType>
   </PropertyGroup>
   <ItemGroup>
     <EmbeddedResource Include="PostgreSqlScripts\Create_Function_DateDiff.sql" />
-    <EmbeddedResource Include="PostgreSqlScripts\Create_Function_DeleteCacheItemFormat.sql" />
-    <EmbeddedResource Include="PostgreSqlScripts\Create_Function_DeleteExpiredCacheItemsFormat.sql" />
     <EmbeddedResource Include="PostgreSqlScripts\Create_Function_GetCacheItemFormat.sql" />
-    <EmbeddedResource Include="PostgreSqlScripts\Create_Function_SetCache.sql" />
-    <EmbeddedResource Include="PostgreSqlScripts\Create_Function_UpdateCacheItemFormat.sql" />
+    <EmbeddedResource Include="PostgreSqlScripts\Create_Procedure_DeleteCacheItemFormat.sql" />
+    <EmbeddedResource Include="PostgreSqlScripts\Create_Procedure_DeleteExpiredCacheItemsFormat.sql" />
+    <EmbeddedResource Include="PostgreSqlScripts\Create_Procedure_SetCache.sql" />
+    <EmbeddedResource Include="PostgreSqlScripts\Create_Procedure_UpdateCacheItemFormat.sql" />
     <EmbeddedResource Include="PostgreSqlScripts\Create_Table_DistCache.sql" />
   </ItemGroup>
   <!--<ItemGroup>
     <Compile Include="**\*.cs" />
     <EmbeddedResource Include="**\*.resx" />
   </ItemGroup>-->
-  <ItemGroup Condition="'$(TargetFramework)' == 'net6.0'" >
-    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="6.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="6.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Options" Version="6.0.0" />
-    <PackageReference Include="Npgsql" Version="6.0.1" />
-  </ItemGroup>
-    <ItemGroup Condition="'$(TargetFramework)' == 'net5.0'" >
-    <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="5.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="5.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="5.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Options" Version="5.0.0" />
-    <PackageReference Include="Npgsql" Version="5.0.11" />
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="7.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="7.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="7.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="7.0.0" />
+    <PackageReference Include="Npgsql" Version="7.0.0" />
   </ItemGroup>
 </Project>

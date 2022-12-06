@@ -1,16 +1,13 @@
--- FUNCTION: public.deletecacheitemformat(text, text, text)
+-- PROCEDURE: public.deletecacheitemformat(text, text, text)
 
--- DROP FUNCTION public.deletecacheitemformat(text, text, text);
+-- DROP PROCEDURE public.deletecacheitemformat(text, text, text);
 
-CREATE OR REPLACE FUNCTION [schemaName].deletecacheitemformat(
+CREATE OR REPLACE PROCEDURE [schemaName].deletecacheitemformat(
 	"SchemaName" text,
 	"TableName" text,
 	"DistCacheId" text)
-    RETURNS void
     LANGUAGE 'plpgsql'
-    COST 100.0
-    VOLATILE NOT LEAKPROOF 
-AS $function$
+AS $$
 
     
 DECLARE v_Query Text;
@@ -30,5 +27,5 @@ if v_Hit = false then
 end if;
 END
 
-$function$;
+$$;
 
