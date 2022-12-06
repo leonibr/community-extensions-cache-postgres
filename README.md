@@ -1,4 +1,4 @@
-﻿# Community.Microsoft.Extensions.Caching.PostgreSQL
+﻿# Community.Microsoft.Extensions.Caching.PostgreSQL ![Nuget](https://img.shields.io/nuget/v/Community.Microsoft.Extensions.Caching.PostgreSql)
 
 ## Description
 
