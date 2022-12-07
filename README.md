@@ -61,24 +61,7 @@ When you have 2 or more instances/microservices/processes and you just to leave 
 
 ## What it does to my database 🐘:
 
-1. Creates a table (name is configurable)
-2. Creates two functions
-
-```
-[schemaName].datediff
-[schemaName].getcacheitemformat
-```
-
-3. Creates four stored procedures
-
-```
-[schemaName].deletecacheitemformat
-[schemaName].deleteexpiredcacheitemsformat
-[schemaName].setcache
-[schemaName].updatecacheitemformat
-```
-
-For additional details please check the [scripts folder](./Extensions.Caching.PostgreSql/PostgreSqlScripts).
+It creates a table & schema for storing cache (names are configurable)
 
 ## Runing the console sample
 
