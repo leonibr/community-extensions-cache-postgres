@@ -77,8 +77,8 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
         private string FormatName(string text)
         {
             return text
-                    .Replace("[schemaName]", SchemaName)
-                    .Replace("[tableName]", TableName);
+                    .Replace("[schemaName]", DelimitIdentifier(SchemaName))
+                    .Replace("[tableName]", DelimitIdentifier(TableName));
         }
 
         private void CreateTableIfNotExist()
@@ -459,6 +459,12 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
             return new NpgsqlCommand(
                 $"SELECT * FROM {SchemaName}.{Functions.Names.GetCacheItemFormat}(@SchemaName, @TableName, @{Columns.Names.CacheItemId}, @UtcNow)",
                 connection);
+        }
+        
+        // From efcore.pg's NpgsqlSqlGenerationHelper
+        private static string DelimitIdentifier(string identifier)
+        {
+            return "\"" + identifier.Replace("\"", "\"\"") + "\"";
         }
     }
 }
