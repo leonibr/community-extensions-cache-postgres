@@ -448,7 +448,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
             string functionName,
             NpgsqlConnection connection)
         {
-            return new NpgsqlCommand($"{SchemaName}.{functionName}", connection)
+            return new NpgsqlCommand($"{DelimitIdentifier(SchemaName)}.{functionName}", connection)
             {
                 CommandType = CommandType.StoredProcedure
             };
@@ -457,7 +457,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
         private NpgsqlCommand CreateGetCacheItemFunctionCallCommand(NpgsqlConnection connection)
         {
             return new NpgsqlCommand(
-                $"SELECT * FROM {SchemaName}.{Functions.Names.GetCacheItemFormat}(@SchemaName, @TableName, @{Columns.Names.CacheItemId}, @UtcNow)",
+                $"SELECT * FROM {DelimitIdentifier(SchemaName)}.{Functions.Names.GetCacheItemFormat}(@SchemaName, @TableName, @{Columns.Names.CacheItemId}, @UtcNow)",
                 connection);
         }
         
