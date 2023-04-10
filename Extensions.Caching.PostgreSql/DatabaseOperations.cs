@@ -357,22 +357,22 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
             byte[] value = null;
             using (var connection = new NpgsqlConnection(ConnectionString))
             {
-                var command = new NpgsqlCommand($"{SchemaName}.{Functions.Names.UpdateCacheItemFormat}", connection)
-                {
-                    CommandType = CommandType.StoredProcedure
-                };
-                command.Parameters
-                   .AddParamWithValue("SchemaName", NpgsqlTypes.NpgsqlDbType.Text, SchemaName)
-                   .AddParamWithValue("TableName", NpgsqlTypes.NpgsqlDbType.Text, TableName)
-                   .AddCacheItemId(key)
-                   .AddWithValue("UtcNow", NpgsqlTypes.NpgsqlDbType.TimestampTz, utcNow);
+                //var command = new NpgsqlCommand($"{SchemaName}.{Functions.Names.UpdateCacheItemFormat}", connection)
+                //{
+                //    CommandType = CommandType.StoredProcedure
+                //};
+                //command.Parameters
+                //   .AddParamWithValue("SchemaName", NpgsqlTypes.NpgsqlDbType.Text, SchemaName)
+                //   .AddParamWithValue("TableName", NpgsqlTypes.NpgsqlDbType.Text, TableName)
+                //   .AddCacheItemId(key)
+                //   .AddWithValue("UtcNow", NpgsqlTypes.NpgsqlDbType.TimestampTz, utcNow);
 
                 await connection.OpenAsync(cancellationToken);
-                await command.ExecuteNonQueryAsync(cancellationToken);
+                //await command.ExecuteNonQueryAsync(cancellationToken);
 
                 if (includeValue)
                 {
-                    command = new NpgsqlCommand($"{SchemaName}.{Functions.Names.GetCacheItemFormat}", connection)
+                    var command = new NpgsqlCommand($"{SchemaName}.{Functions.Names.GetCacheItemFormat}", connection)
                     {
                         CommandType = CommandType.StoredProcedure
                     };
