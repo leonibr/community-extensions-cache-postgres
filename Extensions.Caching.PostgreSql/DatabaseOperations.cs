@@ -19,7 +19,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
 
         public DatabaseOperations(IOptions<PostgreSqlCacheOptions> options, ILogger<DatabaseOperations> logger)
         {
-            var cacheOptions = options.Value;
+            cacheOptions = options.Value;
 
             if (string.IsNullOrEmpty(cacheOptions.ConnectionString))
             {
@@ -37,7 +37,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
                     $"{nameof(PostgreSqlCacheOptions.TableName)} cannot be empty or null.");
             }
 
-            ConnectionString = cacheOptions.ConnectionString;
+            _connectionString = cacheOptions.ConnectionString;
             SystemClock = cacheOptions.SystemClock;
 
             SqlCommands = new SqlCommands(cacheOptions.SchemaName, cacheOptions.TableName);
@@ -50,14 +50,45 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
         }
 
         private SqlCommands SqlCommands { get; }
-
-        private string ConnectionString { get; }
-
+        private string _connectionString;
+        private readonly PostgreSqlCacheOptions cacheOptions;
         private ISystemClock SystemClock { get; }
+
+        /// <summary>
+        /// Modify current conection string 
+        /// </summary>
+        /// <param name="newConnectionString">the new connection string to replace </param>
+        public void ChangeConnectionString(string newConnectionString)
+        {
+            string original = _connectionString;
+            try
+            {
+                using var newConnection = new NpgsqlConnection(newConnectionString);
+                newConnection.Open();
+                bool connected = newConnection.ExecuteScalar<bool>("SELECT 1=1;");
+                if (connected)
+                {
+                    _connectionString = newConnectionString;
+                    _logger.LogDebug("ChangeConnectionString: new connection is valid and is use");
+                }
+                newConnection.Close();
+                if (cacheOptions.CreateInfrastructure)
+                {
+                    CreateSchemaAndTableIfNotExist();
+                }
+            }
+            catch (System.Exception ex)
+            {
+                _connectionString = original;
+                throw new InvalidOperationException("ChangeConnectionString failed.\nPrevious connection restored.", ex);
+            }
+
+
+        }
 
         private void CreateSchemaAndTableIfNotExist()
         {
-            using (var connection = new NpgsqlConnection(ConnectionString))
+            using (var connection = new NpgsqlConnection(_connectionString))
             {
                 connection.Open();
                 using (var transaction = connection.BeginTransaction())
@@ -76,7 +107,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
 
         public void DeleteCacheItem(string key)
         {
-            using var connection = new NpgsqlConnection(ConnectionString);
+            using var connection = new NpgsqlConnection(_connectionString);
 
             var deleteCacheItem = new CommandDefinition(
                 SqlCommands.DeleteCacheItemSql,
@@ -88,7 +119,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
 
         public async Task DeleteCacheItemAsync(string key, CancellationToken cancellationToken)
         {
-            await using var connection = new NpgsqlConnection(ConnectionString);
+            await using var connection = new NpgsqlConnection(_connectionString);
 
             var deleteCacheItem = new CommandDefinition(
                 SqlCommands.DeleteCacheItemSql,
@@ -116,7 +147,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
         {
             var utcNow = SystemClock.UtcNow;
 
-            await using var connection = new NpgsqlConnection(ConnectionString);
+            await using var connection = new NpgsqlConnection(_connectionString);
 
             var deleteExpiredCache = new CommandDefinition(
                 SqlCommands.DeleteExpiredCacheSql,
@@ -132,7 +163,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
             var absoluteExpiration = GetAbsoluteExpiration(utcNow, options);
             ValidateOptions(options.SlidingExpiration, absoluteExpiration);
 
-            using var connection = new NpgsqlConnection(ConnectionString);
+            using var connection = new NpgsqlConnection(_connectionString);
 
             var expiresAtTime = options.SlidingExpiration == null
                 ? absoluteExpiration!.Value
@@ -159,7 +190,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
             var absoluteExpiration = GetAbsoluteExpiration(utcNow, options);
             ValidateOptions(options.SlidingExpiration, absoluteExpiration);
 
-            await using var connection = new NpgsqlConnection(ConnectionString);
+            await using var connection = new NpgsqlConnection(_connectionString);
 
             var expiresAtTime = options.SlidingExpiration == null
                 ? absoluteExpiration!.Value
@@ -185,7 +216,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
             var utcNow = SystemClock.UtcNow;
             byte[] value = null;
 
-            using var connection = new NpgsqlConnection(ConnectionString);
+            using var connection = new NpgsqlConnection(_connectionString);
 
             var updateCacheItem = new CommandDefinition(
                 SqlCommands.UpdateCacheItemSql,
@@ -208,7 +239,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
             var utcNow = SystemClock.UtcNow;
             byte[] value = null;
 
-            await using var connection = new NpgsqlConnection(ConnectionString);
+            await using var connection = new NpgsqlConnection(_connectionString);
 
             var updateCacheItem = new CommandDefinition(
                 SqlCommands.UpdateCacheItemSql,
