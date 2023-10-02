@@ -16,6 +16,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
     internal sealed class DatabaseOperations : IDatabaseOperations
     {
         private readonly ILogger<DatabaseOperations> _logger;
+        private readonly bool _updateOnGetCacheItem;
 
         public DatabaseOperations(IOptions<PostgreSqlCacheOptions> options, ILogger<DatabaseOperations> logger)
         {
@@ -43,6 +44,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
             SqlCommands = new SqlCommands(cacheOptions.SchemaName, cacheOptions.TableName);
 
             this._logger = logger;
+            this._updateOnGetCacheItem = cacheOptions.UpdateOnGetCacheItem;
             if (cacheOptions.CreateInfrastructure)
             {
                 CreateSchemaAndTableIfNotExist();
@@ -187,10 +189,13 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
 
             using var connection = new NpgsqlConnection(ConnectionString);
 
-            var updateCacheItem = new CommandDefinition(
-                SqlCommands.UpdateCacheItemSql,
-                new ItemIdUtcNow { Id = key, UtcNow = utcNow });
-            connection.Execute(updateCacheItem);
+            if (_updateOnGetCacheItem)
+            {
+                var updateCacheItem = new CommandDefinition(
+                    SqlCommands.UpdateCacheItemSql,
+                    new ItemIdUtcNow { Id = key, UtcNow = utcNow });
+                connection.Execute(updateCacheItem);
+            }
 
             if (includeValue)
             {
@@ -210,11 +215,14 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
 
             await using var connection = new NpgsqlConnection(ConnectionString);
 
-            var updateCacheItem = new CommandDefinition(
-                SqlCommands.UpdateCacheItemSql,
-                new ItemIdUtcNow { Id = key, UtcNow = utcNow },
-                cancellationToken: cancellationToken);
-            await connection.ExecuteAsync(updateCacheItem);
+            if (_updateOnGetCacheItem)
+            {
+                var updateCacheItem = new CommandDefinition(
+                    SqlCommands.UpdateCacheItemSql,
+                    new ItemIdUtcNow { Id = key, UtcNow = utcNow },
+                    cancellationToken: cancellationToken);
+                await connection.ExecuteAsync(updateCacheItem);
+            }
 
             if (includeValue)
             {

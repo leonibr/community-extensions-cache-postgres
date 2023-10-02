@@ -33,7 +33,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
         public string TableName { get; set; }
 
 		/// <summary>
-		/// If set to true will create table and functions if necessary every time an instance of PostgreSqlCache is created
+		/// If set to true will create table and functions if necessary every time an instance of PostgreSqlCache is created.
 		/// </summary>
 		public bool CreateInfrastructure { get; set; } = true;
 
@@ -45,10 +45,16 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
 
         /// <summary>
         /// If set to true this instance of the cache will not remove expired items. 
-        /// Maybe on multiple instances scenario sharing the same database another instance will be responsable for remove expired itens.
+        /// Maybe on multiple instances scenario sharing the same database another instance will be responsable for remove expired items.
         /// Default value is false.
         /// </summary>
         public bool DisableRemoveExpired { get; set; } = false;
+
+        /// <summary>
+        /// If set to false no update of ExpiresAtTime will be performed when getting a cache item.
+        /// Default value is true. ATENTION: When is set to false it cancels the slide experitation feature.
+        /// </summary>
+        public bool UpdateOnGetCacheItem { get; set; } = true;
 
         PostgreSqlCacheOptions IOptions<PostgreSqlCacheOptions>.Value => this;
     }
