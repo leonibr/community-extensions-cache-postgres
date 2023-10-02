@@ -27,6 +27,18 @@ namespace PostgreSqlCacheSample
 						// This means que every time starts the application the 
 						// creation of table and database functions will be verified.
 					})
+						
+					// if you need to resolve something from the serviceprovider for configuration
+					// use this overload
+					// services.AddDistributedPostgreSqlCache((serviceProvider, setup) =>
+					// {
+					//	// IConfiguration is used as an example here
+					// 	var configuration = serviceProvider.GetRequiredService<IConfiguration>();
+					// 	setup.ConnectionString = configuration["ConnectionString"];
+					// 	setup.SchemaName = configuration["SchemaName"];
+					// 	setup.TableName = configuration["TableName"];
+					// 	setup.CreateInfrastructure = configuration.GetValue<bool>("CreateInfrastructure");
+					// })
                     .AddHostedService<Worker>();
 				});
 	}
