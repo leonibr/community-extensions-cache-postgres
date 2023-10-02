@@ -37,6 +37,33 @@ services.AddDistributedPostgreSqlCache(setup =>
 })
 ```
 
+### Configuring with `IServiceProvider` access
+
+```c#
+services.AddDistributedPostgreSqlCache((serviceProvider, setup) =>
+{
+    // IConfiguration is used as an example here
+    var configuration = serviceProvider.GetRequiredService<IConfiguration>();
+    setup.ConnectionString = configuration["ConnectionString"];
+    ...
+})
+```
+
+### Configuring via `IConfigureOptions<PostgreSqlCacheOptions>`
+
+use
+
+```c#
+services.AddDistributedPostgreSqlCache();
+```
+
+and implement and register 
+
+```c#
+IConfigureOptions<PostgreSqlCacheOptions>
+```
+
+
 ### `DisableRemoveExpired = True` use case:
 
 When you have 2 or more instances/microservices/processes and you just to leave one of them removing expired items.
