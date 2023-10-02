@@ -86,6 +86,25 @@ When you have 2 or more instances/microservices/processes and you just to leave 
 
 ```
 
+### `UpdateOnGetCacheItem = false` use case:
+
+For read-only databases or if the database user does not have `write` permission you can set `UpdateOnGetCacheItem = false`
+
+- Note 1: This will cancel the sliding expiration and only absolute experation will work
+- Note 2: This can be used to improve performance
+
+```c#
+services.AddDistributedPostgreSqlCache((serviceProvider, setup) =>
+{
+    ...
+    setup.UpdateOnGetCacheItem = false;
+    // Or
+    var configuration = serviceProvider.GetRequiredService<IConfiguration>();
+    setup.UpdateOnGetCacheItem = configuration["UpdateOnGetCacheItem"];
+    ...
+})
+```
+
 ## What it does to my database 🐘:
 
 It creates a table & schema for storing cache (names are configurable)

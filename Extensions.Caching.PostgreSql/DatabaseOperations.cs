@@ -44,7 +44,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
             SqlCommands = new SqlCommands(cacheOptions.SchemaName, cacheOptions.TableName);
 
             this._logger = logger;
-            this._updateOnGetCacheItem = !cacheOptions.DisableUpdateOnGetCacheItem;
+            this._updateOnGetCacheItem = cacheOptions.UpdateOnGetCacheItem;
             if (cacheOptions.CreateInfrastructure)
             {
                 CreateSchemaAndTableIfNotExist();
