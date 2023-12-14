@@ -8,7 +8,6 @@ builder.Services.AddDistributedPostgreSqlCache(setup =>
     setup.SchemaName = builder.Configuration["PgCache:SchemaName"];
     setup.TableName = builder.Configuration["PgCache:TableName"];
     setup.CreateInfrastructure = !string.IsNullOrWhiteSpace(builder.Configuration["PgCache:CreateInfrastructure"]);
-    setup.ExpiredItemsDeletionInterval = System.TimeSpan.FromMinutes(1);
     // CreateInfrastructure is optional, default is TRUE
     // This means que every time starts the application the 
     // creation of table and database functions will be verified.
