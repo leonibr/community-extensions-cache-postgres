@@ -1,26 +1,42 @@
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using Community.Microsoft.Extensions.Caching.PostgreSql;
 
-namespace WebSample
+
+var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddDistributedPostgreSqlCache(setup =>
 {
-    public class Program
-    {
-        public static void Main(string[] args)
-        {
-            CreateHostBuilder(args).Build().Run();
-        }
+    setup.ConnectionString = builder.Configuration["PgCache:ConnectionString"];
+    setup.SchemaName = builder.Configuration["PgCache:SchemaName"];
+    setup.TableName = builder.Configuration["PgCache:TableName"];
+    setup.CreateInfrastructure = !string.IsNullOrWhiteSpace(builder.Configuration["PgCache:CreateInfrastructure"]);
+    setup.ExpiredItemsDeletionInterval = System.TimeSpan.FromMinutes(1);
+    // CreateInfrastructure is optional, default is TRUE
+    // This means que every time starts the application the 
+    // creation of table and database functions will be verified.
+});
 
-        public static IHostBuilder CreateHostBuilder(string[] args) =>
-            Host.CreateDefaultBuilder(args)
-                .ConfigureWebHostDefaults(webBuilder =>
-                {
-                    webBuilder.UseStartup<Startup>();
-                });
-    }
+// Add services to the container.
+
+builder.Services.AddControllersWithViews();
+
+var app = builder.Build();
+
+// Configure the HTTP request pipeline.
+if (!app.Environment.IsDevelopment())
+{
+    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+    app.UseHsts();
 }
+
+app.UseHttpsRedirection();
+app.UseStaticFiles();
+app.UseRouting();
+
+
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller}/{action=Index}/{id?}");
+
+app.MapFallbackToFile("index.html");
+
+app.Run();
+
