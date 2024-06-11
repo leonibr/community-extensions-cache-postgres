@@ -17,6 +17,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
     {
         private readonly ILogger<DatabaseOperations> _logger;
         private readonly bool _updateOnGetCacheItem;
+        private readonly bool _readOnlyMode;
 
         public DatabaseOperations(IOptions<PostgreSqlCacheOptions> options, ILogger<DatabaseOperations> logger)
         {
@@ -45,6 +46,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
 
             this._logger = logger;
             this._updateOnGetCacheItem = cacheOptions.UpdateOnGetCacheItem;
+            this._readOnlyMode = cacheOptions.ReadOnlyMode;
             if (cacheOptions.CreateInfrastructure)
             {
                 CreateSchemaAndTableIfNotExist();
@@ -59,6 +61,12 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
 
         private void CreateSchemaAndTableIfNotExist()
         {
+            if (_readOnlyMode)
+            {
+                _logger.LogDebug("CreateTableIfNotExist skipped due to ReadOnlyMode");
+                return;
+            }
+
             using (var connection = new NpgsqlConnection(ConnectionString))
             {
                 connection.Open();
@@ -78,6 +86,12 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
 
         public void DeleteCacheItem(string key)
         {
+            if (_readOnlyMode)
+            {
+                _logger.LogDebug("DeleteCacheItem skipped due to ReadOnlyMode");
+                return;
+            }
+
             using var connection = new NpgsqlConnection(ConnectionString);
 
             var deleteCacheItem = new CommandDefinition(
@@ -90,6 +104,12 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
 
         public async Task DeleteCacheItemAsync(string key, CancellationToken cancellationToken)
         {
+            if (_readOnlyMode)
+            {
+                _logger.LogDebug("DeleteCacheItem skipped due to ReadOnlyMode");
+                return;
+            }
+
             await using var connection = new NpgsqlConnection(ConnectionString);
 
             var deleteCacheItem = new CommandDefinition(
@@ -116,6 +136,9 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
 
         public async Task DeleteExpiredCacheItemsAsync(CancellationToken cancellationToken)
         {
+            if (_readOnlyMode)
+                return;
+
             var utcNow = SystemClock.UtcNow;
 
             await using var connection = new NpgsqlConnection(ConnectionString);
@@ -129,6 +152,9 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
 
         public void SetCacheItem(string key, byte[] value, DistributedCacheEntryOptions options)
         {
+            if (_readOnlyMode)
+                return;
+
             var utcNow = SystemClock.UtcNow;
 
             var absoluteExpiration = GetAbsoluteExpiration(utcNow, options);
@@ -156,6 +182,9 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
 
         public async Task SetCacheItemAsync(string key, byte[] value, DistributedCacheEntryOptions options, CancellationToken cancellationToken)
         {
+            if (_readOnlyMode)
+                return;
+
             var utcNow = SystemClock.UtcNow;
 
             var absoluteExpiration = GetAbsoluteExpiration(utcNow, options);
@@ -189,7 +218,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
 
             using var connection = new NpgsqlConnection(ConnectionString);
 
-            if (_updateOnGetCacheItem)
+            if (!_readOnlyMode && (_updateOnGetCacheItem || !includeValue))
             {
                 var updateCacheItem = new CommandDefinition(
                     SqlCommands.UpdateCacheItemSql,
@@ -215,7 +244,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
 
             await using var connection = new NpgsqlConnection(ConnectionString);
 
-            if (_updateOnGetCacheItem)
+            if (!_readOnlyMode && (_updateOnGetCacheItem || !includeValue))
             {
                 var updateCacheItem = new CommandDefinition(
                     SqlCommands.UpdateCacheItemSql,

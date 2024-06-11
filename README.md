@@ -10,14 +10,15 @@ Use older versions of this packages (<= 3.1.2)
 
 ## Getting Started
 
-1. Install the package into your project
+### 1. Install the package into your project
 
 ```
 dotnet add package Community.Microsoft.Extensions.Caching.PostgreSql
 ```
 
-2. Add the following line to the `Startup` `Configure` method.
+### 2. Add the following line to the `Startup` `Configure` method.
 
+#### Basic Configuring
 ```c#
 services.AddDistributedPostgreSqlCache(setup =>
 {
@@ -37,7 +38,7 @@ services.AddDistributedPostgreSqlCache(setup =>
 })
 ```
 
-### Configuring with `IServiceProvider` access
+#### Configuring with `IServiceProvider` access
 
 ```c#
 services.AddDistributedPostgreSqlCache((serviceProvider, setup) =>
@@ -49,7 +50,7 @@ services.AddDistributedPostgreSqlCache((serviceProvider, setup) =>
 })
 ```
 
-### Configuring via `IConfigureOptions<PostgreSqlCacheOptions>`
+#### Configuring via `IConfigureOptions<PostgreSqlCacheOptions>`
 
 use
 
@@ -63,8 +64,9 @@ and implement and register
 IConfigureOptions<PostgreSqlCacheOptions>
 ```
 
+## Configuration Options
 
-### `DisableRemoveExpired = True` use case:
+### `DisableRemoveExpired = True` use case (default false):
 
 When you have 2 or more instances/microservices/processes and you just to leave one of them removing expired items.
 
@@ -86,12 +88,10 @@ When you have 2 or more instances/microservices/processes and you just to leave 
 
 ```
 
-### `UpdateOnGetCacheItem = false` use case:
+### `UpdateOnGetCacheItem = false` use case (default true):
 
-For read-only databases or if the database user does not have `write` permission you can set `UpdateOnGetCacheItem = false`
-
-- Note 1: This will cancel the sliding expiration and only absolute experation will work
-- Note 2: This can be used to improve performance
+If you, or the implementation using this cache, is explicitly calling the `IDistributedCache.Refresh` to update the sliding window, 
+then you can turn off the `UpdateOnGetCacheItem` to remove the additional DB expiration update call just prior to reading the cached value. This is useful if you are using this package in conjunction with ASP.NET Core Session handling. 
 
 ```c#
 services.AddDistributedPostgreSqlCache((serviceProvider, setup) =>
@@ -105,7 +105,26 @@ services.AddDistributedPostgreSqlCache((serviceProvider, setup) =>
 })
 ```
 
-## What it does to my database 🐘:
+### 'ReadOnlyMode = true` use case (default false):
+
+For read-only databases or if the database user does not have `write` permission you can set `ReadOnlyMode = true`
+
+- Note 1: This will cancel the sliding expiration and only absolute expiration will work
+- Note 2: This can be used to improve performance, but you will not be able to change any cache values
+
+```c#
+services.AddDistributedPostgreSqlCache((serviceProvider, setup) =>
+{
+    ...
+    setup.ReadOnlyMode = true;
+    // Or
+    var configuration = serviceProvider.GetRequiredService<IConfiguration>();
+    setup.ReadOnlyMode = configuration["UpdateOnGetCacheItem"];
+    ...
+})
+```
+
+### `CreateInfrastructure = true` use case:
 
 It creates a table & schema for storing cache (names are configurable)
 
