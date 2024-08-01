@@ -1,11 +1,24 @@
 ﻿using Microsoft.Extensions.Internal;
 using Microsoft.Extensions.Options;
 using System;
+using Npgsql;
 
 namespace Community.Microsoft.Extensions.Caching.PostgreSql
 {
 	public class PostgreSqlCacheOptions : IOptions<PostgreSqlCacheOptions>
     {
+        /// <summary>
+        /// The factory to create a NpgsqlDataSource instance.
+        /// Either <see cref="DataSourceFactory"/> or <see cref="ConnectionString"/> should be set.
+        /// </summary>
+        public Func<NpgsqlDataSource> DataSourceFactory { get; set; }
+
+        /// <summary>
+        /// The connection string to the database.
+        /// If <see cref="DataSourceFactory"/> not set, <see cref="ConnectionString"/> would be used to connect to the database.
+        /// </summary>
+        public string ConnectionString { get; set; }
+
         /// <summary>
         /// An abstraction to represent the clock of a machine in order to enable unit testing.
         /// </summary>
@@ -16,11 +29,6 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
         /// Minimum allowed is 5 minutes.
         /// </summary>
         public TimeSpan? ExpiredItemsDeletionInterval { get; set; }
-
-        /// <summary>
-        /// The connection string to the database.
-        /// </summary>
-        public string ConnectionString { get; set; }
 
         /// <summary>
         /// The schema name of the table.
