@@ -17,8 +17,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
     {
         private readonly ILogger<DatabaseOperations> _logger;
         private readonly bool _updateOnGetCacheItem;
-
-        private bool _schemaCreated;
+        private readonly bool _readOnlyMode;
 
         public DatabaseOperations(IOptions<PostgreSqlCacheOptions> options, ILogger<DatabaseOperations> logger)
         {
@@ -50,7 +49,11 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
 
             this._logger = logger;
             this._updateOnGetCacheItem = cacheOptions.UpdateOnGetCacheItem;
-            this._schemaCreated = !cacheOptions.CreateInfrastructure;
+            this._readOnlyMode = cacheOptions.ReadOnlyMode;
+            if (cacheOptions.CreateInfrastructure)
+            {
+                CreateSchemaAndTableIfNotExist();
+            }
         }
 
         private SqlCommands SqlCommands { get; }
@@ -61,6 +64,12 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
 
         private void CreateSchemaAndTableIfNotExist()
         {
+            if (_readOnlyMode)
+            {
+                _logger.LogDebug("CreateTableIfNotExist skipped due to ReadOnlyMode");
+                return;
+            }
+
             using (var connection = ConnectionFactory())
             {
                 connection.Open();
@@ -80,7 +89,11 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
 
         public void DeleteCacheItem(string key)
         {
-            EnsureSchemaCreated();
+            if (_readOnlyMode)
+            {
+                _logger.LogDebug("DeleteCacheItem skipped due to ReadOnlyMode");
+                return;
+            }
 
             using var connection = ConnectionFactory();
 
@@ -94,8 +107,11 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
 
         public async Task DeleteCacheItemAsync(string key, CancellationToken cancellationToken)
         {
-            EnsureSchemaCreated();
-
+            if (_readOnlyMode)
+            {
+                _logger.LogDebug("DeleteCacheItem skipped due to ReadOnlyMode");
+                return;
+            }
             await using var connection = ConnectionFactory();
 
             var deleteCacheItem = new CommandDefinition(
@@ -107,33 +123,23 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
             _logger.LogDebug($"Cache key deleted: {key}");
         }
 
-        public byte[] GetCacheItem(string key)
-        {
-            EnsureSchemaCreated();
-            return GetCacheItem(key, includeValue: true);
-        }
+        public byte[] GetCacheItem(string key) =>
+            GetCacheItem(key, includeValue: true);
 
-        public async Task<byte[]> GetCacheItemAsync(string key, CancellationToken cancellationToken)
-        {
-            EnsureSchemaCreated();
-            return await GetCacheItemAsync(key, includeValue: true, cancellationToken);
-        }
+        public async Task<byte[]> GetCacheItemAsync(string key, CancellationToken cancellationToken) =>
+            await GetCacheItemAsync(key, includeValue: true, cancellationToken);
 
-        public void RefreshCacheItem(string key)
-        {
-            EnsureSchemaCreated();
+        public void RefreshCacheItem(string key) =>
             GetCacheItem(key, includeValue: false);
-        }
 
-        public async Task RefreshCacheItemAsync(string key, CancellationToken cancellationToken)
-        {
-            EnsureSchemaCreated();
+        public async Task RefreshCacheItemAsync(string key, CancellationToken cancellationToken) =>
             await GetCacheItemAsync(key, includeValue: false, cancellationToken);
-        }
+
 
         public async Task DeleteExpiredCacheItemsAsync(CancellationToken cancellationToken)
         {
-            EnsureSchemaCreated();
+            if (_readOnlyMode)
+                return;
 
             var utcNow = SystemClock.UtcNow;
 
@@ -148,7 +154,8 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
 
         public void SetCacheItem(string key, byte[] value, DistributedCacheEntryOptions options)
         {
-            EnsureSchemaCreated();
+            if (_readOnlyMode)
+                return;
 
             var utcNow = SystemClock.UtcNow;
 
@@ -177,7 +184,8 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
 
         public async Task SetCacheItemAsync(string key, byte[] value, DistributedCacheEntryOptions options, CancellationToken cancellationToken)
         {
-            EnsureSchemaCreated();
+            if (_readOnlyMode)
+                return;
 
             var utcNow = SystemClock.UtcNow;
 
@@ -212,7 +220,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
 
             using var connection = ConnectionFactory();
 
-            if (_updateOnGetCacheItem)
+            if (!_readOnlyMode && (_updateOnGetCacheItem || !includeValue))
             {
                 var updateCacheItem = new CommandDefinition(
                     SqlCommands.UpdateCacheItemSql,
@@ -238,7 +246,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
 
             await using var connection = ConnectionFactory();
 
-            if (_updateOnGetCacheItem)
+            if (!_readOnlyMode && (_updateOnGetCacheItem || !includeValue))
             {
                 var updateCacheItem = new CommandDefinition(
                     SqlCommands.UpdateCacheItemSql,
@@ -285,15 +293,6 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
             {
                 throw new InvalidOperationException("Either absolute or sliding expiration needs " +
                     "to be provided.");
-            }
-        }
-
-        private void EnsureSchemaCreated()
-        {
-            if (!_schemaCreated)
-            {
-                CreateSchemaAndTableIfNotExist();
-                _schemaCreated = true;
             }
         }
     }
