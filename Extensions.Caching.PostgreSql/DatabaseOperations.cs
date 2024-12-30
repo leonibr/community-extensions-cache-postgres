@@ -40,7 +40,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
             }
 
             ConnectionFactory = cacheOptions.DataSourceFactory != null
-                ? () => cacheOptions.DataSourceFactory.Invoke().CreateConnection() 
+                ? () => cacheOptions.DataSourceFactory.Invoke().CreateConnection()
                 : new Func<NpgsqlConnection>(() => new NpgsqlConnection(cacheOptions.ConnectionString));
 
             SystemClock = cacheOptions.SystemClock;
