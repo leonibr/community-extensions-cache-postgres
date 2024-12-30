@@ -14,7 +14,7 @@ jobs:
         uses: actions/setup-dotnet@v1
         with:
           dotnet-version: |
-            8.0.x
+            9.0.x
 
       - name: Install dependencies
         run: dotnet restore
@@ -22,7 +22,7 @@ jobs:
         run: dotnet pack --configuration Release --no-restore /p:Version=${{ github.event.release.tag_name }} /p:PackageReleaseNotes="See https://github.com/leonibr/community-extensions-cache-postgres/releases/tag/${{ github.event.release.tag_name }}"
         working-directory: ./Extensions.Caching.PostgreSql/
       - name: Archive NuGet Package
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v4
         with:
           name: Extensions.Caching.PostgreSql
           path: ./Extensions.Caching.PostgreSql/bin/Release/Community.Microsoft.Extensions.Caching.PostgreSql.${{ github.event.release.tag_name }}.nupkg
