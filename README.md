@@ -1,8 +1,6 @@
 ﻿# PostgreSQL Distributed Cache for .NET Core | Community Edition
 
 [![Nuget](https://img.shields.io/nuget/v/Community.Microsoft.Extensions.Caching.PostgreSql)](https://www.nuget.org/packages/Community.Microsoft.Extensions.Caching.PostgreSql)
-[![Build Status](https://img.shields.io/github/actions/workflow/status/leonibr/community-extensions-cache-postgres/dotnet.yml?branch=main)](https://github.com/leonibr/community-extensions-cache-postgres/actions/workflows/dotnet.yml)
-[![Code Quality](https://img.shields.io/codefactor/grade/github/leonibr/community-extensions-cache-postgres)](https://www.codefactor.io/repository/github/leonibr/community-extensions-cache-postgres)
 
 ## Introduction
 
