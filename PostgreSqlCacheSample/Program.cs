@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Community.Microsoft.Extensions.Caching.PostgreSql;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace PostgreSqlCacheSample
 {
@@ -14,6 +15,11 @@ namespace PostgreSqlCacheSample
 		
 		private static IHostBuilder CreateHostBuilder(string[] args) =>
 			Host.CreateDefaultBuilder(args)
+				.ConfigureLogging(logging=>
+				{
+					logging.ClearProviders();
+					logging.AddConsole();
+				})
 				.ConfigureServices((hostContext, services) =>
 				{
 					var configuration = hostContext.Configuration;

@@ -97,9 +97,10 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
                         _logger.LogDebug($"DeleteExpiredCacheItems was cancelled at {utcNow}");
                         break;
                     }
-                    catch (Exception)
+                    catch (Exception ex)
                     {
                         //We don't want transient errors from failing next run
+                        _logger.LogError(ex, "An error occurred while deleting expired cache items.");
                     }
                 }
 
