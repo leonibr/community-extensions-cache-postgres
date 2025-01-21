@@ -33,4 +33,10 @@
     <PackageReference Include="Microsoft.Extensions.Options" Version="9.0.0" />
     <PackageReference Include="Npgsql" Version="9.0.2" />
   </ItemGroup>
+
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+      <_Parameter1>CachingTest</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
 </Project>
