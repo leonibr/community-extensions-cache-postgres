@@ -1,10 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk" ToolsVersion="16.0">
   <PropertyGroup>
-    <TargetFrameworks>net6.0;net8.0;net9.0</TargetFrameworks>
+    <TargetFrameworks>net8.0</TargetFrameworks>
     <AssemblyName>Community.Microsoft.Extensions.Caching.PostgreSql</AssemblyName>
     <RootNamespace>Community.Microsoft.Extensions.Caching.PostgreSql</RootNamespace>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
-    <Version>5.0.0</Version>
+    <Version>8.0.0</Version>
     <Authors>Ashley Marques</Authors>
     <Company />
     <Description>DistributedCache using postgres</Description>
