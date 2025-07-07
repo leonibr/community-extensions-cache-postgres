@@ -146,10 +146,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
                 && !options.AbsoluteExpirationRelativeToNow.HasValue
                 && !options.SlidingExpiration.HasValue)
             {
-                options = new DistributedCacheEntryOptions()
-                {
-                    SlidingExpiration = _defaultSlidingExpiration
-                };
+                options.SlidingExpiration = _defaultSlidingExpiration;
             }
         }
     }

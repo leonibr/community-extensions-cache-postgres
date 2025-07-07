@@ -99,7 +99,20 @@ namespace PostgreSqlCacheSample
             await GetKeyStatement();
             _logger.LogInformation("\nList all keys from database");
             await using var conn = new Npgsql.NpgsqlConnection(_configuration["ConnectionString"]);
-            await using var cmd = new Npgsql.NpgsqlCommand($"select \"Id\" from {_configuration["SchemaName"]}.{_configuration["TableName"]}", conn);
+            var schemaName = _configuration["SchemaName"];
+            var tableName = _configuration["TableName"];
+            
+            // Validate identifier names to prevent SQL injection
+            if (string.IsNullOrWhiteSpace(schemaName) || string.IsNullOrWhiteSpace(tableName) ||
+                schemaName.Contains('"') || tableName.Contains('"') ||
+                schemaName.Contains(';') || tableName.Contains(';'))
+            {
+                throw new InvalidOperationException("Invalid schema or table name configuration");
+            }
+            
+            // Use proper identifier quoting for PostgreSQL
+            var sql = $"SELECT \"Id\" FROM \"{schemaName}\".\"{tableName}\"";
+            await using var cmd = new Npgsql.NpgsqlCommand(sql, conn);
             conn.Open();
             var reader = cmd.ExecuteReader();
             if (reader.HasRows)
