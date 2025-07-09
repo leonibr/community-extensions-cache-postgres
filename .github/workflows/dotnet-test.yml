@@ -121,3 +121,7 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           cobertura-path: ${{ env.COVERAGE_FILE_PATH }}
+          title: Tests Report
+          min-coverage-percentage: 80
+          fail-under-coverage-percentage: true
+          override-comment: true
