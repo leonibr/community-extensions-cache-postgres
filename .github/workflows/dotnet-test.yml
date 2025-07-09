@@ -43,19 +43,30 @@ jobs:
           name: test-results
           path: ./TestResults/*.trx
 
-      - name: Upload Coverage Report
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-report
-          path: ./TestResults/coverage/coverage.cobertura.xml
-
       - name: Publish Test Results
         uses: EnricoMi/publish-unit-test-result-action@v2
         with:
           files: ./TestResults/*.trx
 
+      - name: Check if coverage file exists
+        run: |
+          if [ -f "./TestResults/coverage/coverage.cobertura.xml" ]; then
+            echo "Coverage file found, proceeding with report generation"
+          else
+            echo "Coverage file not found, skipping report generation"
+            exit 0
+          fi
+
+      - name: Upload Coverage Report
+        uses: actions/upload-artifact@v4
+        if: hashFiles('./TestResults/coverage/coverage.cobertura.xml') != ''
+        with:
+          name: coverage-report
+          path: ./TestResults/coverage/coverage.cobertura.xml
+
       - name: Generate Coverage Report
         uses: danielpalme/ReportGenerator-GitHub-Action@5.3.5
+        if: hashFiles('./TestResults/coverage/coverage.cobertura.xml') != ''
         with:
           reports: './TestResults/coverage/coverage.cobertura.xml'
           targetdir: './TestResults/coverage/report'
@@ -63,10 +74,12 @@ jobs:
 
       - name: Upload HTML Coverage Report
         uses: actions/upload-artifact@v4
+        if: hashFiles('./TestResults/coverage/coverage.cobertura.xml') != ''
         with:
           name: html-coverage-report
           path: ./TestResults/coverage/report
 
       - name: Display Coverage Summary
+        if: hashFiles('./TestResults/coverage/coverage.cobertura.xml') != ''
         run: |
           cat ./TestResults/coverage/report/Summary.md || echo 'No coverage summary found.'
