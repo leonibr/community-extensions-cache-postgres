@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk.Worker">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net9.0</TargetFramework>
     <UserSecretsId>dotnet-PostgreSqlCacheSample-F04BB98E-2126-4C2F-B086-66C8CC6AA428</UserSecretsId>
   </PropertyGroup>
 
