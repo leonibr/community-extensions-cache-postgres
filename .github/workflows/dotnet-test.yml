@@ -73,6 +73,13 @@ jobs:
           targetdir: './TestResults/coverage/report'
           reporttypes: 'MarkdownSummary;Html'
 
+      - name: Extract Coverage Percentage
+        if: env.COVERAGE_FILE_PATH != ''
+        id: coverage
+        run: |
+          COVERAGE_PCT=$(grep -o '[0-9.]*%' ./TestResults/coverage/report/Summary.md | head -1 | sed 's/%//')
+          echo "coverage=$COVERAGE_PCT%" >> $GITHUB_OUTPUT
+
       - name: Upload HTML Coverage Report
         uses: actions/upload-artifact@v4
         if: env.COVERAGE_FILE_PATH != ''
@@ -84,3 +91,35 @@ jobs:
         if: env.COVERAGE_FILE_PATH != ''
         run: |
           cat ./TestResults/coverage/report/Summary.md || echo 'No coverage summary found.'
+
+            # Optional: Deploy to GitHub Pages (requires enabling GitHub Pages in repo settings)
+      # - name: Deploy Coverage Report to GitHub Pages
+      #   if: env.COVERAGE_FILE_PATH != '' && github.ref == 'refs/heads/main'
+      #   uses: peaceiris/actions-gh-pages@v3
+      #   with:
+      #     github_token: ${{ secrets.GITHUB_TOKEN }}
+      #     publish_dir: ./TestResults/coverage/report
+      #     destination_dir: coverage
+
+      # Optional: Generate Coverage Badge (requires GIST_SECRET secret)
+      # - name: Generate Coverage Badge
+      #   if: env.COVERAGE_FILE_PATH != ''
+      #   uses: schneegans/dynamic-badges-action@v1.6.0
+      #   with:
+      #     auth: ${{ secrets.GIST_SECRET }}
+      #     namedLogo: github
+      #     label: coverage
+      #     namedLogoColor: white
+      #     labelColor: 555
+      #     valueColor: 2E8B57
+      #     message: ${{ steps.coverage.outputs.coverage }}
+      #     filepath: coverage.json
+      #     namedLogoWidth: 20
+
+      - name: GitHub Action Coverage Reporter
+        if: env.COVERAGE_FILE_PATH != ''
+        uses: AlexRogalskiy/github-action-coverage-reporter@v1.0.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          lcov-file: ${{ env.COVERAGE_FILE_PATH }}
+          fail-below: 80

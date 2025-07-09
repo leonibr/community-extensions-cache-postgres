@@ -1,6 +1,7 @@
 ﻿# PostgreSQL Distributed Cache for .NET Core | Community Edition
 
 [![Nuget](https://img.shields.io/nuget/v/Community.Microsoft.Extensions.Caching.PostgreSql)](https://www.nuget.org/packages/Community.Microsoft.Extensions.Caching.PostgreSql)
+[![Coverage](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/leonibr/4a15a6116d49e35415ce8e93de55a9fc/raw/33a8e6bf5c48317d2697b7da139efa910e74607c/coverage.json)](https://leonibr.github.io/community-extensions-cache-postgres/coverage/)
 
 ## Introduction
 
@@ -30,13 +31,14 @@ This library allows you to seamlessly integrate caching into your ASP.NET / .NET
 5.  [Usage Examples](#usage-examples)
     - [Basic Example](#basic-example)
     - [Using Custom Options](#using-custom-options)
-6.  [Running the Console Sample](#runing-the-console-sample)
-7.  [Running the React+WebApi Web Sample](#runing-the-reactwebapi-websample-project)
-8.  [Change Log](#change-log)
-9.  [Contributing](#contributing)
-10. [License](#license)
-11. [FAQ](#faq)
-12. [Troubleshooting](#troubleshooting)
+6.  [Code Coverage](#code-coverage)
+7.  [Running the Console Sample](#runing-the-console-sample)
+8.  [Running the React+WebApi Web Sample](#runing-the-reactwebapi-websample-project)
+9.  [Change Log](#change-log)
+10. [Contributing](#contributing)
+11. [License](#license)
+12. [FAQ](#faq)
+13. [Troubleshooting](#troubleshooting)
 
 ## Getting Started
 
@@ -204,6 +206,29 @@ This creates the table and schema for storing the cache (names are configurable)
  });
 ```
 
+## Code Coverage
+
+This project maintains comprehensive test coverage to ensure reliability and quality. You can view the current coverage status and detailed reports in several ways:
+
+### Coverage Badge
+
+The coverage badge in the header shows the current test coverage percentage. Click on it to view the detailed HTML coverage report.
+
+### Coverage Reports
+
+- **HTML Report**: Available at [https://leonibr.github.io/community-extensions-cache-postgres/coverage/](https://leonibr.github.io/community-extensions-cache-postgres/coverage/)
+- **GitHub Actions**: Coverage reports are generated automatically on every push to the main branch
+- **Local Generation**: Run `dotnet test --collect:"XPlat Code Coverage"` to generate coverage reports locally
+
+### Coverage Details
+
+The coverage report includes:
+
+- Line coverage for all source files
+- Branch coverage analysis
+- Detailed breakdown by class and method
+- Historical coverage trends
+
 ## Running the Console Sample
 
 You will need a local PostgreSQL server with the following:
@@ -254,21 +279,20 @@ prepare-database.cmd -erase // windows
 
 ## Change Log
 
-1.  v5.0.0 - Added support for .NET 9
-    1.  [BREAKING CHANGE] - Dropped support for .NETStandard2.0
-    1.  [BREAKING CHANGE] - Supports .NET 9, .NET 8 and .NET 6
-1.  v4.0.1 - Added support for .NET 7
-    1.  [BREAKING CHANGE] - Dropped support for .NET 5
-    2.  [BREAKING CHANGE] - Now uses stored procedures (won't work with PostgreSQL <= 10, use version 3)
-1.  v3.1.2 - Removed dependency for `IHostApplicationLifetime` if not supported on the platform (e.g., AWS) - issue #28
-1.  v3.1.0 - Added log messages on `Debug` Level, multitarget .NET 5 and .NET 6, dropped support for netstandard2.0, fixed sample to match multi-targeting and sample database.
-1.  v3.0.2 - `CreateInfrastructure` also creates the schema - issue #8
-1.  v3.0.1 - Added `DisableRemoveExpired` configuration; if `TRUE`, the cache instance won't delete expired items.
-1.  v3.0
-    1.  [BREAKING CHANGE] - Direct instantiation not preferred.
-    2.  Single-threaded loop remover.
-1.  v2.0.x - Updated everything to .NET 5.0, more detailed sample project.
-1.  v1.0.8 - Updated to the latest dependencies.
+- [v5.0.1](https://github.com/leonibr/community-extensions-cache-postgres/releases/tag/v5.0.1) - Added unit tests and improve multitarget frameworks
+- [v5.0.0](https://github.com/leonibr/community-extensions-cache-postgres/releases/tag/v5.0.0) - Added support for .NET 9
+  - [BREAKING CHANGE] - Dropped support for .NETStandard2.0
+  - [BREAKING CHANGE] - Supports .NET 9, .NET 8 and .NET 6
+- [v4.0.1](https://github.com/leonibr/community-extensions-cache-postgres/releases/tag/v4.0.1) - Added support for .NET 7
+  - [BREAKING CHANGE] - Dropped support for .NET 5
+  - [BREAKING CHANGE] - Now uses stored procedures (won't work with PostgreSQL <= 10, use version 3)
+- [v3.1.2](https://github.com/leonibr/community-extensions-cache-postgres/releases/tag/v3.1.2) - Removed dependency for `IHostApplicationLifetime` if not supported on the platform (e.g., AWS) - issue #28
+- [v3.1.0](https://github.com/leonibr/community-extensions-cache-postgres/releases/tag/v3.1.0) - Added log messages on `Debug` Level, multitarget .NET 5 and .NET 6, dropped support for netstandard2.0, fixed sample to match multi-targeting and sample database.
+- [v3.0.2](https://github.com/leonibr/community-extensions-cache-postgres/releases/tag/v3.0.2) - `CreateInfrastructure` also creates the schema - issue #8
+- [v3.0.1](https://github.com/leonibr/community-extensions-cache-postgres/releases/tag/v3.0.1) - Added `DisableRemoveExpired` configuration; if `TRUE`, the cache instance won't delete expired items.
+- [v3.0](https://github.com/leonibr/community-extensions-cache-postgres/releases/tag/v3.0) - [BREAKING CHANGE] - Direct instantiation not preferred. Single-threaded loop remover.
+- [v2.0.x commits](https://github.com/leonibr/community-extensions-cache-postgres/commits/main?utf8=%E2%9C%93&search=v2.0) - Updated everything to .NET 5.0, more detailed sample project.
+- [v1.0.8](https://github.com/leonibr/community-extensions-cache-postgres/releases/tag/v1.0.8) - Updated to the latest dependencies.
 
 ## Contributing
 
