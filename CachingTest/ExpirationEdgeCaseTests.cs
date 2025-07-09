@@ -27,7 +27,7 @@ public class ExpirationEdgeCaseTests
         var dbOperations = new DatabaseOperations(Options.Create(options), _logger);
 
         // Act & Assert - Should not throw even with invalid connection string
-        Assert.Throws<Npgsql.PostgresException>(() => dbOperations.SetCacheItem("test-key", new byte[] { 1, 2, 3 },
+        Assert.Throws<Npgsql.NpgsqlException>(() => dbOperations.SetCacheItem("test-key", new byte[] { 1, 2, 3 },
             new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5) }));
     }
 
@@ -46,7 +46,7 @@ public class ExpirationEdgeCaseTests
         var dbOperations = new DatabaseOperations(Options.Create(options), _logger);
 
         // Act & Assert - Should not throw even with invalid connection string
-        Assert.Throws<Npgsql.PostgresException>(() => dbOperations.SetCacheItem("test-key", new byte[] { 1, 2, 3 },
+        Assert.Throws<Npgsql.NpgsqlException>(() => dbOperations.SetCacheItem("test-key", new byte[] { 1, 2, 3 },
             new DistributedCacheEntryOptions
             {
                 AbsoluteExpiration = DateTime.UtcNow.AddMinutes(10),
@@ -69,7 +69,7 @@ public class ExpirationEdgeCaseTests
         var dbOperations = new DatabaseOperations(Options.Create(options), _logger);
 
         // Act & Assert - Should not throw even with invalid connection string
-        Assert.Throws<Npgsql.PostgresException>(() => dbOperations.SetCacheItem("test-key", new byte[] { 1, 2, 3 },
+        Assert.Throws<Npgsql.NpgsqlException>(() => dbOperations.SetCacheItem("test-key", new byte[] { 1, 2, 3 },
             new DistributedCacheEntryOptions { SlidingExpiration = TimeSpan.FromMinutes(5) }));
     }
 
@@ -221,7 +221,7 @@ public class ExpirationEdgeCaseTests
         var dbOperations = new DatabaseOperations(Options.Create(options), _logger);
 
         // Act & Assert - Should not throw even with invalid connection string
-        Assert.Throws<Npgsql.PostgresException>(() => dbOperations.SetCacheItem("test-key", new byte[] { 1, 2, 3 },
+        Assert.Throws<Npgsql.NpgsqlException>(() => dbOperations.SetCacheItem("test-key", new byte[] { 1, 2, 3 },
             new DistributedCacheEntryOptions { SlidingExpiration = TimeSpan.FromDays(365) }));
     }
 
@@ -240,7 +240,7 @@ public class ExpirationEdgeCaseTests
         var dbOperations = new DatabaseOperations(Options.Create(options), _logger);
 
         // Act & Assert - Should not throw even with invalid connection string
-        Assert.Throws<Npgsql.PostgresException>(() => dbOperations.SetCacheItem("test-key", new byte[] { 1, 2, 3 },
+        Assert.Throws<Npgsql.NpgsqlException>(() => dbOperations.SetCacheItem("test-key", new byte[] { 1, 2, 3 },
             new DistributedCacheEntryOptions { AbsoluteExpiration = DateTime.UtcNow.AddYears(10) }));
     }
 
@@ -259,7 +259,7 @@ public class ExpirationEdgeCaseTests
         var dbOperations = new DatabaseOperations(Options.Create(options), _logger);
 
         // Act & Assert - Should not throw even with invalid connection string
-        Assert.Throws<Npgsql.PostgresException>(() => dbOperations.SetCacheItem("test-key", new byte[] { 1, 2, 3 },
+        Assert.Throws<Npgsql.NpgsqlException>(() => dbOperations.SetCacheItem("test-key", new byte[] { 1, 2, 3 },
             new DistributedCacheEntryOptions { SlidingExpiration = TimeSpan.FromMilliseconds(1) }));
     }
 
@@ -278,7 +278,7 @@ public class ExpirationEdgeCaseTests
         var dbOperations = new DatabaseOperations(Options.Create(options), _logger);
 
         // Act & Assert - Should not throw even with invalid connection string
-        Assert.Throws<Npgsql.PostgresException>(() => dbOperations.SetCacheItem("test-key", new byte[] { 1, 2, 3 },
+        Assert.Throws<Npgsql.NpgsqlException>(() => dbOperations.SetCacheItem("test-key", new byte[] { 1, 2, 3 },
             new DistributedCacheEntryOptions { AbsoluteExpiration = DateTime.UtcNow.AddMilliseconds(1) }));
     }
 }
