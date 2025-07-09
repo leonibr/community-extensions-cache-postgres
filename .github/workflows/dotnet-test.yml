@@ -1,0 +1,69 @@
+name: .NET Test & Coverage
+
+on:
+  push:
+    branches: [master, add-unit-tests]
+  pull_request:
+    branches: [master, add-unit-tests]
+
+jobs:
+  build-test-coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '6.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore --configuration Release
+
+      - name: Test with coverage
+        run: >
+          dotnet test CachingTest/CachingTest.csproj \
+            --no-build --configuration Release \
+            --logger "trx;LogFileName=test-results.trx" \
+            --results-directory ./TestResults \
+            /p:CollectCoverage=true \
+            /p:CoverletOutput=./TestResults/coverage/ \
+            /p:CoverletOutputFormat=cobertura
+
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: ./TestResults/*.trx
+
+      - name: Upload Coverage Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: ./TestResults/coverage/coverage.cobertura.xml
+
+      - name: Publish Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        with:
+          files: ./TestResults/*.trx
+
+      - name: Generate Coverage Report
+        uses: danielpalme/ReportGenerator-GitHub-Action@5.3.5
+        with:
+          reports: './TestResults/coverage/coverage.cobertura.xml'
+          targetdir: './TestResults/coverage/report'
+          reporttypes: 'MarkdownSummary;Html'
+
+      - name: Upload HTML Coverage Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: html-coverage-report
+          path: ./TestResults/coverage/report
+
+      - name: Display Coverage Summary
+        run: |
+          cat ./TestResults/coverage/report/Summary.md || echo 'No coverage summary found.'
