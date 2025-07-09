@@ -17,15 +17,16 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
     {
         private readonly ILogger<DatabaseOperations> _logger;
         private readonly bool _updateOnGetCacheItem;
+        private readonly bool _readOnlyMode;
 
         public DatabaseOperations(IOptions<PostgreSqlCacheOptions> options, ILogger<DatabaseOperations> logger)
         {
             var cacheOptions = options.Value;
 
-            if (string.IsNullOrEmpty(cacheOptions.ConnectionString))
+            if (string.IsNullOrEmpty(cacheOptions.ConnectionString) && cacheOptions.DataSourceFactory is null)
             {
                 throw new ArgumentException(
-                    $"{nameof(PostgreSqlCacheOptions.ConnectionString)} cannot be empty or null.");
+                    $"Either {nameof(PostgreSqlCacheOptions.ConnectionString)} or {nameof(PostgreSqlCacheOptions.DataSourceFactory)} must be set.");
             }
             if (string.IsNullOrEmpty(cacheOptions.SchemaName))
             {
@@ -38,13 +39,17 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
                     $"{nameof(PostgreSqlCacheOptions.TableName)} cannot be empty or null.");
             }
 
-            ConnectionString = cacheOptions.ConnectionString;
+            ConnectionFactory = cacheOptions.DataSourceFactory != null
+                ? () => cacheOptions.DataSourceFactory.Invoke().CreateConnection()
+                : new Func<NpgsqlConnection>(() => new NpgsqlConnection(cacheOptions.ConnectionString));
+
             SystemClock = cacheOptions.SystemClock;
 
             SqlCommands = new SqlCommands(cacheOptions.SchemaName, cacheOptions.TableName);
 
             this._logger = logger;
             this._updateOnGetCacheItem = cacheOptions.UpdateOnGetCacheItem;
+            this._readOnlyMode = cacheOptions.ReadOnlyMode;
             if (cacheOptions.CreateInfrastructure)
             {
                 CreateSchemaAndTableIfNotExist();
@@ -53,13 +58,19 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
 
         private SqlCommands SqlCommands { get; }
 
-        private string ConnectionString { get; }
+        private Func<NpgsqlConnection> ConnectionFactory { get; }
 
         private ISystemClock SystemClock { get; }
 
         private void CreateSchemaAndTableIfNotExist()
         {
-            using (var connection = new NpgsqlConnection(ConnectionString))
+            if (_readOnlyMode)
+            {
+                _logger.LogDebug("CreateTableIfNotExist skipped due to ReadOnlyMode");
+                return;
+            }
+
+            using (var connection = ConnectionFactory())
             {
                 connection.Open();
                 using (var transaction = connection.BeginTransaction())
@@ -78,7 +89,13 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
 
         public void DeleteCacheItem(string key)
         {
-            using var connection = new NpgsqlConnection(ConnectionString);
+            if (_readOnlyMode)
+            {
+                _logger.LogDebug("DeleteCacheItem skipped due to ReadOnlyMode");
+                return;
+            }
+
+            using var connection = ConnectionFactory();
 
             var deleteCacheItem = new CommandDefinition(
                 SqlCommands.DeleteCacheItemSql,
@@ -90,7 +107,12 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
 
         public async Task DeleteCacheItemAsync(string key, CancellationToken cancellationToken)
         {
-            await using var connection = new NpgsqlConnection(ConnectionString);
+            if (_readOnlyMode)
+            {
+                _logger.LogDebug("DeleteCacheItem skipped due to ReadOnlyMode");
+                return;
+            }
+            await using var connection = ConnectionFactory();
 
             var deleteCacheItem = new CommandDefinition(
                 SqlCommands.DeleteCacheItemSql,
@@ -116,9 +138,12 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
 
         public async Task DeleteExpiredCacheItemsAsync(CancellationToken cancellationToken)
         {
+            if (_readOnlyMode)
+                return;
+
             var utcNow = SystemClock.UtcNow;
 
-            await using var connection = new NpgsqlConnection(ConnectionString);
+            await using var connection = ConnectionFactory();
 
             var deleteExpiredCache = new CommandDefinition(
                 SqlCommands.DeleteExpiredCacheSql,
@@ -129,12 +154,15 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
 
         public void SetCacheItem(string key, byte[] value, DistributedCacheEntryOptions options)
         {
+            if (_readOnlyMode)
+                return;
+
             var utcNow = SystemClock.UtcNow;
 
             var absoluteExpiration = GetAbsoluteExpiration(utcNow, options);
             ValidateOptions(options.SlidingExpiration, absoluteExpiration);
 
-            using var connection = new NpgsqlConnection(ConnectionString);
+            using var connection = ConnectionFactory();
 
             var expiresAtTime = options.SlidingExpiration == null
                 ? absoluteExpiration!.Value
@@ -156,12 +184,15 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
 
         public async Task SetCacheItemAsync(string key, byte[] value, DistributedCacheEntryOptions options, CancellationToken cancellationToken)
         {
+            if (_readOnlyMode)
+                return;
+
             var utcNow = SystemClock.UtcNow;
 
             var absoluteExpiration = GetAbsoluteExpiration(utcNow, options);
             ValidateOptions(options.SlidingExpiration, absoluteExpiration);
 
-            await using var connection = new NpgsqlConnection(ConnectionString);
+            await using var connection = ConnectionFactory();
 
             var expiresAtTime = options.SlidingExpiration == null
                 ? absoluteExpiration!.Value
@@ -187,9 +218,9 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
             var utcNow = SystemClock.UtcNow;
             byte[] value = null;
 
-            using var connection = new NpgsqlConnection(ConnectionString);
+            using var connection = ConnectionFactory();
 
-            if (_updateOnGetCacheItem)
+            if (!_readOnlyMode && (_updateOnGetCacheItem || !includeValue))
             {
                 var updateCacheItem = new CommandDefinition(
                     SqlCommands.UpdateCacheItemSql,
@@ -213,9 +244,9 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
             var utcNow = SystemClock.UtcNow;
             byte[] value = null;
 
-            await using var connection = new NpgsqlConnection(ConnectionString);
+            await using var connection = ConnectionFactory();
 
-            if (_updateOnGetCacheItem)
+            if (!_readOnlyMode && (_updateOnGetCacheItem || !includeValue))
             {
                 var updateCacheItem = new CommandDefinition(
                     SqlCommands.UpdateCacheItemSql,
