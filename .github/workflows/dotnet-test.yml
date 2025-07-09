@@ -116,10 +116,8 @@ jobs:
       #     filepath: coverage.json
       #     namedLogoWidth: 20
 
-      - name: GitHub Action Coverage Reporter
-        if: env.COVERAGE_FILE_PATH != ''
-        uses: AlexRogalskiy/github-action-coverage-reporter@master
+      - name: Coverage Report
+        uses: aGallea/tests-coverage-report@v1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          lcov-file: ${{ env.COVERAGE_FILE_PATH }}
-          fail-below: 80
+          cobertura-path: ${{ env.COVERAGE_FILE_PATH }}
