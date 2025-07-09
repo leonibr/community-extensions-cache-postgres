@@ -5,7 +5,7 @@ using Npgsql;
 
 namespace Community.Microsoft.Extensions.Caching.PostgreSql
 {
-	public class PostgreSqlCacheOptions : IOptions<PostgreSqlCacheOptions>
+    public class PostgreSqlCacheOptions : IOptions<PostgreSqlCacheOptions>
     {
         /// <summary>
         /// The factory to create a NpgsqlDataSource instance.
@@ -40,16 +40,16 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
         /// </summary>
         public string TableName { get; set; }
 
-		/// <summary>
-		/// If set to true will create table and functions if necessary every time an instance of PostgreSqlCache is created.
-		/// </summary>
-		public bool CreateInfrastructure { get; set; } = true;
+        /// <summary>
+        /// If set to true will create table and functions if necessary every time an instance of PostgreSqlCache is created.
+        /// </summary>
+        public bool CreateInfrastructure { get; set; } = true;
 
-		/// <summary>
-		/// The default sliding expiration set for a cache entry if neither Absolute or SlidingExpiration has been set explicitly.
-		/// By default, its 20 minutes.
-		/// </summary>
-		public TimeSpan DefaultSlidingExpiration { get; set; } = TimeSpan.FromMinutes(20);
+        /// <summary>
+        /// The default sliding expiration set for a cache entry if neither Absolute or SlidingExpiration has been set explicitly.
+        /// By default, its 20 minutes.
+        /// </summary>
+        public TimeSpan DefaultSlidingExpiration { get; set; } = TimeSpan.FromMinutes(20);
 
         /// <summary>
         /// If set to true this instance of the cache will not remove expired items. 
