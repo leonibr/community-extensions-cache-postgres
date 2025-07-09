@@ -118,7 +118,7 @@ jobs:
 
       - name: GitHub Action Coverage Reporter
         if: env.COVERAGE_FILE_PATH != ''
-        uses: AlexRogalskiy/github-action-coverage-reporter@v1.0.0
+        uses: AlexRogalskiy/github-action-coverage-reporter@master
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           lcov-file: ${{ env.COVERAGE_FILE_PATH }}
