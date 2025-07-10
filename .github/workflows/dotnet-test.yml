@@ -2,9 +2,9 @@ name: .NET Test & Coverage
 
 on:
   push:
-    branches: [master, add-unit-tests]
+    branches: [master, next, add-unit-tests]
   pull_request:
-    branches: [master, add-unit-tests]
+    branches: [master, next, add-unit-tests]
 
 jobs:
   build-test-coverage:
