@@ -206,6 +206,50 @@ This creates the table and schema for storing the cache (names are configurable)
  });
 ```
 
+### Azure Key Vault Rotation Support
+
+For applications using Azure Key Vault for secret management, this library provides built-in support for automatic connection string reloading when secrets are rotated.
+
+#### Quick Setup
+
+```csharp
+// Install required packages
+// dotnet add package Azure.Security.KeyVault.Secrets
+// dotnet add package Azure.Identity
+// dotnet add package Microsoft.Extensions.Configuration.AzureKeyVault
+
+// Configure Azure Key Vault
+var keyVaultUrl = $"https://{builder.Configuration["AzureKeyVault:VaultName"]}.vault.azure.net/";
+var credential = new ClientSecretCredential(
+    builder.Configuration["AzureKeyVault:TenantId"],
+    builder.Configuration["AzureKeyVault:ClientId"],
+    builder.Configuration["AzureKeyVault:ClientSecret"]);
+
+var secretClient = new SecretClient(new Uri(keyVaultUrl), credential);
+builder.Configuration.AddAzureKeyVault(secretClient, new AzureKeyVaultConfigurationOptions());
+
+// Configure cache with reloadable connection string
+builder.Services.AddDistributedPostgreSqlCacheWithReloadableConnection(
+    connectionStringKey: "PostgreSqlCache:ConnectionString",
+    reloadInterval: TimeSpan.FromMinutes(5),
+    setupAction: options =>
+    {
+        options.SchemaName = "cache";
+        options.TableName = "cache_items";
+        options.CreateInfrastructure = true;
+    });
+```
+
+#### Features
+
+- **Automatic Reloading**: Periodically checks for updated connection strings
+- **Configurable Intervals**: Set how often to check for updates (default: 5 minutes)
+- **Thread-Safe**: Safe concurrent access to connection string updates
+- **Comprehensive Logging**: Detailed logging of connection string changes
+- **Graceful Fallback**: Continues using existing connection string if reload fails
+
+For detailed implementation guide, see [Azure Key Vault Rotation Support](AZURE_KEY_VAULT_ROTATION.md).
+
 ## Code Coverage
 
 This project maintains comprehensive test coverage to ensure reliability and quality. You can view the current coverage status and detailed reports in several ways:
