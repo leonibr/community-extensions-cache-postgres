@@ -79,6 +79,15 @@ jobs:
           name: html-coverage-report
           path: ./TestResults/coverage/report
 
+      - name: Deploy Coverage Report to GitHub Pages
+        if: hashFiles('./TestResults/coverage/coverage.cobertura.xml') != ''
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./TestResults/coverage/report
+          publish_branch: gh-pages
+          force_orphan: true
+
       - name: Display Coverage Summary
         if: hashFiles('./TestResults/coverage/coverage.cobertura.xml') != ''
         run: |
