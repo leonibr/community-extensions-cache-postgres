@@ -13,7 +13,7 @@ This library allows you to seamlessly integrate caching into your ASP.NET / .NET
 
 1. If you already use PostgreSQL, this package avoids the need for additional caching solutions like Redis, reducing infrastructure overhead.
 1. Optimized for fast read and write operations with PostgreSQL, providing excellent caching performance. It is not a competitor to Redis, but it is a good alternative for some scenarios.
-1. Dstributed cache supports scaling of multiple instances and high loads.
+1. Distributed cache supports scaling of multiple instances and high loads.
 1. Simple setup process using standard ASP.NET Core / .NET Core dependency injection.
 1. Provides flexible configuration options including cache expiration policies, background cleanup tasks, read-only mode, and more.
 1. Benefit from the power of open source and a community-driven approach to caching.
@@ -21,28 +21,28 @@ This library allows you to seamlessly integrate caching into your ASP.NET / .NET
 ## Table of Contents
 
 1.  [Getting Started](#getting-started)
-2.  [Installation](#installation)
-3.  [Basic Configuration](#basic-configuration)
-4.  [Configuration Options](#configuration-options)
+    - [Installation](#installation)
+    - [Basic Configuration](#basic-configuration)
+1.  [Configuration Options](#configuration-options)
     - [Disable Remove Expired](#disable-remove-expired-true-use-case-default-false)
     - [Update on Get Cache Item](#updateongetcacheitem--false-use-case-default-true)
     - [Read Only Mode](#readonlymode--true-use-case-default-false)
     - [Create Infrastructure](#createinfrastructure--true-use-case)
-5.  [Usage Examples](#usage-examples)
+1.  [Usage Examples](#usage-examples)
     - [Basic Example](#basic-example)
     - [Using Custom Options](#using-custom-options)
-6.  [Code Coverage](#code-coverage)
-7.  [Running the Console Sample](#runing-the-console-sample)
-8.  [Running the React+WebApi Web Sample](#runing-the-reactwebapi-websample-project)
-9.  [Change Log](#change-log)
-10. [Contributing](#contributing)
-11. [License](#license)
-12. [FAQ](#faq)
-13. [Troubleshooting](#troubleshooting)
+1.  [Code Coverage](#code-coverage)
+1.  [Running the Console Sample](#running-the-console-sample)
+1.  [Running the React+WebApi Web Sample](#running-the-reactwebapi-websample-project)
+1.  [Change Log](#change-log)
+1.  [Contributing](#contributing)
+1.  [License](#license)
+1.  [FAQ](#faq)
+1.  [Troubleshooting](#troubleshooting)
 
 ## Getting Started
 
-### 1. Installation
+### Installation
 
 Install the package via the .NET CLI:
 
@@ -50,7 +50,7 @@ Install the package via the .NET CLI:
 dotnet add package Community.Microsoft.Extensions.Caching.PostgreSql
 ```
 
-### 2. Basic Configuration
+### Basic Configuration
 
 Add the following line to your `Startup.cs` or `Program.cs`'s `ConfigureServices` method:
 
@@ -101,51 +101,22 @@ IConfigureOptions<PostgreSqlCacheOptions>
 
 ## Configuration Options
 
-### `DisableRemoveExpired = True` use case (default false):
+The following options can be set when configuring the PostgreSQL distributed cache. Each option is described with its purpose, recommended use cases, and any pros/cons to help you decide the best configuration for your scenario.
 
-When you have 2 or more instances/microservices/processes and you want to leave only one instance to remove expired items.
+**For detailed explanations, usage guidance, and pros/cons for each option, see the [Options Details & Usage Guidance](docs/OptionsDetails.md) document.**
 
-- **Note 1:** This is not mandatory; assess whether it fits your needs.
-- **Note 2:** If you have only one instance and set this to `True`, expired items will not be automatically removed. When calling `GetItem`, expired items are filtered out. In this scenario, you are responsible for manually removing the expired keys or updating them.
+| Option                                                                                  | Type     | Default  | Description                                                      |
+| --------------------------------------------------------------------------------------- | -------- | -------- | ---------------------------------------------------------------- |
+| `ConnectionString`                                                                      | string   | —        | The PostgreSQL connection string. **Required.**                  |
+| `SchemaName`                                                                            | string   | "public" | The schema where the cache table will be created.                |
+| `TableName`                                                                             | string   | "cache"  | The name of the cache table.                                     |
+| [`DisableRemoveExpired`](docs/OptionsDetails.md#1-disableremoveexpired)                 | bool     | false    | Disables automatic removal of expired cache items.               |
+| [`UpdateOnGetCacheItem`](docs/OptionsDetails.md#2-updateongetcacheitem)                 | bool     | true     | Updates sliding expiration on cache reads.                       |
+| [`ReadOnlyMode`](docs/OptionsDetails.md#3-readonlymode)                                 | bool     | false    | Enables read-only mode (no writes, disables sliding expiration). |
+| [`CreateInfrastructure`](docs/OptionsDetails.md#4-createinfrastructure)                 | bool     | true     | Automatically creates the schema/table if they do not exist.     |
+| [`ExpiredItemsDeletionInterval`](docs/OptionsDetails.md#5-expireditemsdeletioninterval) | TimeSpan | 30 min   | How often expired items are deleted (min: 5 min).                |
 
-### `UpdateOnGetCacheItem = false` use case (default true):
-
-If you (or the implementation using this cache) are explicitly calling `IDistributedCache.Refresh` to update the sliding window, you can turn off `UpdateOnGetCacheItem` to remove the extra DB expiration update call prior to reading the cached value. This is useful when used with ASP.NET Core Session handling.
-
-```csharp
-services.AddDistributedPostgreSqlCache((serviceProvider, setup) =>
-{
-    ...
-    setup.UpdateOnGetCacheItem = false;
-    // Or
-    var configuration = serviceProvider.GetRequiredService<IConfiguration>();
-    setup.UpdateOnGetCacheItem = configuration["UpdateOnGetCacheItem"];
-    ...
-});
-```
-
-### `ReadOnlyMode = true` use case (default false):
-
-For read-only databases, or if the database user lacks `write` permissions, you can set `ReadOnlyMode = true`.
-
-- **Note 1:** This will disable sliding expiration; only absolute expiration will work.
-- **Note 2:** This can improve performance, but you will not be able to change any cache values.
-
-```csharp
-services.AddDistributedPostgreSqlCache((serviceProvider, setup) =>
-{
-    ...
-    setup.ReadOnlyMode = true;
-    // Or
-    var configuration = serviceProvider.GetRequiredService<IConfiguration>();
-    setup.ReadOnlyMode = configuration["UpdateOnGetCacheItem"];
-    ...
-});
-```
-
-### `CreateInfrastructure = true` use case:
-
-This creates the table and schema for storing the cache (names are configurable) if they don't exist.
+---
 
 ## Usage Examples
 
@@ -323,18 +294,18 @@ prepare-database.cmd -erase // windows
 
 ## Change Log
 
-- [v5.0.1](https://github.com/leonibr/community-extensions-cache-postgres/releases/tag/v5.0.1) - Added unit tests and improve multitarget frameworks
-- [v5.0.0](https://github.com/leonibr/community-extensions-cache-postgres/releases/tag/v5.0.0) - Added support for .NET 9
+- [v5.0.1](https://github.com/leonibr/community-extensions-cache-postgres/releases/tag/5.0.1) - Added unit tests and improve multitarget frameworks
+- [v5.0.0](https://github.com/leonibr/community-extensions-cache-postgres/releases/tag/5.0.0) - Added support for .NET 9
   - [BREAKING CHANGE] - Dropped support for .NETStandard2.0
   - [BREAKING CHANGE] - Supports .NET 9, .NET 8 and .NET 6
-- [v4.0.1](https://github.com/leonibr/community-extensions-cache-postgres/releases/tag/v4.0.1) - Added support for .NET 7
+- [v4.0.1](https://github.com/leonibr/community-extensions-cache-postgres/releases/tag/4.0.1) - Added support for .NET 7
   - [BREAKING CHANGE] - Dropped support for .NET 5
   - [BREAKING CHANGE] - Now uses stored procedures (won't work with PostgreSQL <= 10, use version 3)
 - [v3.1.2](https://github.com/leonibr/community-extensions-cache-postgres/releases/tag/v3.1.2) - Removed dependency for `IHostApplicationLifetime` if not supported on the platform (e.g., AWS) - issue #28
-- [v3.1.0](https://github.com/leonibr/community-extensions-cache-postgres/releases/tag/v3.1.0) - Added log messages on `Debug` Level, multitarget .NET 5 and .NET 6, dropped support for netstandard2.0, fixed sample to match multi-targeting and sample database.
+- [v3.1.0](https://github.com/leonibr/community-extensions-cache-postgres/releases/tag/3.1.0) - Added log messages on `Debug` Level, multitarget .NET 5 and .NET 6, dropped support for netstandard2.0, fixed sample to match multi-targeting and sample database.
 - [v3.0.2](https://github.com/leonibr/community-extensions-cache-postgres/releases/tag/v3.0.2) - `CreateInfrastructure` also creates the schema - issue #8
 - [v3.0.1](https://github.com/leonibr/community-extensions-cache-postgres/releases/tag/v3.0.1) - Added `DisableRemoveExpired` configuration; if `TRUE`, the cache instance won't delete expired items.
-- [v3.0](https://github.com/leonibr/community-extensions-cache-postgres/releases/tag/v3.0) - [BREAKING CHANGE] - Direct instantiation not preferred. Single-threaded loop remover.
+- [v3.0](https://github.com/leonibr/community-extensions-cache-postgres/releases/tag/3.0.0) - [BREAKING CHANGE] - Direct instantiation not preferred. Single-threaded loop remover.
 - [v2.0.x commits](https://github.com/leonibr/community-extensions-cache-postgres/commits/main?utf8=%E2%9C%93&search=v2.0) - Updated everything to .NET 5.0, more detailed sample project.
 - [v1.0.8](https://github.com/leonibr/community-extensions-cache-postgres/releases/tag/v1.0.8) - Updated to the latest dependencies.
 
@@ -372,7 +343,3 @@ Please check the [Github issues page](https://github.com/leonibr/community-exten
 ### Known issues:
 
 - The library does not perform well with large objects in the cache due to the nature of PostgreSQL, large objects may cause performance bottlenecks.
-
----
-
-### This is a fork from [repo](https://github.com/wullemsb/Extensions.Caching.PostgreSQL)
