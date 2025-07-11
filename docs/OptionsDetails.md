@@ -1,5 +1,7 @@
 # Options Details & Usage Guidance
 
+[← Back to Configuration Options in README](../README.md#configuration-options)
+
 ## `ConnectionString`, `SchemaName`, `TableName`
 
 - **What they do:**  
@@ -81,7 +83,7 @@
 
 ---
 
-## Example: Custom Configuration
+## Custom Configuration
 
 ```csharp
 services.AddDistributedPostgreSqlCache(options =>
@@ -96,3 +98,5 @@ services.AddDistributedPostgreSqlCache(options =>
     options.ReadOnlyMode = false; // Set true for read-only DB users
 });
 ```
+
+[← Back to Configuration Options in README](../README.md#configuration-options)
