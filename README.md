@@ -101,51 +101,119 @@ IConfigureOptions<PostgreSqlCacheOptions>
 
 ## Configuration Options
 
-### `DisableRemoveExpired = True` use case (default false):
+The following options can be set when configuring the PostgreSQL distributed cache. Each option is described with its purpose, recommended use cases, and any pros/cons to help you decide the best configuration for your scenario.
 
-When you have 2 or more instances/microservices/processes and you want to leave only one instance to remove expired items.
+| Option                                                            | Type     | Default  | Description                                                      |
+| ----------------------------------------------------------------- | -------- | -------- | ---------------------------------------------------------------- |
+| `ConnectionString`                                                | string   | —        | The PostgreSQL connection string. **Required.**                  |
+| `SchemaName`                                                      | string   | "public" | The schema where the cache table will be created.                |
+| `TableName`                                                       | string   | "cache"  | The name of the cache table.                                     |
+| [`DisableRemoveExpired`](#1-disableremoveexpired)                 | bool     | false    | Disables automatic removal of expired cache items.               |
+| [`UpdateOnGetCacheItem`](#2-updateongetcacheitem)                 | bool     | true     | Updates sliding expiration on cache reads.                       |
+| [`ReadOnlyMode`](#3-readonlymode)                                 | bool     | false    | Enables read-only mode (no writes, disables sliding expiration). |
+| [`CreateInfrastructure`](#4-createinfrastructure)                 | bool     | true     | Automatically creates the schema/table if they do not exist.     |
+| [`ExpiredItemsDeletionInterval`](#5-expireditemsdeletioninterval) | TimeSpan | 30 min   | How often expired items are deleted (min: 5 min).                |
 
-- **Note 1:** This is not mandatory; assess whether it fits your needs.
-- **Note 2:** If you have only one instance and set this to `True`, expired items will not be automatically removed. When calling `GetItem`, expired items are filtered out. In this scenario, you are responsible for manually removing the expired keys or updating them.
+---
 
-### `UpdateOnGetCacheItem = false` use case (default true):
+### Option Details & Usage Guidance
 
-If you (or the implementation using this cache) are explicitly calling `IDistributedCache.Refresh` to update the sliding window, you can turn off `UpdateOnGetCacheItem` to remove the extra DB expiration update call prior to reading the cached value. This is useful when used with ASP.NET Core Session handling.
+#### `ConnectionString`, `SchemaName`, `TableName`
+
+- **What they do:**  
+  Standard DB connection and naming options.
+- **When to use:**
+  - Always set `ConnectionString`.
+  - Customize `SchemaName`/`TableName` if you want to use non-default names or schemas.
+
+#### 1. `DisableRemoveExpired`
+
+- **What it does:**  
+  If `true`, this instance will not automatically remove expired cache items in the background.
+- **When to use:**
+  - You have multiple app instances and want only one to perform cleanup (set `true` on all but one).
+  - You want to handle expired item cleanup yourself.
+- **Pros:**
+  - Reduces DB load if you have many instances.
+- **Cons:**
+  - If all instances have this set to `true`, expired items will accumulate unless you remove them manually.
+- **Recommendation:**
+  - For single-instance deployments, leave as `false`.
+  - For multi-instance, set `true` on all but one instance.
+
+#### 2. `UpdateOnGetCacheItem`
+
+- **What it does:**  
+  If `true`, reading a cache item with sliding expiration will update its expiration in the database.
+- **When to use:**
+  - Leave as `true` for most scenarios.
+  - Set to `false` if you explicitly call `IDistributedCache.Refresh` (e.g., with ASP.NET Core Session).
+- **Pros:**
+  - Ensures sliding expiration works automatically.
+- **Cons:**
+  - Slightly more DB writes on cache reads.
+- **Recommendation:**
+  - Set to `false` only if you manage sliding expiration yourself.
+
+#### 3. `ReadOnlyMode`
+
+- **What it does:**  
+  If `true`, disables all write operations (including sliding expiration updates).
+- **When to use:**
+  - Your database user has only read permissions.
+  - You want to ensure the cache is never modified by this app.
+- **Pros:**
+  - Prevents accidental writes.
+  - Can improve performance (no write queries).
+- **Cons:**
+  - Sliding expiration is disabled; only absolute expiration works.
+  - Cache cannot be updated or cleared by this instance.
+- **Recommendation:**
+  - Use for read-only replicas or when you want strict read-only cache access.
+
+#### 4. `CreateInfrastructure`
+
+- **What it does:**  
+  If `true`, creates the schema and table for the cache if they do not exist.
+- **When to use:**
+  - You want the app to auto-provision the cache table/schema.
+- **Pros:**
+  - Simplifies setup.
+- **Cons:**
+  - May not be desirable in environments with strict DB change controls.
+- **Recommendation:**
+  - Set to `false` if you want to manage DB schema manually.
+
+#### 5. `ExpiredItemsDeletionInterval`
+
+- **What it does:**  
+  Sets how often the background process checks for and deletes expired items.
+- **When to use:**
+  - Adjust for your cache churn and DB performance needs.
+- **Pros:**
+  - Lower intervals mean expired items are removed sooner.
+- **Cons:**
+  - Too frequent can increase DB load; too infrequent can leave expired data longer.
+- **Recommendation:**
+  - Default (30 min) is suitable for most; minimum is 5 min.
+
+---
+
+### Example: Custom Configuration
 
 ```csharp
-services.AddDistributedPostgreSqlCache((serviceProvider, setup) =>
+services.AddDistributedPostgreSqlCache(options =>
 {
-    ...
-    setup.UpdateOnGetCacheItem = false;
-    // Or
-    var configuration = serviceProvider.GetRequiredService<IConfiguration>();
-    setup.UpdateOnGetCacheItem = configuration["UpdateOnGetCacheItem"];
-    ...
+    options.ConnectionString = configuration["CacheConnectionString"];
+    options.SchemaName = "my_schema";
+    options.TableName = "my_cache_table";
+    options.DisableRemoveExpired = true; // Only if another instance is cleaning up
+    options.CreateInfrastructure = false; // If you manage schema manually
+    options.ExpiredItemsDeletionInterval = TimeSpan.FromMinutes(15);
+    options.UpdateOnGetCacheItem = false; // If you call Refresh explicitly
+    options.ReadOnlyMode = false; // Set true for read-only DB users
 });
 ```
-
-### `ReadOnlyMode = true` use case (default false):
-
-For read-only databases, or if the database user lacks `write` permissions, you can set `ReadOnlyMode = true`.
-
-- **Note 1:** This will disable sliding expiration; only absolute expiration will work.
-- **Note 2:** This can improve performance, but you will not be able to change any cache values.
-
-```csharp
-services.AddDistributedPostgreSqlCache((serviceProvider, setup) =>
-{
-    ...
-    setup.ReadOnlyMode = true;
-    // Or
-    var configuration = serviceProvider.GetRequiredService<IConfiguration>();
-    setup.ReadOnlyMode = configuration["ReadOnlyMode"];
-    ...
-});
-```
-
-### `CreateInfrastructure = true` use case:
-
-This creates the table and schema for storing the cache (names are configurable) if they don't exist.
 
 ## Usage Examples
 
