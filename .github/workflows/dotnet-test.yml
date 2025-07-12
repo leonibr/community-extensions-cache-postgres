@@ -2,9 +2,9 @@ name: .NET Test & Coverage
 
 on:
   push:
-    branches: [master, add-unit-tests]
+    branches: [master, next, add-unit-tests]
   pull_request:
-    branches: [master, add-unit-tests]
+    branches: [master, next, add-unit-tests]
 
 jobs:
   build-test-coverage:
@@ -33,9 +33,8 @@ jobs:
             --no-build --configuration Release \
             --logger "trx;LogFileName=test-results.trx" \
             --results-directory ./TestResults \
-            /p:CollectCoverage=true \
-            /p:CoverletOutput=./TestResults/coverage/ \
-            /p:CoverletOutputFormat=cobertura
+            --collect:"XPlat Code Coverage" \
+            --collect:"Code Coverage"
 
       - name: Upload Test Results
         uses: actions/upload-artifact@v4
@@ -50,8 +49,10 @@ jobs:
 
       - name: Check if coverage file exists
         run: |
-          if [ -f "./TestResults/coverage/coverage.cobertura.xml" ]; then
-            echo "Coverage file found, proceeding with report generation"
+          COVERAGE_FILE=$(find ./TestResults -name "coverage.cobertura.xml" -type f | head -1)
+          if [ -n "$COVERAGE_FILE" ]; then
+            echo "Coverage file found at: $COVERAGE_FILE"
+            echo "COVERAGE_FILE_PATH=$COVERAGE_FILE" >> $GITHUB_ENV
           else
             echo "Coverage file not found, skipping report generation"
             exit 0
@@ -59,27 +60,28 @@ jobs:
 
       - name: Upload Coverage Report
         uses: actions/upload-artifact@v4
-        if: hashFiles('./TestResults/coverage/coverage.cobertura.xml') != ''
+        if: env.COVERAGE_FILE_PATH != ''
         with:
           name: coverage-report
-          path: ./TestResults/coverage/coverage.cobertura.xml
+          path: ${{ env.COVERAGE_FILE_PATH }}
 
       - name: Generate Coverage Report
         uses: danielpalme/ReportGenerator-GitHub-Action@5.3.5
-        if: hashFiles('./TestResults/coverage/coverage.cobertura.xml') != ''
+        if: env.COVERAGE_FILE_PATH != ''
         with:
-          reports: './TestResults/coverage/coverage.cobertura.xml'
+          reports: '${{ env.COVERAGE_FILE_PATH }}'
           targetdir: './TestResults/coverage/report'
           reporttypes: 'MarkdownSummary;Html'
+          verbosity: 'Info'
 
-      - name: Upload HTML Coverage Report
+      - name: Upload HTML Coverage Report as Artifact
         uses: actions/upload-artifact@v4
-        if: hashFiles('./TestResults/coverage/coverage.cobertura.xml') != ''
+        if: env.COVERAGE_FILE_PATH != ''
         with:
           name: html-coverage-report
           path: ./TestResults/coverage/report
 
       - name: Display Coverage Summary
-        if: hashFiles('./TestResults/coverage/coverage.cobertura.xml') != ''
+        if: env.COVERAGE_FILE_PATH != ''
         run: |
           cat ./TestResults/coverage/report/Summary.md || echo 'No coverage summary found.'
