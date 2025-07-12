@@ -1,5 +1,9 @@
 name: .NET Test & Coverage
 
+permissions:
+  checks: write
+  contents: read
+
 on:
   push:
     branches: [master, next, add-unit-tests]
