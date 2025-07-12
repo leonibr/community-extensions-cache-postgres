@@ -109,7 +109,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
                     _logger.LogDebug($"Task Delay interval will sleep for {_expiredItemsDeletionInterval}s");
                     await Task
                             .Delay(_expiredItemsDeletionInterval, _cancellationTokenSource.Token)
-                            .ConfigureAwait(true);
+                            .ConfigureAwait(false);
                     _logger.LogDebug($"Task Delay interval resumed after {_expiredItemsDeletionInterval}s");
                 }
                 catch (TaskCanceledException)
