@@ -3,6 +3,7 @@ name: .NET Test & Coverage
 permissions:
   checks: write
   contents: read
+  issues: write
 
 on:
   push:
