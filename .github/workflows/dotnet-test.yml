@@ -51,6 +51,7 @@ jobs:
         uses: EnricoMi/publish-unit-test-result-action@v2
         with:
           files: ./TestResults/*.trx
+          comment_mode: off
 
       - name: Check if coverage file exists
         run: |
