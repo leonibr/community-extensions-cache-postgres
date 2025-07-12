@@ -1,5 +1,10 @@
 name: .NET Test & Coverage
 
+permissions:
+  checks: write
+  contents: read
+  issues: write
+
 on:
   push:
     branches: [master, next, add-unit-tests]
@@ -46,6 +51,7 @@ jobs:
         uses: EnricoMi/publish-unit-test-result-action@v2
         with:
           files: ./TestResults/*.trx
+          comment_mode: off
 
       - name: Check if coverage file exists
         run: |
