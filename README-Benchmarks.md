@@ -256,6 +256,6 @@ Instead of individual benchmark snapshots, you now have:
 ✅ **Zero-cost hosting** using GitHub Pages  
 ✅ **Seamless CI/CD integration** with existing workflows
 
-**Your dashboard**: `https://[username].github.io/[repository]/benchmarks/`
+**Your dashboard**: `https://leonibr.github.io/community-extensions-cache-postgres/benchmarks/`
 
 The horizontal, historical view you requested is now built into every benchmark run! 🚀

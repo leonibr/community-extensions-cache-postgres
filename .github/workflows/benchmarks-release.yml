@@ -175,7 +175,7 @@ jobs:
             const path = require('path');
             
             try {
-              const reportPath = 'reports/performance-report-${{ github.event.release.tag_name }}.md';
+              const reportPath = `reports/performance-report-${context.payload.release.tag_name}.md`;
               
               if (fs.existsSync(reportPath)) {
                 const report = fs.readFileSync(reportPath, 'utf8');
@@ -187,7 +187,7 @@ jobs:
                 const currentRelease = await github.rest.repos.getRelease({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
-                  release_id: ${{ github.event.release.id }}
+                  release_id: context.payload.release.id
                 });
                 
                 const currentBody = currentRelease.data.body || '';
@@ -197,14 +197,14 @@ jobs:
 
 ${summary}
 
-**📁 [Download Full Performance Report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})**
+**📁 [Download Full Performance Report](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})**
 
 ---`;
                 
                 await github.rest.repos.updateRelease({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
-                  release_id: ${{ github.event.release.id }},
+                  release_id: context.payload.release.id,
                   body: currentBody + performanceSection
                 });
                 
@@ -222,8 +222,8 @@ ${summary}
         uses: actions/github-script@v7
         with:
           script: |
-            const title = `📊 Performance Review: ${{ github.event.release.tag_name }}`;
-            const body = `# Performance Review for Release ${{ github.event.release.tag_name }}
+            const title = `📊 Performance Review: ${context.payload.release.tag_name}`;
+            const body = `# Performance Review for Release ${context.payload.release.tag_name}
             
             A comprehensive performance benchmark has been completed for this release.
             
@@ -235,7 +235,7 @@ ${summary}
             
             ## Benchmark Results
             
-            📁 **[Download Full Results](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})**
+            📁 **[Download Full Results](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})**
             
             The benchmark suite tested:
             - ✅ Core Operations (Get, Set, Delete, Refresh)
@@ -245,7 +245,7 @@ ${summary}
             - ✅ Bulk Operations (10-500 operation batches)
             
             ## Environment Details
-            - **Runtime**: .NET ${{ env.DOTNET_VERSION }}
+            - **Runtime**: .NET ${process.env.DOTNET_VERSION}
             - **Database**: PostgreSQL 16 (TestContainer)
             - **Platform**: GitHub Actions Ubuntu Runner
             - **Configuration**: Release build
