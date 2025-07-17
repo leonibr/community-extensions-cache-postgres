@@ -15,7 +15,7 @@ The benchmark suite evaluates performance across multiple dimensions:
 ## Prerequisites
 
 - .NET 9.0 SDK
-- Docker (for PostgreSQL TestContainer to run)
+- Docker (for PostgreSQL TestContainer run)
 - At least 4GB RAM available for Docker containers
 - x64 platform (recommended for accurate benchmarks)
 
