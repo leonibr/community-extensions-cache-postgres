@@ -19,7 +19,11 @@ on:
           - bulk
           - all
   push:
-    branches: [main]
+    branches:
+      [
+        master,
+        79-request-add-benchmarks-and-integrate-performance-testing-into-cicd,
+      ]
     paths:
       - 'Extensions.Caching.PostgreSql/**'
       - 'Benchmarks/**'
