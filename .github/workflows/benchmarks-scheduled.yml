@@ -1,0 +1,157 @@
+name: Scheduled Performance Benchmarks
+
+on:
+  schedule:
+    # Run Monday and Thursday at 2 AM UTC to track performance trends
+    - cron: '0 2 * * 1,4'
+  workflow_dispatch:
+    inputs:
+      benchmark_suite:
+        description: 'Benchmark suite to run'
+        required: false
+        default: 'core'
+        type: choice
+        options:
+          - core
+          - datasize
+          - expiration
+          - concurrency
+          - bulk
+          - all
+  push:
+    branches:
+      [
+        master,
+        79-request-add-benchmarks-and-integrate-performance-testing-into-cicd,
+      ]
+    paths:
+      - 'Extensions.Caching.PostgreSql/**'
+      - 'Benchmarks/**'
+
+env:
+  DOTNET_VERSION: '9.0.x'
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    permissions:
+      contents: write
+      deployments: write
+      pages: write
+
+    strategy:
+      matrix:
+        benchmark: ${{ fromJson(github.event.inputs.benchmark_suite == 'all' && '["core", "datasize", "expiration", "concurrency", "bulk"]' || github.event.inputs.benchmark_suite && format('["{0}"]', github.event.inputs.benchmark_suite) || '["core"]') }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore dependencies
+        run: dotnet restore Benchmarks/Benchmarks.csproj
+
+      - name: Build benchmarks
+        run: dotnet build Benchmarks/Benchmarks.csproj --configuration Release --no-restore
+
+      - name: Run ${{ matrix.benchmark }} benchmark
+        run: dotnet run --project Benchmarks/Benchmarks.csproj --configuration Release --no-build -- ${{ matrix.benchmark }}
+
+      - name: Set benchmark class name
+        id: benchmark-class
+        run: |
+          case "${{ matrix.benchmark }}" in
+            "core") echo "class_name=CoreOperationsBenchmark" >> $GITHUB_OUTPUT ;;
+            "datasize") echo "class_name=DataSizeBenchmark" >> $GITHUB_OUTPUT ;;
+            "expiration") echo "class_name=ExpirationBenchmark" >> $GITHUB_OUTPUT ;;
+            "concurrency") echo "class_name=ConcurrencyBenchmark" >> $GITHUB_OUTPUT ;;
+            "bulk") echo "class_name=BulkOperationsBenchmark" >> $GITHUB_OUTPUT ;;
+            *) echo "class_name=Unknown" >> $GITHUB_OUTPUT ;;
+          esac
+
+      - name: Store benchmark result
+        uses: benchmark-action/github-action-benchmark@v1
+        with:
+          name: ${{ matrix.benchmark }}-benchmark
+          tool: 'benchmarkdotnet'
+          output-file-path: BenchmarkDotNet.Artifacts/results/Benchmarks.UseCases.${{ steps.benchmark-class.outputs.class_name }}-report-full-compressed.json
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          auto-push: true
+          # Show alert with commit comment on detecting possible performance regression
+          alert-threshold: '150%'
+          comment-on-alert: true
+          fail-on-alert: false
+          # Store data in gh-pages branch
+          gh-pages-branch: 'gh-pages'
+          benchmark-data-dir-path: 'benchmarks'
+
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results-${{ matrix.benchmark }}-${{ github.run_number }}
+          path: Benchmarks/BenchmarkDotNet.Artifacts/results/
+          retention-days: 30
+
+      - name: Create benchmark summary
+        run: |
+          echo "# Benchmark Results: ${{ matrix.benchmark }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Date:** $(date)" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📊 **[View Historical Trends](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/benchmarks/)**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Find and include the GitHub markdown report
+          REPORT_FILE=$(find Benchmarks/BenchmarkDotNet.Artifacts/results/ -name "*github.md" | head -1)
+          if [ -f "$REPORT_FILE" ]; then
+            cat "$REPORT_FILE" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "No markdown report found" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  performance-report:
+    needs: benchmark
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Download all benchmark results
+        uses: actions/download-artifact@v4
+        with:
+          pattern: benchmark-results-*
+          merge-multiple: true
+          path: ./benchmark-results
+
+      - name: Generate consolidated report
+        run: |
+          mkdir -p reports
+
+          echo "# PostgreSQL Cache Performance Report" > reports/performance-summary.md
+          echo "**Generated:** $(date)" >> reports/performance-summary.md
+          echo "**Commit:** ${{ github.sha }}" >> reports/performance-summary.md
+          echo "**Trigger:** ${{ github.event_name }}" >> reports/performance-summary.md
+          echo "" >> reports/performance-summary.md
+          echo "📊 **[View Historical Dashboard](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/benchmarks/)**" >> reports/performance-summary.md
+          echo "" >> reports/performance-summary.md
+
+          # Process each benchmark type
+          for md_file in benchmark-results/*github.md; do
+            if [ -f "$md_file" ]; then
+              echo "## $(basename "$md_file" | sed 's/-report-github.md//')" >> reports/performance-summary.md
+              cat "$md_file" >> reports/performance-summary.md
+              echo "" >> reports/performance-summary.md
+            fi
+          done
+
+      - name: Upload consolidated report
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-report-${{ github.run_number }}
+          path: reports/performance-summary.md
+          retention-days: 90

@@ -2,6 +2,8 @@
 using Microsoft.Extensions.Options;
 using System;
 using Npgsql;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace Community.Microsoft.Extensions.Caching.PostgreSql
 {
@@ -18,6 +20,34 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
         /// If <see cref="DataSourceFactory"/> not set, <see cref="ConnectionString"/> would be used to connect to the database.
         /// </summary>
         public string ConnectionString { get; set; }
+
+        /// <summary>
+        /// Configuration key for the connection string. Used for reloading from configuration sources like Azure Key Vault.
+        /// If set, the connection string will be reloaded from configuration when needed.
+        /// </summary>
+        public string ConnectionStringKey { get; set; }
+
+        /// <summary>
+        /// Configuration instance for reloading connection strings. Required when using <see cref="ConnectionStringKey"/>.
+        /// </summary>
+        public IConfiguration Configuration { get; set; }
+
+        /// <summary>
+        /// Logger instance for connection string reloading operations.
+        /// </summary>
+        public ILogger Logger { get; set; }
+
+        /// <summary>
+        /// Time interval to check for connection string updates. Default is 5 minutes.
+        /// Only used when <see cref="ConnectionStringKey"/> is set.
+        /// </summary>
+        public TimeSpan ConnectionStringReloadInterval { get; set; } = TimeSpan.FromMinutes(5);
+
+        /// <summary>
+        /// Whether to enable automatic connection string reloading from configuration.
+        /// Default is false.
+        /// </summary>
+        public bool EnableConnectionStringReloading { get; set; } = false;
 
         /// <summary>
         /// An abstraction to represent the clock of a machine in order to enable unit testing.

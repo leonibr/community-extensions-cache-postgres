@@ -5,6 +5,8 @@ using System;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 
 namespace Community.Microsoft.Extensions.Caching.PostgreSql
 {
@@ -28,10 +30,10 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
 
 			services.AddOptions();
 			AddPostgreSqlCacheServices(services);
-			
+
 			return services;
 		}
-		
+
 		/// <summary>
 		/// Adds Community Microsoft PostgreSql distributed caching services to the specified <see cref="IServiceCollection" />.
 		/// </summary>
@@ -79,14 +81,99 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
 			AddPostgreSqlCacheServices(services);
 			services.AddSingleton<IConfigureOptions<PostgreSqlCacheOptions>>(
 				sp => new ConfigureOptions<PostgreSqlCacheOptions>(opt => setupAction(sp, opt)));
-			
+
+			return services;
+		}
+
+		/// <summary>
+		/// Adds PostgreSQL distributed caching services with reloadable connection string support for Azure Key Vault rotation.
+		/// </summary>
+		/// <param name="services">The <see cref="IServiceCollection" /> to add services to.</param>
+		/// <param name="connectionStringKey">The configuration key for the connection string.</param>
+		/// <param name="setupAction">An <see cref="Action{PostgreSqlCacheOptions}" /> to configure additional options.</param>
+		/// <returns>The <see cref="IServiceCollection" /> so that additional calls can be chained.</returns>
+		public static IServiceCollection AddDistributedPostgreSqlCacheWithReloadableConnection(
+			this IServiceCollection services,
+			string connectionStringKey,
+			Action<PostgreSqlCacheOptions> setupAction = null)
+		{
+			if (services == null)
+			{
+				throw new ArgumentNullException(nameof(services));
+			}
+
+			if (string.IsNullOrEmpty(connectionStringKey))
+			{
+				throw new ArgumentException("Connection string key cannot be null or empty.", nameof(connectionStringKey));
+			}
+
+			services.AddOptions();
+			AddPostgreSqlCacheServices(services);
+			services.AddSingleton<IConfigureOptions<PostgreSqlCacheOptions>>(
+				sp => new ConfigureOptions<PostgreSqlCacheOptions>(options =>
+				{
+					var configuration = sp.GetRequiredService<IConfiguration>();
+					var logger = sp.GetRequiredService<ILogger<PostgreSqlCache>>();
+
+					options.ConnectionStringKey = connectionStringKey;
+					options.Configuration = configuration;
+					options.Logger = logger;
+					options.EnableConnectionStringReloading = true;
+
+					setupAction?.Invoke(options);
+				}));
+
+			return services;
+		}
+
+		/// <summary>
+		/// Adds PostgreSQL distributed caching services with reloadable connection string support for Azure Key Vault rotation.
+		/// </summary>
+		/// <param name="services">The <see cref="IServiceCollection" /> to add services to.</param>
+		/// <param name="connectionStringKey">The configuration key for the connection string.</param>
+		/// <param name="reloadInterval">The interval to check for connection string updates.</param>
+		/// <param name="setupAction">An <see cref="Action{PostgreSqlCacheOptions}" /> to configure additional options.</param>
+		/// <returns>The <see cref="IServiceCollection" /> so that additional calls can be chained.</returns>
+		public static IServiceCollection AddDistributedPostgreSqlCacheWithReloadableConnection(
+			this IServiceCollection services,
+			string connectionStringKey,
+			TimeSpan reloadInterval,
+			Action<PostgreSqlCacheOptions> setupAction = null)
+		{
+			if (services == null)
+			{
+				throw new ArgumentNullException(nameof(services));
+			}
+
+			if (string.IsNullOrEmpty(connectionStringKey))
+			{
+				throw new ArgumentException("Connection string key cannot be null or empty.", nameof(connectionStringKey));
+			}
+
+			services.AddOptions();
+			AddPostgreSqlCacheServices(services);
+			services.AddSingleton<IConfigureOptions<PostgreSqlCacheOptions>>(
+				sp => new ConfigureOptions<PostgreSqlCacheOptions>(options =>
+				{
+					var configuration = sp.GetRequiredService<IConfiguration>();
+					var logger = sp.GetRequiredService<ILogger<PostgreSqlCache>>();
+
+					options.ConnectionStringKey = connectionStringKey;
+					options.Configuration = configuration;
+					options.Logger = logger;
+					options.EnableConnectionStringReloading = true;
+					options.ConnectionStringReloadInterval = reloadInterval;
+
+					setupAction?.Invoke(options);
+				}));
+
 			return services;
 		}
 
 		// to enable unit testing
-        private static void AddPostgreSqlCacheServices(IServiceCollection services)
+		private static void AddPostgreSqlCacheServices(IServiceCollection services)
 		{
-            services.AddSingleton<IDatabaseOperations, DatabaseOperations>();
+			services.AddSingleton<IDatabaseOperations, DatabaseOperations>();
 			services.AddSingleton<IDatabaseExpiredItemsRemoverLoop, DatabaseExpiredItemsRemoverLoop>();
 			services.AddSingleton<IDistributedCache, PostgreSqlCache>();
 		}

@@ -1,0 +1,297 @@
+name: 'Setup Benchmark Dashboard'
+
+on:
+  workflow_dispatch:
+    inputs:
+      force_setup:
+        description: 'Force setup even if already configured'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  setup-dashboard:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check if already setup
+        id: check-setup
+        run: |
+          if git ls-remote --exit-code --heads origin gh-pages >/dev/null 2>&1 && [ "${{ github.event.inputs.force_setup }}" != "true" ]; then
+            echo "setup-needed=false" >> $GITHUB_OUTPUT
+            echo "gh-pages branch already exists. Skipping setup."
+          else
+            echo "setup-needed=true" >> $GITHUB_OUTPUT
+            echo "Setting up benchmark dashboard..."
+          fi
+
+      - name: Create initial benchmark data structure
+        if: steps.check-setup.outputs.setup-needed == 'true'
+        run: |
+          # Create the benchmarks directory structure
+          mkdir -p benchmarks
+
+          # Create initial data files for each benchmark type
+          cat > benchmarks/core-benchmark.json << 'EOF'
+          []
+          EOF
+
+          cat > benchmarks/datasize-benchmark.json << 'EOF'
+          []
+          EOF
+
+          cat > benchmarks/expiration-benchmark.json << 'EOF'
+          []
+          EOF
+
+          cat > benchmarks/concurrency-benchmark.json << 'EOF'
+          []
+          EOF
+
+          cat > benchmarks/bulk-benchmark.json << 'EOF'
+          []
+          EOF
+
+      - name: Create dashboard index page
+        if: steps.check-setup.outputs.setup-needed == 'true'
+        run: |
+          cat > benchmarks/index.html << 'EOF'
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <meta charset="utf-8" />
+              <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1, user-scalable=yes" />
+              <title>PostgreSQL Cache Performance Dashboard</title>
+              <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+              <script src="https://cdn.jsdelivr.net/npm/github-action-benchmark@1.16.2/dist/index.js"></script>
+              <style>
+                body {
+                  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+                  margin: 0;
+                  padding: 20px;
+                  background: #f6f8fa;
+                }
+                .container {
+                  max-width: 1200px;
+                  margin: 0 auto;
+                  background: white;
+                  border-radius: 8px;
+                  box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+                  padding: 30px;
+                }
+                h1 {
+                  color: #24292e;
+                  border-bottom: 1px solid #e1e4e8;
+                  padding-bottom: 10px;
+                }
+                .benchmark-section {
+                  margin: 30px 0;
+                  border: 1px solid #e1e4e8;
+                  border-radius: 6px;
+                  padding: 20px;
+                }
+                .benchmark-title {
+                  font-size: 1.25em;
+                  font-weight: 600;
+                  margin-bottom: 15px;
+                  color: #0366d6;
+                }
+                .chart-container {
+                  position: relative;
+                  height: 400px;
+                  margin: 20px 0;
+                }
+                .info-box {
+                  background: #f1f8ff;
+                  border: 1px solid #c9dfef;
+                  border-radius: 6px;
+                  padding: 15px;
+                  margin-bottom: 20px;
+                }
+                .repo-link {
+                  background: #28a745;
+                  color: white;
+                  padding: 8px 16px;
+                  border-radius: 6px;
+                  text-decoration: none;
+                  display: inline-block;
+                  margin: 10px 0;
+                }
+                .repo-link:hover {
+                  background: #22863a;
+                  color: white;
+                }
+              </style>
+            </head>
+            <body>
+              <div class="container">
+                <h1>📊 PostgreSQL Distributed Cache - Performance Dashboard</h1>
+                
+                <div class="info-box">
+                  <strong>About this Dashboard:</strong><br>
+                  This dashboard shows performance trends for the PostgreSQL distributed cache library.
+                  Benchmarks are automatically run on schedule and for releases to track performance over time.
+                  <br><br>
+                  <a href="https://github.com/$GITHUB_REPOSITORY" class="repo-link">View Repository →</a>
+                </div>
+
+                <div class="benchmark-section">
+                  <div class="benchmark-title">🚀 Core Operations</div>
+                  <p>Basic cache operations: Get, Set, Delete, Refresh</p>
+                  <div class="chart-container">
+                    <canvas id="core-chart"></canvas>
+                  </div>
+                </div>
+
+                <div class="benchmark-section">
+                  <div class="benchmark-title">📦 Data Size Impact</div>
+                  <p>Performance with different payload sizes (1KB to 1MB)</p>
+                  <div class="chart-container">
+                    <canvas id="datasize-chart"></canvas>
+                  </div>
+                </div>
+
+                <div class="benchmark-section">
+                  <div class="benchmark-title">⏰ Expiration Strategies</div>
+                  <p>Different cache expiration configurations</p>
+                  <div class="chart-container">
+                    <canvas id="expiration-chart"></canvas>
+                  </div>
+                </div>
+
+                <div class="benchmark-section">
+                  <div class="benchmark-title">🔄 Concurrency Performance</div>
+                  <p>Performance under concurrent access (2-16 concurrent operations)</p>
+                  <div class="chart-container">
+                    <canvas id="concurrency-chart"></canvas>
+                  </div>
+                </div>
+
+                <div class="benchmark-section">
+                  <div class="benchmark-title">⚡ Bulk Operations</div>
+                  <p>High-throughput scenarios and bulk operations (10-500 items)</p>
+                  <div class="chart-container">
+                    <canvas id="bulk-chart"></canvas>
+                  </div>
+                </div>
+              </div>
+
+              <script>
+                const GITHUB_REPOSITORY = '$GITHUB_REPOSITORY';
+                
+                function initChart(chartId, benchmarkName) {
+                  fetch('./' + benchmarkName + '-benchmark.json')
+                    .then(response => response.json())
+                    .then(data => {
+                      const canvas = document.getElementById(chartId);
+                      if (data.length === 0) {
+                        canvas.parentElement.innerHTML = '<p style="text-align: center; color: #586069; padding: 50px;">No benchmark data available yet. Run the benchmarks to see results here.</p>';
+                        return;
+                      }
+                      
+                      window.generateBenchmarkChart(data, canvas, {
+                        title: benchmarkName.charAt(0).toUpperCase() + benchmarkName.slice(1) + ' Benchmark',
+                        yLabel: 'Time (ms)',
+                        yAxisScale: 'logarithmic'
+                      });
+                    })
+                    .catch(error => {
+                      console.error('Error loading ' + benchmarkName + ' data:', error);
+                      const canvas = document.getElementById(chartId);
+                      canvas.parentElement.innerHTML = '<p style="text-align: center; color: #d73a49; padding: 50px;">Error loading benchmark data</p>';
+                    });
+                }
+
+                // Initialize all charts
+                document.addEventListener('DOMContentLoaded', function() {
+                  initChart('core-chart', 'core');
+                  initChart('datasize-chart', 'datasize');  
+                  initChart('expiration-chart', 'expiration');
+                  initChart('concurrency-chart', 'concurrency');
+                  initChart('bulk-chart', 'bulk');
+                });
+              </script>
+            </body>
+          </html>
+          EOF
+
+          # Replace placeholder with actual repository name
+          sed -i "s/\$GITHUB_REPOSITORY/${{ github.repository }}/g" benchmarks/index.html
+
+      - name: Create README for gh-pages
+        if: steps.check-setup.outputs.setup-needed == 'true'
+        run: |
+          cat > benchmarks/README.md << 'EOF'
+          # Performance Dashboard
+
+          This branch contains the performance benchmark data and dashboard for the PostgreSQL distributed cache library.
+
+          ## View Dashboard
+
+          Visit the live dashboard at: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/benchmarks/
+
+          ## Data Structure
+
+          - `core-benchmark.json` - Core operations data
+          - `datasize-benchmark.json` - Data size impact data  
+          - `expiration-benchmark.json` - Expiration strategies data
+          - `concurrency-benchmark.json` - Concurrency performance data
+          - `bulk-benchmark.json` - Bulk operations data
+          - `index.html` - Dashboard web interface
+
+          ## Automated Updates
+
+          This data is automatically updated by GitHub Actions workflows:
+          - Scheduled runs (Monday/Thursday)
+          - Release validations
+          - Manual triggers
+          EOF
+
+      - name: Deploy to GitHub Pages
+        if: steps.check-setup.outputs.setup-needed == 'true'
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./benchmarks
+          publish_branch: gh-pages
+          commit_message: 'Initial setup of benchmark dashboard'
+
+      - name: Setup complete
+        if: steps.check-setup.outputs.setup-needed == 'true'
+        run: |
+          echo "## 🎉 Benchmark Dashboard Setup Complete!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Your performance dashboard has been initialized and will be available at:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🔗 **https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/benchmarks/**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Next Steps:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "1. **Enable GitHub Pages** in repository Settings → Pages" >> $GITHUB_STEP_SUMMARY
+          echo "   - Source: Deploy from a branch" >> $GITHUB_STEP_SUMMARY
+          echo "   - Branch: gh-pages" >> $GITHUB_STEP_SUMMARY
+          echo "   - Folder: / (root)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "2. **Run your first benchmark** using the scheduled workflow or manually" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "3. **Wait 5-10 minutes** for GitHub Pages to deploy" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "The dashboard will show 'No data available' until you run benchmarks." >> $GITHUB_STEP_SUMMARY
+
+      - name: Already setup
+        if: steps.check-setup.outputs.setup-needed == 'false'
+        run: |
+          echo "## ✅ Dashboard Already Setup" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Your benchmark dashboard is already configured at:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🔗 **https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/benchmarks/**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "To force re-setup, run this workflow again with 'Force setup' checked." >> $GITHUB_STEP_SUMMARY

@@ -27,4 +27,4 @@ jobs:
           name: Extensions.Caching.PostgreSql
           path: ./Extensions.Caching.PostgreSql/bin/Release/Community.Microsoft.Extensions.Caching.PostgreSql.${{ github.event.release.tag_name }}.nupkg
       - name: Deploy to Nuget
-        run: dotnet nuget push **/*.nupkg --api-key ${{ secrets.NUGET_API_SECRET }} --source https://api.nuget.org/v3/index.json --no-symbols true
+        run: dotnet nuget push **/*.nupkg --api-key ${{ secrets.NUGET_API_SECRET }} --source https://api.nuget.org/v3/index.json --no-symbols
