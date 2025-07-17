@@ -1,4 +1,4 @@
-name: Setup Benchmark Dashboard
+name: "Setup Benchmark Dashboard"
 
 on:
   workflow_dispatch:
