@@ -75,19 +75,12 @@ jobs:
             *) echo "class_name=Unknown" >> $GITHUB_OUTPUT ;;
           esac
 
-      - name: Show current directory
-        run: pwd
-      - name: List results directory
-        run: ls -lha $(pwd)/BenchmarkDotNet.Artifacts
-      - name: List results directory
-        run: ls -lha $(pwd)/BenchmarkDotNet.Artifacts/results
-
       - name: Store benchmark result
         uses: benchmark-action/github-action-benchmark@v1
         with:
           name: ${{ matrix.benchmark }}-benchmark
           tool: 'benchmarkdotnet'
-          output-file-path: Benchmarks/BenchmarkDotNet.Artifacts/results/Benchmarks.UseCases.${{ steps.benchmark-class.outputs.class_name }}-report.json
+          output-file-path: BenchmarkDotNet.Artifacts/results/Benchmarks.UseCases.${{ steps.benchmark-class.outputs.class_name }}-report-full-compressed.json
           github-token: ${{ secrets.GITHUB_TOKEN }}
           auto-push: true
           # Show alert with commit comment on detecting possible performance regression

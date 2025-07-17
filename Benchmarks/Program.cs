@@ -38,7 +38,7 @@ Console.WriteLine("PostgreSQL Distributed Cache Benchmarks");
 Console.WriteLine("========================================");
 Console.WriteLine();
 Console.WriteLine("Available benchmark classes:");
-Console.WriteLine("1. CoreOperationsBenchmark - Basic cache operations (Get, Set, Delete, Refresh)[~10 minutes]");
+Console.WriteLine("1. CoreOperationsBenchmark - Basic cache operations (Get, Set, Delete, Refresh) [~10 minutes]");
 Console.WriteLine("2. DataSizeBenchmark - Performance with different payload sizes [~10 minutes]");
 Console.WriteLine("3. ExpirationBenchmark - Different expiration strategies [~10 minutes]");
 Console.WriteLine("4. ConcurrencyBenchmark - Concurrent access patterns [~15 minutes]");
