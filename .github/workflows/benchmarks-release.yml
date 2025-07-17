@@ -1,0 +1,310 @@
+name: Release Performance Validation
+
+on:
+  release:
+    types: [published, prereleased]
+  workflow_dispatch:
+    inputs:
+      benchmark_filter:
+        description: 'Benchmarks to run'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - core
+          - datasize
+          - expiration
+          - concurrency
+          - bulk
+          - all
+      create_release_notes:
+        description: 'Create performance summary for release notes'
+        required: false
+        default: true
+        type: boolean
+
+env:
+  DOTNET_VERSION: '9.0.x'
+
+jobs:
+  comprehensive-benchmarks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        benchmark: ${{ fromJson(
+          github.event.inputs.benchmark_filter == 'all' && '["core", "datasize", "expiration", "concurrency", "bulk"]' ||
+          github.event.inputs.benchmark_filter && format('["{0}"]', github.event.inputs.benchmark_filter) ||
+          '["core", "datasize", "expiration", "concurrency", "bulk"]'
+        ) }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+          
+      - name: Restore dependencies
+        run: dotnet restore Benchmarks/Benchmarks.csproj
+        
+      - name: Build benchmarks
+        run: dotnet build Benchmarks/Benchmarks.csproj --configuration Release --no-restore
+        
+      - name: Run ${{ matrix.benchmark }} benchmark
+        run: dotnet run --project Benchmarks/Benchmarks.csproj --configuration Release --no-build -- ${{ matrix.benchmark }}
+        
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-benchmark-${{ matrix.benchmark }}
+          path: Benchmarks/BenchmarkDotNet.Artifacts/results/
+          retention-days: 365 # Keep release benchmarks for a year
+          
+      - name: Create benchmark summary
+        run: |
+          echo "# ${{ matrix.benchmark }} Benchmark Results" >> $GITHUB_STEP_SUMMARY
+          echo "**Release:** ${{ github.event.release.tag_name || 'Manual Run' }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Date:** $(date)" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Find and include the GitHub markdown report
+          REPORT_FILE=$(find Benchmarks/BenchmarkDotNet.Artifacts/results/ -name "*github.md" | head -1)
+          if [ -f "$REPORT_FILE" ]; then
+            cat "$REPORT_FILE" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "No markdown report found for ${{ matrix.benchmark }}" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  generate-performance-report:
+    needs: comprehensive-benchmarks
+    runs-on: ubuntu-latest
+    if: always()
+    
+    permissions:
+      contents: write
+      pull-requests: write
+      
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Download all benchmark results
+        uses: actions/download-artifact@v4
+        with:
+          pattern: release-benchmark-*
+          path: ./benchmark-results
+          
+      - name: Generate comprehensive performance report
+        run: |
+          mkdir -p reports
+          
+          RELEASE_TAG="${{ github.event.release.tag_name || 'manual-run' }}"
+          REPORT_FILE="reports/performance-report-${RELEASE_TAG}.md"
+          
+          echo "# PostgreSQL Distributed Cache - Performance Report" > "$REPORT_FILE"
+          echo "" >> "$REPORT_FILE"
+          echo "**Release:** ${RELEASE_TAG}" >> "$REPORT_FILE"
+          echo "**Generated:** $(date)" >> "$REPORT_FILE"
+          echo "**Commit:** ${{ github.sha }}" >> "$REPORT_FILE"
+          echo "**Runner:** GitHub Actions (ubuntu-latest)" >> "$REPORT_FILE"
+          echo "" >> "$REPORT_FILE"
+          
+          echo "## Executive Summary" >> "$REPORT_FILE"
+          echo "" >> "$REPORT_FILE"
+          echo "This report contains comprehensive performance benchmarks for the PostgreSQL distributed cache library." >> "$REPORT_FILE"
+          echo "All benchmarks were run in Release configuration using BenchmarkDotNet with PostgreSQL TestContainers." >> "$REPORT_FILE"
+          echo "" >> "$REPORT_FILE"
+          
+          echo "## Benchmark Results" >> "$REPORT_FILE"
+          echo "" >> "$REPORT_FILE"
+          
+          # Process each benchmark type
+          for benchmark_dir in benchmark-results/release-benchmark-*; do
+            if [ -d "$benchmark_dir" ]; then
+              BENCHMARK_NAME=$(basename "$benchmark_dir" | sed 's/release-benchmark-//')
+              echo "### ${BENCHMARK_NAME^} Operations" >> "$REPORT_FILE"
+              echo "" >> "$REPORT_FILE"
+              
+              # Find the GitHub markdown report
+              MD_FILE=$(find "$benchmark_dir" -name "*github.md" | head -1)
+              if [ -f "$MD_FILE" ]; then
+                cat "$MD_FILE" >> "$REPORT_FILE"
+              else
+                echo "⚠️ No results found for $BENCHMARK_NAME benchmark" >> "$REPORT_FILE"
+              fi
+              echo "" >> "$REPORT_FILE"
+            fi
+          done
+          
+          echo "## Performance Notes" >> "$REPORT_FILE"
+          echo "" >> "$REPORT_FILE"
+          echo "- **Environment**: GitHub Actions Ubuntu runner with 4 vCPUs and 16GB RAM" >> "$REPORT_FILE"
+          echo "- **Database**: PostgreSQL 16 in Docker container" >> "$REPORT_FILE"
+          echo "- **.NET Version**: ${{ env.DOTNET_VERSION }}" >> "$REPORT_FILE"
+          echo "- **Configuration**: Release build with optimizations enabled" >> "$REPORT_FILE"
+          echo "- **Garbage Collection**: Server GC enabled" >> "$REPORT_FILE"
+          echo "" >> "$REPORT_FILE"
+          echo "**Important**: These results are from a virtualized environment and should be used for relative comparison." >> "$REPORT_FILE"
+          echo "For production performance planning, run benchmarks in your target environment." >> "$REPORT_FILE"
+          echo "" >> "$REPORT_FILE"
+          
+          echo "## Recommendations" >> "$REPORT_FILE"
+          echo "" >> "$REPORT_FILE"
+          echo "1. **Production Testing**: Validate performance in your production-like environment" >> "$REPORT_FILE"
+          echo "2. **Monitoring**: Implement performance monitoring to track trends over time" >> "$REPORT_FILE"
+          echo "3. **Tuning**: Consider connection pooling and PostgreSQL configuration optimization" >> "$REPORT_FILE"
+          echo "4. **Scaling**: Review concurrent operation performance for your expected load" >> "$REPORT_FILE"
+          
+          echo "Generated performance report: $REPORT_FILE"
+          
+      - name: Upload performance report
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-report-${{ github.event.release.tag_name || 'manual' }}
+          path: reports/
+          retention-days: 365
+          
+      - name: Add performance summary to release notes
+        if: github.event.release && (github.event.inputs.create_release_notes != 'false')
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            
+            try {
+              const reportPath = 'reports/performance-report-${{ github.event.release.tag_name }}.md';
+              
+              if (fs.existsSync(reportPath)) {
+                const report = fs.readFileSync(reportPath, 'utf8');
+                
+                // Create a condensed version for release notes
+                const summaryLines = report.split('\n').slice(0, 50); // First 50 lines
+                const summary = summaryLines.join('\n');
+                
+                const currentRelease = await github.rest.repos.getRelease({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  release_id: ${{ github.event.release.id }}
+                });
+                
+                const currentBody = currentRelease.data.body || '';
+                const performanceSection = `
+
+## 📊 Performance Report
+
+${summary}
+
+**📁 [Download Full Performance Report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})**
+
+---`;
+                
+                await github.rest.repos.updateRelease({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  release_id: ${{ github.event.release.id }},
+                  body: currentBody + performanceSection
+                });
+                
+                console.log('Added performance summary to release notes');
+              } else {
+                console.log('Performance report not found, skipping release notes update');
+              }
+            } catch (error) {
+              console.error('Error updating release notes:', error);
+              // Don't fail the workflow if we can't update release notes
+            }
+            
+      - name: Create performance comparison issue
+        if: github.event.release
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = `📊 Performance Review: ${{ github.event.release.tag_name }}`;
+            const body = `# Performance Review for Release ${{ github.event.release.tag_name }}
+            
+            A comprehensive performance benchmark has been completed for this release.
+            
+            ## Quick Actions
+            - [ ] Review benchmark results against previous releases
+            - [ ] Identify any performance regressions
+            - [ ] Document any significant improvements
+            - [ ] Update performance baselines if needed
+            
+            ## Benchmark Results
+            
+            📁 **[Download Full Results](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})**
+            
+            The benchmark suite tested:
+            - ✅ Core Operations (Get, Set, Delete, Refresh)
+            - ✅ Data Size Impact (1KB to 1MB payloads)
+            - ✅ Expiration Strategies
+            - ✅ Concurrency Performance (2-16 concurrent operations)
+            - ✅ Bulk Operations (10-500 operation batches)
+            
+            ## Environment Details
+            - **Runtime**: .NET ${{ env.DOTNET_VERSION }}
+            - **Database**: PostgreSQL 16 (TestContainer)
+            - **Platform**: GitHub Actions Ubuntu Runner
+            - **Configuration**: Release build
+            
+            ---
+            
+            _This issue was automatically created by the Release Performance Validation workflow._
+            `;
+            
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: body,
+              labels: ['performance', 'release', 'review']
+            });
+            
+            console.log('Created performance review issue');
+
+  performance-regression-check:
+    needs: comprehensive-benchmarks
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+      - name: Download benchmark results
+        uses: actions/download-artifact@v4
+        with:
+          pattern: release-benchmark-core
+          path: ./benchmark-results
+          
+      - name: Basic regression analysis
+        run: |
+          echo "# Performance Regression Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Look for any obvious performance issues in core operations
+          CORE_RESULTS=$(find benchmark-results -name "*CoreOperationsBenchmark*github.md" | head -1)
+          
+          if [ -f "$CORE_RESULTS" ]; then
+            echo "## Core Operations Analysis" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            
+            # Extract mean times and look for any operations taking > 100ms
+            if grep -q "| [^|]*| [^|]*| [^|]*[1-9][0-9][0-9]\.[0-9]* ms" "$CORE_RESULTS"; then
+              echo "⚠️ **Potential Performance Issue Detected**" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "Some operations are taking over 100ms. Review the full results for details." >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "✅ Core operations performance looks good (all under 100ms average)" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+            fi
+            
+            echo "**Note**: This is a basic automated check. For comprehensive analysis, review the full benchmark results." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Core benchmark results not found for analysis" >> $GITHUB_STEP_SUMMARY
+          fi 

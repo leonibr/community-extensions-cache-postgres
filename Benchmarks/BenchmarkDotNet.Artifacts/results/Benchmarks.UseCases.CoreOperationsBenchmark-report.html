@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='utf-8' />
+<title>Benchmarks.UseCases.CoreOperationsBenchmark-20250717-073030</title>
+
+<style type="text/css">
+	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
+	td, th { padding: 6px 13px; border: 1px solid #ddd; text-align: right; }
+	tr { background-color: #fff; border-top: 1px solid #ccc; }
+	tr:nth-child(even) { background: #f8f8f8; }
+</style>
+</head>
+<body>
+<pre><code>
+BenchmarkDotNet v0.14.0, Windows 11 (10.0.26100.4652)
+AMD Ryzen 7 5700G with Radeon Graphics, 1 CPU, 16 logical and 8 physical cores
+.NET SDK 9.0.301
+  [Host] : .NET 9.0.6 (9.0.625.26613), X64 RyuJIT AVX2
+</code></pre>
+<pre><code>Runtime=.NET 9.0  Toolchain=InProcessEmitToolchain  InvocationCount=1  
+MaxIterationCount=10  MinIterationCount=3  UnrollFactor=1  
+WarmupCount=2  
+</code></pre>
+
+<table>
+<thead><tr><th>Method </th><th>Mean</th><th>Error</th><th>StdDev</th><th>Min </th><th>Max </th><th>Median</th><th>P90 </th><th>P95 </th><th>Ratio</th><th>RatioSD</th><th>Rank</th><th>Baseline</th><th>Allocated</th><th>Alloc Ratio</th>
+</tr>
+</thead><tbody><tr><td>SetAsync</td><td>803.8 &mu;s</td><td>201.99 &mu;s</td><td>133.60 &mu;s</td><td>588.8 &mu;s</td><td>1,039.8 &mu;s</td><td>775.9 &mu;s</td><td>979.3 &mu;s</td><td>1,009.5 &mu;s</td><td>1.03</td><td>0.23</td><td>1</td><td>Yes</td><td>8.99 KB</td><td>1.00</td>
+</tr><tr><td>GetAsync_Hit</td><td>1,426.4 &mu;s</td><td>261.88 &mu;s</td><td>173.22 &mu;s</td><td>1,166.7 &mu;s</td><td>1,775.2 &mu;s</td><td>1,429.9 &mu;s</td><td>1,581.4 &mu;s</td><td>1,678.3 &mu;s</td><td>1.82</td><td>0.36</td><td>2</td><td>No</td><td>9.97 KB</td><td>1.11</td>
+</tr><tr><td>GetAsync_Miss</td><td>1,467.8 &mu;s</td><td>48.84 &mu;s</td><td>29.06 &mu;s</td><td>1,430.1 &mu;s</td><td>1,523.8 &mu;s</td><td>1,457.7 &mu;s</td><td>1,503.6 &mu;s</td><td>1,513.7 &mu;s</td><td>1.87</td><td>0.30</td><td>2</td><td>No</td><td>10.46 KB</td><td>1.16</td>
+</tr><tr><td>RefreshAsync</td><td>945.8 &mu;s</td><td>56.25 &mu;s</td><td>37.20 &mu;s</td><td>878.4 &mu;s</td><td>993.6 &mu;s</td><td>951.6 &mu;s</td><td>978.9 &mu;s</td><td>986.3 &mu;s</td><td>1.21</td><td>0.20</td><td>1</td><td>No</td><td>12.62 KB</td><td>1.40</td>
+</tr><tr><td>RemoveAsync</td><td>803.8 &mu;s</td><td>175.94 &mu;s</td><td>116.37 &mu;s</td><td>637.5 &mu;s</td><td>996.0 &mu;s</td><td>799.1 &mu;s</td><td>926.8 &mu;s</td><td>961.4 &mu;s</td><td>1.03</td><td>0.22</td><td>1</td><td>No</td><td>7.45 KB</td><td>0.83</td>
+</tr><tr><td>SetSync</td><td>735.8 &mu;s</td><td>152.43 &mu;s</td><td>100.83 &mu;s</td><td>609.1 &mu;s</td><td>895.4 &mu;s</td><td>715.9 &mu;s</td><td>851.9 &mu;s</td><td>873.7 &mu;s</td><td>0.94</td><td>0.19</td><td>1</td><td>No</td><td>8.34 KB</td><td>0.93</td>
+</tr><tr><td>GetSync_Hit</td><td>1,369.8 &mu;s</td><td>230.13 &mu;s</td><td>152.22 &mu;s</td><td>1,143.3 &mu;s</td><td>1,541.3 &mu;s</td><td>1,382.5 &mu;s</td><td>1,528.8 &mu;s</td><td>1,535.0 &mu;s</td><td>1.75</td><td>0.34</td><td>2</td><td>No</td><td>8.23 KB</td><td>0.92</td>
+</tr><tr><td>GetSync_Miss</td><td>1,354.3 &mu;s</td><td>231.69 &mu;s</td><td>153.25 &mu;s</td><td>1,135.2 &mu;s</td><td>1,574.7 &mu;s</td><td>1,381.6 &mu;s</td><td>1,518.0 &mu;s</td><td>1,546.3 &mu;s</td><td>1.73</td><td>0.33</td><td>2</td><td>No</td><td>7.84 KB</td><td>0.87</td>
+</tr><tr><td>RefreshSync</td><td>796.1 &mu;s</td><td>190.78 &mu;s</td><td>126.19 &mu;s</td><td>601.3 &mu;s</td><td>1,000.4 &mu;s</td><td>828.6 &mu;s</td><td>899.1 &mu;s</td><td>949.7 &mu;s</td><td>1.02</td><td>0.22</td><td>1</td><td>No</td><td>5.77 KB</td><td>0.64</td>
+</tr><tr><td>RemoveSync</td><td>686.6 &mu;s</td><td>171.35 &mu;s</td><td>113.34 &mu;s</td><td>580.6 &mu;s</td><td>869.3 &mu;s</td><td>625.0 &mu;s</td><td>836.9 &mu;s</td><td>853.1 &mu;s</td><td>0.88</td><td>0.20</td><td>1</td><td>No</td><td>5.8 KB</td><td>0.65</td>
+</tr></tbody></table>
+</body>
+</html>

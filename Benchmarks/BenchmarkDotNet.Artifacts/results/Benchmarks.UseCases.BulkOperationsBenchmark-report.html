@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='utf-8' />
+<title>Benchmarks.UseCases.BulkOperationsBenchmark-20250717-073721</title>
+
+<style type="text/css">
+	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
+	td, th { padding: 6px 13px; border: 1px solid #ddd; text-align: right; }
+	tr { background-color: #fff; border-top: 1px solid #ccc; }
+	tr:nth-child(even) { background: #f8f8f8; }
+</style>
+</head>
+<body>
+<pre><code>
+BenchmarkDotNet v0.14.0, Windows 11 (10.0.26100.4652)
+AMD Ryzen 7 5700G with Radeon Graphics, 1 CPU, 16 logical and 8 physical cores
+.NET SDK 9.0.301
+  [Host] : .NET 9.0.6 (9.0.625.26613), X64 RyuJIT AVX2
+</code></pre>
+<pre><code>Runtime=.NET 9.0  Toolchain=InProcessEmitToolchain  InvocationCount=1  
+MaxIterationCount=10  MinIterationCount=3  UnrollFactor=1  
+WarmupCount=2  
+</code></pre>
+
+<table>
+<thead><tr><th>Method                 </th><th>BulkSize</th><th>Mean</th><th>Error</th><th>StdDev</th><th>Min </th><th>Max </th><th>Median</th><th>P90 </th><th>P95 </th><th>Ratio</th><th>RatioSD</th><th>Rank</th><th>Baseline</th><th>Allocated</th><th>Alloc Ratio</th>
+</tr>
+</thead><tbody><tr><td>BulkSetSequential</td><td>10</td><td>5.373 ms</td><td>0.3056 ms</td><td>0.2022 ms</td><td>4.985 ms</td><td>5.623 ms</td><td>5.405 ms</td><td>5.599 ms</td><td>5.611 ms</td><td>1.00</td><td>0.05</td><td>2</td><td>Yes</td><td>118.99 KB</td><td>1.00</td>
+</tr><tr><td>BulkSetParallel</td><td>10</td><td>1.710 ms</td><td>0.3318 ms</td><td>0.1735 ms</td><td>1.580 ms</td><td>2.122 ms</td><td>1.673 ms</td><td>1.833 ms</td><td>1.977 ms</td><td>0.32</td><td>0.03</td><td>1</td><td>No</td><td>102.42 KB</td><td>0.86</td>
+</tr><tr><td>BulkGetSequential</td><td>10</td><td>10.319 ms</td><td>0.3859 ms</td><td>0.2553 ms</td><td>9.867 ms</td><td>10.666 ms</td><td>10.332 ms</td><td>10.652 ms</td><td>10.659 ms</td><td>1.92</td><td>0.08</td><td>3</td><td>No</td><td>132.02 KB</td><td>1.11</td>
+</tr><tr><td>BulkGetParallel</td><td>10</td><td>2.521 ms</td><td>0.4472 ms</td><td>0.2339 ms</td><td>2.221 ms</td><td>2.978 ms</td><td>2.460 ms</td><td>2.782 ms</td><td>2.880 ms</td><td>0.47</td><td>0.04</td><td>1</td><td>No</td><td>127.55 KB</td><td>1.07</td>
+</tr><tr><td>BulkMixedOperationsSequential</td><td>10</td><td>7.139 ms</td><td>0.3532 ms</td><td>0.2336 ms</td><td>6.744 ms</td><td>7.483 ms</td><td>7.138 ms</td><td>7.432 ms</td><td>7.457 ms</td><td>1.33</td><td>0.06</td><td>2</td><td>No</td><td>122.83 KB</td><td>1.03</td>
+</tr><tr><td>BulkMixedOperationsParallel</td><td>10</td><td>2.270 ms</td><td>0.2976 ms</td><td>0.1557 ms</td><td>2.030 ms</td><td>2.505 ms</td><td>2.284 ms</td><td>2.418 ms</td><td>2.461 ms</td><td>0.42</td><td>0.03</td><td>1</td><td>No</td><td>114.86 KB</td><td>0.97</td>
+</tr><tr><td>BulkJsonSerializationSet</td><td>10</td><td>1.845 ms</td><td>0.4279 ms</td><td>0.2238 ms</td><td>1.599 ms</td><td>2.301 ms</td><td>1.816 ms</td><td>2.063 ms</td><td>2.182 ms</td><td>0.34</td><td>0.04</td><td>1</td><td>No</td><td>118.71 KB</td><td>1.00</td>
+</tr><tr><td>BulkJsonSerializationGet</td><td>10</td><td>8.382 ms</td><td>0.5062 ms</td><td>0.3348 ms</td><td>7.750 ms</td><td>8.821 ms</td><td>8.378 ms</td><td>8.802 ms</td><td>8.812 ms</td><td>1.56</td><td>0.08</td><td>2</td><td>No</td><td>227.18 KB</td><td>1.91</td>
+</tr><tr><td>BulkRefreshOperations</td><td>10</td><td>1.608 ms</td><td>0.4765 ms</td><td>0.2492 ms</td><td>1.429 ms</td><td>2.171 ms</td><td>1.530 ms</td><td>1.882 ms</td><td>2.026 ms</td><td>0.30</td><td>0.05</td><td>1</td><td>No</td><td>91.73 KB</td><td>0.77</td>
+</tr><tr><td>BulkRemoveOperations</td><td>10</td><td>7.230 ms</td><td>0.4500 ms</td><td>0.2678 ms</td><td>6.829 ms</td><td>7.748 ms</td><td>7.174 ms</td><td>7.477 ms</td><td>7.612 ms</td><td>1.35</td><td>0.07</td><td>2</td><td>No</td><td>170.22 KB</td><td>1.43</td>
+</tr><tr><td>HighThroughputScenario</td><td>10</td><td>6.193 ms</td><td>0.4045 ms</td><td>0.2407 ms</td><td>5.834 ms</td><td>6.567 ms</td><td>6.127 ms</td><td>6.510 ms</td><td>6.539 ms</td><td>1.15</td><td>0.06</td><td>2</td><td>No</td><td>287.87 KB</td><td>2.42</td>
+</tr><tr><td>BulkSetSequential</td><td>50</td><td>25.984 ms</td><td>1.2423 ms</td><td>0.6498 ms</td><td>25.074 ms</td><td>26.961 ms</td><td>26.044 ms</td><td>26.701 ms</td><td>26.831 ms</td><td>1.00</td><td>0.03</td><td>3</td><td>Yes</td><td>641.13 KB</td><td>1.00</td>
+</tr><tr><td>BulkSetParallel</td><td>50</td><td>10.243 ms</td><td>3.5973 ms</td><td>2.3794 ms</td><td>6.684 ms</td><td>12.818 ms</td><td>10.897 ms</td><td>12.665 ms</td><td>12.742 ms</td><td>0.39</td><td>0.09</td><td>1</td><td>No</td><td>448.23 KB</td><td>0.70</td>
+</tr><tr><td>BulkGetSequential</td><td>50</td><td>47.160 ms</td><td>1.7149 ms</td><td>1.0205 ms</td><td>45.193 ms</td><td>48.339 ms</td><td>47.189 ms</td><td>48.313 ms</td><td>48.326 ms</td><td>1.82</td><td>0.06</td><td>4</td><td>No</td><td>636.39 KB</td><td>0.99</td>
+</tr><tr><td>BulkGetParallel</td><td>50</td><td>14.550 ms</td><td>2.7419 ms</td><td>1.8136 ms</td><td>11.246 ms</td><td>17.260 ms</td><td>14.669 ms</td><td>16.894 ms</td><td>17.077 ms</td><td>0.56</td><td>0.07</td><td>2</td><td>No</td><td>607.73 KB</td><td>0.95</td>
+</tr><tr><td>BulkMixedOperationsSequential</td><td>50</td><td>29.925 ms</td><td>0.5897 ms</td><td>0.3084 ms</td><td>29.455 ms</td><td>30.438 ms</td><td>29.981 ms</td><td>30.223 ms</td><td>30.330 ms</td><td>1.15</td><td>0.03</td><td>3</td><td>No</td><td>659.23 KB</td><td>1.03</td>
+</tr><tr><td>BulkMixedOperationsParallel</td><td>50</td><td>11.200 ms</td><td>3.0722 ms</td><td>2.0321 ms</td><td>8.236 ms</td><td>13.814 ms</td><td>11.728 ms</td><td>13.330 ms</td><td>13.572 ms</td><td>0.43</td><td>0.08</td><td>1</td><td>No</td><td>710.64 KB</td><td>1.11</td>
+</tr><tr><td>BulkJsonSerializationSet</td><td>50</td><td>10.582 ms</td><td>4.3389 ms</td><td>2.8699 ms</td><td>5.921 ms</td><td>13.885 ms</td><td>11.646 ms</td><td>13.009 ms</td><td>13.447 ms</td><td>0.41</td><td>0.11</td><td>1</td><td>No</td><td>529.6 KB</td><td>0.83</td>
+</tr><tr><td>BulkJsonSerializationGet</td><td>50</td><td>37.481 ms</td><td>2.5776 ms</td><td>1.5339 ms</td><td>36.150 ms</td><td>41.036 ms</td><td>36.737 ms</td><td>39.036 ms</td><td>40.036 ms</td><td>1.44</td><td>0.07</td><td>3</td><td>No</td><td>1130.43 KB</td><td>1.76</td>
+</tr><tr><td>BulkRefreshOperations</td><td>50</td><td>9.891 ms</td><td>4.3110 ms</td><td>2.8514 ms</td><td>6.340 ms</td><td>13.127 ms</td><td>11.246 ms</td><td>12.691 ms</td><td>12.909 ms</td><td>0.38</td><td>0.11</td><td>1</td><td>No</td><td>729.88 KB</td><td>1.14</td>
+</tr><tr><td>BulkRemoveOperations</td><td>50</td><td>31.589 ms</td><td>1.2589 ms</td><td>0.7491 ms</td><td>30.371 ms</td><td>32.474 ms</td><td>31.368 ms</td><td>32.373 ms</td><td>32.424 ms</td><td>1.22</td><td>0.04</td><td>3</td><td>No</td><td>836.64 KB</td><td>1.30</td>
+</tr><tr><td>HighThroughputScenario</td><td>50</td><td>35.151 ms</td><td>3.4620 ms</td><td>2.2899 ms</td><td>31.581 ms</td><td>38.957 ms</td><td>35.378 ms</td><td>37.683 ms</td><td>38.320 ms</td><td>1.35</td><td>0.09</td><td>3</td><td>No</td><td>1451.52 KB</td><td>2.26</td>
+</tr><tr><td>BulkSetSequential</td><td>100</td><td>48.281 ms</td><td>1.5626 ms</td><td>1.0336 ms</td><td>46.430 ms</td><td>49.364 ms</td><td>48.684 ms</td><td>49.294 ms</td><td>49.329 ms</td><td>1.00</td><td>0.03</td><td>3</td><td>Yes</td><td>1304.71 KB</td><td>1.00</td>
+</tr><tr><td>BulkSetParallel</td><td>100</td><td>15.525 ms</td><td>1.9766 ms</td><td>1.3074 ms</td><td>13.143 ms</td><td>17.610 ms</td><td>15.427 ms</td><td>17.136 ms</td><td>17.373 ms</td><td>0.32</td><td>0.03</td><td>1</td><td>No</td><td>1142.2 KB</td><td>0.88</td>
+</tr><tr><td>BulkGetSequential</td><td>100</td><td>95.476 ms</td><td>3.1443 ms</td><td>2.0797 ms</td><td>91.312 ms</td><td>97.950 ms</td><td>95.643 ms</td><td>97.585 ms</td><td>97.767 ms</td><td>1.98</td><td>0.06</td><td>5</td><td>No</td><td>1267.56 KB</td><td>0.97</td>
+</tr><tr><td>BulkGetParallel</td><td>100</td><td>27.201 ms</td><td>4.6147 ms</td><td>3.0523 ms</td><td>23.494 ms</td><td>32.038 ms</td><td>26.616 ms</td><td>30.668 ms</td><td>31.353 ms</td><td>0.56</td><td>0.06</td><td>2</td><td>No</td><td>1372.41 KB</td><td>1.05</td>
+</tr><tr><td>BulkMixedOperationsSequential</td><td>100</td><td>61.775 ms</td><td>2.0693 ms</td><td>1.0823 ms</td><td>59.697 ms</td><td>63.040 ms</td><td>62.162 ms</td><td>62.693 ms</td><td>62.867 ms</td><td>1.28</td><td>0.03</td><td>4</td><td>No</td><td>1322.13 KB</td><td>1.01</td>
+</tr><tr><td>BulkMixedOperationsParallel</td><td>100</td><td>18.359 ms</td><td>3.8843 ms</td><td>2.5692 ms</td><td>14.704 ms</td><td>21.116 ms</td><td>19.213 ms</td><td>20.996 ms</td><td>21.056 ms</td><td>0.38</td><td>0.05</td><td>1</td><td>No</td><td>1157.7 KB</td><td>0.89</td>
+</tr><tr><td>BulkJsonSerializationSet</td><td>100</td><td>15.647 ms</td><td>3.0677 ms</td><td>2.0291 ms</td><td>12.354 ms</td><td>18.602 ms</td><td>15.736 ms</td><td>17.888 ms</td><td>18.245 ms</td><td>0.32</td><td>0.04</td><td>1</td><td>No</td><td>1267.64 KB</td><td>0.97</td>
+</tr><tr><td>BulkJsonSerializationGet</td><td>100</td><td>73.638 ms</td><td>3.6737 ms</td><td>2.1861 ms</td><td>71.474 ms</td><td>78.433 ms</td><td>72.870 ms</td><td>75.970 ms</td><td>77.201 ms</td><td>1.53</td><td>0.05</td><td>4</td><td>No</td><td>2279.45 KB</td><td>1.75</td>
+</tr><tr><td>BulkRefreshOperations</td><td>100</td><td>17.102 ms</td><td>3.9216 ms</td><td>2.5939 ms</td><td>13.384 ms</td><td>21.115 ms</td><td>17.926 ms</td><td>19.458 ms</td><td>20.287 ms</td><td>0.35</td><td>0.05</td><td>1</td><td>No</td><td>1104.3 KB</td><td>0.85</td>
+</tr><tr><td>BulkRemoveOperations</td><td>100</td><td>66.716 ms</td><td>3.8045 ms</td><td>2.2640 ms</td><td>63.912 ms</td><td>70.239 ms</td><td>66.652 ms</td><td>69.658 ms</td><td>69.948 ms</td><td>1.38</td><td>0.05</td><td>4</td><td>No</td><td>1671.81 KB</td><td>1.28</td>
+</tr><tr><td>HighThroughputScenario</td><td>100</td><td>62.843 ms</td><td>2.5404 ms</td><td>1.6803 ms</td><td>60.746 ms</td><td>65.336 ms</td><td>62.706 ms</td><td>65.107 ms</td><td>65.222 ms</td><td>1.30</td><td>0.04</td><td>4</td><td>No</td><td>2951.67 KB</td><td>2.26</td>
+</tr><tr><td>BulkSetSequential</td><td>500</td><td>236.204 ms</td><td>8.4954 ms</td><td>5.6192 ms</td><td>227.333 ms</td><td>245.621 ms</td><td>234.785 ms</td><td>243.177 ms</td><td>244.399 ms</td><td>1.00</td><td>0.03</td><td>4</td><td>Yes</td><td>4418.51 KB</td><td>1.00</td>
+</tr><tr><td>BulkSetParallel</td><td>500</td><td>68.787 ms</td><td>11.0105 ms</td><td>7.2827 ms</td><td>58.052 ms</td><td>78.987 ms</td><td>69.416 ms</td><td>77.554 ms</td><td>78.270 ms</td><td>0.29</td><td>0.03</td><td>1</td><td>No</td><td>5098.57 KB</td><td>1.15</td>
+</tr><tr><td>BulkGetSequential</td><td>500</td><td>475.209 ms</td><td>12.8853 ms</td><td>8.5228 ms</td><td>464.869 ms</td><td>490.897 ms</td><td>473.537 ms</td><td>486.280 ms</td><td>488.589 ms</td><td>2.01</td><td>0.06</td><td>7</td><td>No</td><td>4138.73 KB</td><td>0.94</td>
+</tr><tr><td>BulkGetParallel</td><td>500</td><td>125.444 ms</td><td>17.1117 ms</td><td>11.3183 ms</td><td>108.428 ms</td><td>147.300 ms</td><td>126.269 ms</td><td>134.134 ms</td><td>140.717 ms</td><td>0.53</td><td>0.05</td><td>3</td><td>No</td><td>5193.02 KB</td><td>1.18</td>
+</tr><tr><td>BulkMixedOperationsSequential</td><td>500</td><td>299.409 ms</td><td>6.5797 ms</td><td>3.4413 ms</td><td>292.033 ms</td><td>302.522 ms</td><td>300.081 ms</td><td>302.297 ms</td><td>302.410 ms</td><td>1.27</td><td>0.03</td><td>5</td><td>No</td><td>4414.59 KB</td><td>1.00</td>
+</tr><tr><td>BulkMixedOperationsParallel</td><td>500</td><td>87.686 ms</td><td>21.0731 ms</td><td>13.9386 ms</td><td>66.987 ms</td><td>110.912 ms</td><td>86.142 ms</td><td>102.555 ms</td><td>106.733 ms</td><td>0.37</td><td>0.06</td><td>2</td><td>No</td><td>4395.05 KB</td><td>0.99</td>
+</tr><tr><td>BulkJsonSerializationSet</td><td>500</td><td>70.155 ms</td><td>8.7116 ms</td><td>5.7622 ms</td><td>60.648 ms</td><td>78.450 ms</td><td>70.304 ms</td><td>76.256 ms</td><td>77.353 ms</td><td>0.30</td><td>0.02</td><td>1</td><td>No</td><td>5406.09 KB</td><td>1.22</td>
+</tr><tr><td>BulkJsonSerializationGet</td><td>500</td><td>353.314 ms</td><td>9.2540 ms</td><td>6.1209 ms</td><td>342.587 ms</td><td>362.617 ms</td><td>354.186 ms</td><td>359.393 ms</td><td>361.005 ms</td><td>1.50</td><td>0.04</td><td>6</td><td>No</td><td>9200.33 KB</td><td>2.08</td>
+</tr><tr><td>BulkRefreshOperations</td><td>500</td><td>68.644 ms</td><td>12.7411 ms</td><td>8.4275 ms</td><td>53.096 ms</td><td>80.207 ms</td><td>70.605 ms</td><td>77.086 ms</td><td>78.647 ms</td><td>0.29</td><td>0.03</td><td>1</td><td>No</td><td>4060.8 KB</td><td>0.92</td>
+</tr><tr><td>BulkRemoveOperations</td><td>500</td><td>310.366 ms</td><td>15.4764 ms</td><td>10.2367 ms</td><td>296.127 ms</td><td>327.085 ms</td><td>311.527 ms</td><td>319.367 ms</td><td>323.226 ms</td><td>1.31</td><td>0.05</td><td>5</td><td>No</td><td>6232.02 KB</td><td>1.41</td>
+</tr><tr><td>HighThroughputScenario</td><td>500</td><td>284.293 ms</td><td>12.7753 ms</td><td>8.4501 ms</td><td>273.848 ms</td><td>300.437 ms</td><td>282.068 ms</td><td>295.199 ms</td><td>297.818 ms</td><td>1.20</td><td>0.04</td><td>5</td><td>No</td><td>12796.45 KB</td><td>2.90</td>
+</tr></tbody></table>
+</body>
+</html>

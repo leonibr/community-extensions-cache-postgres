@@ -1,0 +1,250 @@
+name: PR Performance Validation
+
+on:
+  pull_request:
+    paths:
+      - 'Extensions.Caching.PostgreSql/**'
+      - 'Benchmarks/**'
+    types: [opened, synchronize, labeled]
+
+env:
+  DOTNET_VERSION: '9.0.x'
+
+jobs:
+  check-performance-label:
+    runs-on: ubuntu-latest
+    outputs:
+      should-run: ${{ steps.check.outputs.should-run }}
+    steps:
+      - name: Check if performance testing is requested
+        id: check
+        run: |
+          # Check if PR has 'performance' label or title contains '[perf]'
+          LABELS="${{ join(github.event.pull_request.labels.*.name, ' ') }}"
+          TITLE="${{ github.event.pull_request.title }}"
+
+          if [[ "$LABELS" == *"performance"* ]] || [[ "$TITLE" == *"[perf]"* ]]; then
+            echo "should-run=true" >> $GITHUB_OUTPUT
+            echo "Performance testing requested via label or title"
+          else
+            echo "should-run=false" >> $GITHUB_OUTPUT
+            echo "Performance testing not requested. Add 'performance' label or '[perf]' in title to run benchmarks."
+          fi
+
+  performance-validation:
+    needs: check-performance-label
+    if: needs.check-performance-label.outputs.should-run == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    permissions:
+      pull-requests: write
+      contents: read
+
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore dependencies
+        run: dotnet restore Benchmarks/Benchmarks.csproj
+
+      - name: Build benchmarks
+        run: dotnet build Benchmarks/Benchmarks.csproj --configuration Release --no-restore
+
+      - name: Run core operations benchmark
+        run: dotnet run --project Benchmarks/Benchmarks.csproj --configuration Release --no-build -- core
+
+      - name: Download previous benchmark data for comparison
+        uses: dawidd6/action-download-artifact@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          workflow: benchmarks-scheduled.yml
+          branch: gh-pages
+          name: github-pages
+          path: ./previous-data
+        continue-on-error: true
+
+      - name: Store benchmark result with comparison
+        uses: benchmark-action/github-action-benchmark@v1
+        with:
+          name: 'core-benchmark-pr'
+          tool: 'benchmarkdotnet'
+          output-file-path: Benchmarks/BenchmarkDotNet.Artifacts/results/Benchmarks.UseCases.*Core*-report.json
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          auto-push: false # Don't push PR results to main data
+          # Show comparison with baseline in PR comments
+          alert-threshold: '120%' # More sensitive for PRs
+          comment-on-alert: true
+          fail-on-alert: false
+          # Reference main branch data for comparison
+          external-data-json-path: './previous-data/benchmarks/core-benchmark.json'
+
+      - name: Find benchmark results
+        id: find-results
+        run: |
+          GITHUB_MD_FILE=$(find Benchmarks/BenchmarkDotNet.Artifacts/results/ -name "*CoreOperationsBenchmark*github.md" | head -1)
+          if [ -f "$GITHUB_MD_FILE" ]; then
+            echo "results-file=$GITHUB_MD_FILE" >> $GITHUB_OUTPUT
+            echo "results-found=true" >> $GITHUB_OUTPUT
+          else
+            echo "results-found=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Comment PR with performance results
+        if: steps.find-results.outputs.results-found == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const resultsFile = '${{ steps.find-results.outputs.results-file }}';
+
+            try {
+              const results = fs.readFileSync(resultsFile, 'utf8');
+              
+              const body = `## 🚀 Performance Validation Results
+              
+            This PR has been tested for performance impact on core cache operations.
+
+            **Commit:** \`${{ github.event.pull_request.head.sha }}\`
+            **Date:** ${new Date().toISOString()}
+            **Comparison:** vs main branch baseline
+
+            ### Core Operations Benchmark
+
+            ${results}
+
+            ### 📊 Historical Context
+
+            - **[View Trends Dashboard](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/benchmarks/)**
+            - **[Compare with Baseline](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/benchmarks/core-benchmark.html)**
+
+            ### Performance Analysis
+
+            ⚡ **Regression Detection:** Automatic alerts trigger if performance degrades by >20%
+            📈 **Trend Analysis:** Compare this PR against historical performance data
+            🎯 **Baseline Comparison:** Results measured against main branch performance
+
+            ---
+
+            **Note:** These results are from a GitHub Actions runner and should be used for relative comparison only. 
+            For more comprehensive performance testing, consider running the full benchmark suite locally.
+
+            **Need more benchmarks?** Add specific benchmark names to your PR description:
+            - \`datasize\` - Test different payload sizes
+            - \`expiration\` - Test expiration strategies  
+            - \`concurrency\` - Test concurrent operations
+            - \`bulk\` - Test bulk operations
+            `;
+              
+              // Check if we already commented
+              const comments = await github.rest.issues.listComments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+              });
+              
+              const existingComment = comments.data.find(comment => 
+                comment.user.login === 'github-actions[bot]' && 
+                comment.body.includes('Performance Validation Results')
+              );
+              
+              if (existingComment) {
+                // Update existing comment
+                await github.rest.issues.updateComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: existingComment.id,
+                  body: body
+                });
+              } else {
+                // Create new comment
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: context.issue.number,
+                  body: body
+                });
+              }
+            } catch (error) {
+              console.error('Error reading benchmark results:', error);
+              
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: `## ❌ Performance Validation Failed
+                
+                Unable to read benchmark results. Check the [workflow logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details.
+                
+                **Commit:** \`${{ github.event.pull_request.head.sha }}\`
+                **Error:** ${error.message}
+                
+                **Dashboard:** [View Historical Trends](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/benchmarks/)
+                `
+              });
+            }
+
+      - name: Upload detailed results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr-performance-results-${{ github.event.pull_request.number }}
+          path: Benchmarks/BenchmarkDotNet.Artifacts/results/
+          retention-days: 14
+
+  performance-guide:
+    needs: check-performance-label
+    if: needs.check-performance-label.outputs.should-run == 'false'
+    runs-on: ubuntu-latest
+
+    permissions:
+      pull-requests: write
+
+    steps:
+      - name: Comment with performance testing guide
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Check if we already provided guidance
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const hasGuidance = comments.data.some(comment => 
+              comment.user.login === 'github-actions[bot]' && 
+              comment.body.includes('Performance Testing Available')
+            );
+
+            if (!hasGuidance) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: `## 📊 Performance Testing Available
+                
+            This PR modifies performance-sensitive code. If you want to validate performance impact:
+
+            **Option 1:** Add the \`performance\` label to this PR
+            **Option 2:** Include \`[perf]\` in your PR title
+
+            This will trigger core operations benchmarking with historical comparison to help identify any performance regressions.
+
+            **📈 View Current Trends:** [Performance Dashboard](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/benchmarks/)
+
+            **Local testing:** For comprehensive performance analysis, run benchmarks locally:
+            \`\`\`bash
+            cd Benchmarks
+            dotnet run --configuration Release
+            \`\`\`
+            `
+              });
+            }

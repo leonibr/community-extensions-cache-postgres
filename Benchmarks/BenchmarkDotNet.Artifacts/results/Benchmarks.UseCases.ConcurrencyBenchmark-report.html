@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='utf-8' />
+<title>Benchmarks.UseCases.ConcurrencyBenchmark-20250717-073412</title>
+
+<style type="text/css">
+	table { border-collapse: collapse; display: block; width: 100%; overflow: auto; }
+	td, th { padding: 6px 13px; border: 1px solid #ddd; text-align: right; }
+	tr { background-color: #fff; border-top: 1px solid #ccc; }
+	tr:nth-child(even) { background: #f8f8f8; }
+</style>
+</head>
+<body>
+<pre><code>
+BenchmarkDotNet v0.14.0, Windows 11 (10.0.26100.4652)
+AMD Ryzen 7 5700G with Radeon Graphics, 1 CPU, 16 logical and 8 physical cores
+.NET SDK 9.0.301
+  [Host] : .NET 9.0.6 (9.0.625.26613), X64 RyuJIT AVX2
+</code></pre>
+<pre><code>Runtime=.NET 9.0  Toolchain=InProcessEmitToolchain  InvocationCount=1  
+MaxIterationCount=10  MinIterationCount=3  UnrollFactor=1  
+WarmupCount=2  
+</code></pre>
+
+<table>
+<thead><tr><th>Method                    </th><th>ConcurrentTasks</th><th>Mean</th><th>Error</th><th>StdDev</th><th>Median</th><th>Min </th><th>Max</th><th>P90</th><th>P95</th><th>Ratio</th><th>RatioSD</th><th>Rank</th><th>Baseline</th><th>Allocated</th><th>Alloc Ratio</th>
+</tr>
+</thead><tbody><tr><td>ConcurrentSet</td><td>2</td><td>1.088 ms</td><td>0.1472 ms</td><td>0.0973 ms</td><td>1.059 ms</td><td>0.9821 ms</td><td>1.299 ms</td><td>1.187 ms</td><td>1.243 ms</td><td>1.01</td><td>0.12</td><td>1</td><td>Yes</td><td>18 KB</td><td>1.00</td>
+</tr><tr><td>ConcurrentGet</td><td>2</td><td>1.550 ms</td><td>0.0929 ms</td><td>0.0553 ms</td><td>1.559 ms</td><td>1.4331 ms</td><td>1.627 ms</td><td>1.608 ms</td><td>1.617 ms</td><td>1.43</td><td>0.12</td><td>2</td><td>No</td><td>17.23 KB</td><td>0.96</td>
+</tr><tr><td>ConcurrentMixedOperations</td><td>2</td><td>1.487 ms</td><td>0.0688 ms</td><td>0.0360 ms</td><td>1.506 ms</td><td>1.4294 ms</td><td>1.524 ms</td><td>1.516 ms</td><td>1.520 ms</td><td>1.38</td><td>0.11</td><td>2</td><td>No</td><td>18.27 KB</td><td>1.01</td>
+</tr><tr><td>ConcurrentSetSameKey</td><td>2</td><td>1.043 ms</td><td>0.0847 ms</td><td>0.0504 ms</td><td>1.051 ms</td><td>0.9332 ms</td><td>1.099 ms</td><td>1.091 ms</td><td>1.095 ms</td><td>0.97</td><td>0.09</td><td>1</td><td>No</td><td>18.3 KB</td><td>1.02</td>
+</tr><tr><td>ConcurrentGetSameKey</td><td>2</td><td>1.589 ms</td><td>0.0900 ms</td><td>0.0595 ms</td><td>1.556 ms</td><td>1.5307 ms</td><td>1.691 ms</td><td>1.661 ms</td><td>1.676 ms</td><td>1.47</td><td>0.13</td><td>2</td><td>No</td><td>18.73 KB</td><td>1.04</td>
+</tr><tr><td>ConcurrentRefresh</td><td>2</td><td>1.036 ms</td><td>0.0828 ms</td><td>0.0548 ms</td><td>1.043 ms</td><td>0.9597 ms</td><td>1.102 ms</td><td>1.094 ms</td><td>1.098 ms</td><td>0.96</td><td>0.09</td><td>1</td><td>No</td><td>15.29 KB</td><td>0.85</td>
+</tr><tr><td>ConcurrentRemove</td><td>2</td><td>2.067 ms</td><td>0.2086 ms</td><td>0.1380 ms</td><td>1.994 ms</td><td>1.9288 ms</td><td>2.353 ms</td><td>2.223 ms</td><td>2.288 ms</td><td>1.91</td><td>0.19</td><td>3</td><td>No</td><td>22.4 KB</td><td>1.24</td>
+</tr><tr><td>ConcurrentHighContentionScenario</td><td>2</td><td>1.457 ms</td><td>0.0484 ms</td><td>0.0320 ms</td><td>1.461 ms</td><td>1.4077 ms</td><td>1.497 ms</td><td>1.494 ms</td><td>1.496 ms</td><td>1.35</td><td>0.11</td><td>2</td><td>No</td><td>19.16 KB</td><td>1.06</td>
+</tr><tr><td>ConcurrentBulkOperations</td><td>2</td><td>5.476 ms</td><td>0.1951 ms</td><td>0.1161 ms</td><td>5.464 ms</td><td>5.3088 ms</td><td>5.628 ms</td><td>5.619 ms</td><td>5.623 ms</td><td>5.07</td><td>0.42</td><td>4</td><td>No</td><td>115.65 KB</td><td>6.42</td>
+</tr><tr><td>ConcurrentSet</td><td>4</td><td>1.101 ms</td><td>0.0595 ms</td><td>0.0394 ms</td><td>1.099 ms</td><td>1.0283 ms</td><td>1.156 ms</td><td>1.150 ms</td><td>1.153 ms</td><td>1.00</td><td>0.05</td><td>1</td><td>Yes</td><td>30.19 KB</td><td>1.00</td>
+</tr><tr><td>ConcurrentGet</td><td>4</td><td>1.719 ms</td><td>0.2940 ms</td><td>0.1945 ms</td><td>1.605 ms</td><td>1.5212 ms</td><td>2.098 ms</td><td>1.955 ms</td><td>2.026 ms</td><td>1.56</td><td>0.18</td><td>1</td><td>No</td><td>32.2 KB</td><td>1.07</td>
+</tr><tr><td>ConcurrentMixedOperations</td><td>4</td><td>1.426 ms</td><td>0.0944 ms</td><td>0.0562 ms</td><td>1.427 ms</td><td>1.3467 ms</td><td>1.517 ms</td><td>1.509 ms</td><td>1.513 ms</td><td>1.30</td><td>0.07</td><td>1</td><td>No</td><td>26.13 KB</td><td>0.87</td>
+</tr><tr><td>ConcurrentSetSameKey</td><td>4</td><td>1.156 ms</td><td>0.1230 ms</td><td>0.0814 ms</td><td>1.179 ms</td><td>1.0456 ms</td><td>1.304 ms</td><td>1.220 ms</td><td>1.262 ms</td><td>1.05</td><td>0.08</td><td>1</td><td>No</td><td>23.9 KB</td><td>0.79</td>
+</tr><tr><td>ConcurrentGetSameKey</td><td>4</td><td>1.784 ms</td><td>0.1244 ms</td><td>0.0823 ms</td><td>1.787 ms</td><td>1.6550 ms</td><td>1.923 ms</td><td>1.888 ms</td><td>1.906 ms</td><td>1.62</td><td>0.09</td><td>1</td><td>No</td><td>31.92 KB</td><td>1.06</td>
+</tr><tr><td>ConcurrentRefresh</td><td>4</td><td>1.071 ms</td><td>0.0744 ms</td><td>0.0443 ms</td><td>1.073 ms</td><td>0.9891 ms</td><td>1.151 ms</td><td>1.110 ms</td><td>1.131 ms</td><td>0.97</td><td>0.05</td><td>1</td><td>No</td><td>30.05 KB</td><td>1.00</td>
+</tr><tr><td>ConcurrentRemove</td><td>4</td><td>3.354 ms</td><td>0.1817 ms</td><td>0.1202 ms</td><td>3.381 ms</td><td>3.1608 ms</td><td>3.493 ms</td><td>3.464 ms</td><td>3.479 ms</td><td>3.05</td><td>0.15</td><td>2</td><td>No</td><td>39.46 KB</td><td>1.31</td>
+</tr><tr><td>ConcurrentHighContentionScenario</td><td>4</td><td>1.516 ms</td><td>0.1641 ms</td><td>0.1086 ms</td><td>1.501 ms</td><td>1.4100 ms</td><td>1.700 ms</td><td>1.636 ms</td><td>1.668 ms</td><td>1.38</td><td>0.11</td><td>1</td><td>No</td><td>27.01 KB</td><td>0.89</td>
+</tr><tr><td>ConcurrentBulkOperations</td><td>4</td><td>5.693 ms</td><td>0.3069 ms</td><td>0.1826 ms</td><td>5.659 ms</td><td>5.4325 ms</td><td>5.913 ms</td><td>5.908 ms</td><td>5.910 ms</td><td>5.17</td><td>0.24</td><td>3</td><td>No</td><td>225.92 KB</td><td>7.48</td>
+</tr><tr><td>ConcurrentSet</td><td>8</td><td>1.381 ms</td><td>0.2117 ms</td><td>0.1400 ms</td><td>1.387 ms</td><td>1.1251 ms</td><td>1.600 ms</td><td>1.525 ms</td><td>1.563 ms</td><td>1.01</td><td>0.14</td><td>1</td><td>Yes</td><td>54.23 KB</td><td>1.00</td>
+</tr><tr><td>ConcurrentGet</td><td>8</td><td>1.968 ms</td><td>0.0821 ms</td><td>0.0543 ms</td><td>1.971 ms</td><td>1.8474 ms</td><td>2.035 ms</td><td>2.023 ms</td><td>2.029 ms</td><td>1.44</td><td>0.15</td><td>1</td><td>No</td><td>57.88 KB</td><td>1.07</td>
+</tr><tr><td>ConcurrentMixedOperations</td><td>8</td><td>1.600 ms</td><td>0.2027 ms</td><td>0.1341 ms</td><td>1.540 ms</td><td>1.4575 ms</td><td>1.843 ms</td><td>1.745 ms</td><td>1.794 ms</td><td>1.17</td><td>0.15</td><td>1</td><td>No</td><td>46.7 KB</td><td>0.86</td>
+</tr><tr><td>ConcurrentSetSameKey</td><td>8</td><td>1.584 ms</td><td>0.1579 ms</td><td>0.1045 ms</td><td>1.613 ms</td><td>1.3737 ms</td><td>1.716 ms</td><td>1.665 ms</td><td>1.691 ms</td><td>1.16</td><td>0.14</td><td>1</td><td>No</td><td>51.52 KB</td><td>0.95</td>
+</tr><tr><td>ConcurrentGetSameKey</td><td>8</td><td>2.370 ms</td><td>0.2155 ms</td><td>0.1425 ms</td><td>2.358 ms</td><td>2.1183 ms</td><td>2.635 ms</td><td>2.498 ms</td><td>2.566 ms</td><td>1.73</td><td>0.20</td><td>2</td><td>No</td><td>57.58 KB</td><td>1.06</td>
+</tr><tr><td>ConcurrentRefresh</td><td>8</td><td>1.188 ms</td><td>0.0594 ms</td><td>0.0393 ms</td><td>1.192 ms</td><td>1.1078 ms</td><td>1.244 ms</td><td>1.236 ms</td><td>1.240 ms</td><td>0.87</td><td>0.09</td><td>1</td><td>No</td><td>39.27 KB</td><td>0.72</td>
+</tr><tr><td>ConcurrentRemove</td><td>8</td><td>5.716 ms</td><td>0.3632 ms</td><td>0.2403 ms</td><td>5.617 ms</td><td>5.4403 ms</td><td>6.087 ms</td><td>6.066 ms</td><td>6.076 ms</td><td>4.18</td><td>0.46</td><td>3</td><td>No</td><td>73.16 KB</td><td>1.35</td>
+</tr><tr><td>ConcurrentHighContentionScenario</td><td>8</td><td>1.698 ms</td><td>0.0866 ms</td><td>0.0515 ms</td><td>1.709 ms</td><td>1.6007 ms</td><td>1.769 ms</td><td>1.755 ms</td><td>1.762 ms</td><td>1.24</td><td>0.13</td><td>1</td><td>No</td><td>48.57 KB</td><td>0.90</td>
+</tr><tr><td>ConcurrentBulkOperations</td><td>8</td><td>7.287 ms</td><td>0.3317 ms</td><td>0.1974 ms</td><td>7.314 ms</td><td>7.0413 ms</td><td>7.618 ms</td><td>7.489 ms</td><td>7.554 ms</td><td>5.33</td><td>0.56</td><td>4</td><td>No</td><td>445.24 KB</td><td>8.21</td>
+</tr><tr><td>ConcurrentSet</td><td>16</td><td>1.820 ms</td><td>0.2447 ms</td><td>0.1619 ms</td><td>1.820 ms</td><td>1.6092 ms</td><td>2.022 ms</td><td>2.005 ms</td><td>2.014 ms</td><td>1.01</td><td>0.12</td><td>1</td><td>Yes</td><td>102.87 KB</td><td>1.00</td>
+</tr><tr><td>ConcurrentGet</td><td>16</td><td>3.194 ms</td><td>0.5791 ms</td><td>0.3830 ms</td><td>3.058 ms</td><td>2.7367 ms</td><td>3.847 ms</td><td>3.818 ms</td><td>3.832 ms</td><td>1.77</td><td>0.25</td><td>3</td><td>No</td><td>110.37 KB</td><td>1.07</td>
+</tr><tr><td>ConcurrentMixedOperations</td><td>16</td><td>2.442 ms</td><td>0.5178 ms</td><td>0.2708 ms</td><td>2.376 ms</td><td>2.1666 ms</td><td>2.938 ms</td><td>2.798 ms</td><td>2.868 ms</td><td>1.35</td><td>0.18</td><td>2</td><td>No</td><td>85.23 KB</td><td>0.83</td>
+</tr><tr><td>ConcurrentSetSameKey</td><td>16</td><td>2.299 ms</td><td>0.1805 ms</td><td>0.0944 ms</td><td>2.315 ms</td><td>2.1858 ms</td><td>2.431 ms</td><td>2.415 ms</td><td>2.423 ms</td><td>1.27</td><td>0.12</td><td>2</td><td>No</td><td>101.04 KB</td><td>0.98</td>
+</tr><tr><td>ConcurrentGetSameKey</td><td>16</td><td>3.571 ms</td><td>0.2068 ms</td><td>0.1368 ms</td><td>3.535 ms</td><td>3.3946 ms</td><td>3.768 ms</td><td>3.755 ms</td><td>3.761 ms</td><td>1.98</td><td>0.18</td><td>3</td><td>No</td><td>108.79 KB</td><td>1.06</td>
+</tr><tr><td>ConcurrentRefresh</td><td>16</td><td>1.833 ms</td><td>0.1995 ms</td><td>0.1043 ms</td><td>1.830 ms</td><td>1.6669 ms</td><td>1.965 ms</td><td>1.946 ms</td><td>1.956 ms</td><td>1.01</td><td>0.10</td><td>1</td><td>No</td><td>79.13 KB</td><td>0.77</td>
+</tr><tr><td>ConcurrentRemove</td><td>16</td><td>14.145 ms</td><td>7.7104 ms</td><td>5.0999 ms</td><td>11.147 ms</td><td>10.4864 ms</td><td>26.006 ms</td><td>18.006 ms</td><td>22.006 ms</td><td>7.83</td><td>2.78</td><td>4</td><td>No</td><td>140.44 KB</td><td>1.37</td>
+</tr><tr><td>ConcurrentHighContentionScenario</td><td>16</td><td>2.420 ms</td><td>0.2713 ms</td><td>0.1794 ms</td><td>2.378 ms</td><td>2.2141 ms</td><td>2.723 ms</td><td>2.706 ms</td><td>2.714 ms</td><td>1.34</td><td>0.15</td><td>2</td><td>No</td><td>92.43 KB</td><td>0.90</td>
+</tr><tr><td>ConcurrentBulkOperations</td><td>16</td><td>13.337 ms</td><td>0.5344 ms</td><td>0.3180 ms</td><td>13.416 ms</td><td>12.7853 ms</td><td>13.751 ms</td><td>13.644 ms</td><td>13.697 ms</td><td>7.38</td><td>0.65</td><td>4</td><td>No</td><td>885.2 KB</td><td>8.61</td>
+</tr></tbody></table>
+</body>
+</html>

@@ -1,0 +1,36 @@
+```
+
+BenchmarkDotNet v0.14.0, Windows 11 (10.0.26100.4652)
+AMD Ryzen 7 5700G with Radeon Graphics, 1 CPU, 16 logical and 8 physical cores
+.NET SDK 9.0.301
+  [Host] : .NET 9.0.6 (9.0.625.26613), X64 RyuJIT AVX2
+
+Runtime=.NET 9.0  Toolchain=InProcessEmitToolchain  InvocationCount=1  
+MaxIterationCount=10  MinIterationCount=3  UnrollFactor=1  
+WarmupCount=2  
+
+```
+| Method                           | Mean       | Error    | StdDev    | Min        | Max        | Median     | P90        | P95        | Ratio | RatioSD | Rank | Baseline | Allocated | Alloc Ratio |
+|--------------------------------- |-----------:|---------:|----------:|-----------:|-----------:|-----------:|-----------:|-----------:|------:|--------:|-----:|--------- |----------:|------------:|
+| SetAsync_NoExpiration            |   970.7 μs | 128.1 μs |  76.23 μs |   810.9 μs | 1,065.5 μs |   984.4 μs | 1,064.7 μs | 1,065.0 μs |  1.01 |    0.11 |    1 | Yes      |  15.02 KB |        1.00 |
+| SetAsync_SlidingExpiration       | 1,056.0 μs | 301.8 μs | 179.57 μs |   857.5 μs | 1,323.8 μs | 1,025.1 μs | 1,298.2 μs | 1,311.0 μs |  1.09 |    0.20 |    1 | No       |  34.23 KB |        2.28 |
+| SetAsync_AbsoluteExpiration      |   903.4 μs | 101.5 μs |  67.16 μs |   796.0 μs |   996.0 μs |   920.6 μs |   969.2 μs |   982.6 μs |  0.94 |    0.10 |    1 | No       |   32.1 KB |        2.14 |
+| SetAsync_AbsoluteExpirationFixed |   839.0 μs | 307.7 μs | 203.52 μs |   607.1 μs | 1,136.2 μs |   805.6 μs | 1,133.8 μs | 1,135.0 μs |  0.87 |    0.21 |    1 | No       |  22.99 KB |        1.53 |
+| SetAsync_BothExpirations         |   774.4 μs | 206.8 μs | 136.81 μs |   615.2 μs | 1,050.7 μs |   792.4 μs |   899.3 μs |   975.0 μs |  0.80 |    0.15 |    1 | No       |  69.45 KB |        4.62 |
+| SetAsync_ShortExpiration         |   713.9 μs | 174.1 μs | 103.63 μs |   562.0 μs |   848.2 μs |   750.4 μs |   827.6 μs |   837.9 μs |  0.74 |    0.12 |    1 | No       |  20.27 KB |        1.35 |
+| GetAsync_NoExpiration            | 1,308.2 μs | 139.9 μs |  83.27 μs | 1,190.7 μs | 1,408.3 μs | 1,313.8 μs | 1,394.5 μs | 1,401.4 μs |  1.36 |    0.14 |    1 | No       |   24.3 KB |        1.62 |
+| GetAsync_SlidingExpiration       | 1,417.0 μs | 239.6 μs | 158.46 μs | 1,168.3 μs | 1,656.9 μs | 1,434.5 μs | 1,599.1 μs | 1,628.0 μs |  1.47 |    0.20 |    1 | No       |   23.8 KB |        1.59 |
+| GetAsync_AbsoluteExpiration      | 1,303.0 μs | 229.3 μs | 151.66 μs | 1,128.0 μs | 1,560.5 μs | 1,242.2 μs | 1,519.0 μs | 1,539.7 μs |  1.35 |    0.19 |    1 | No       |  24.05 KB |        1.60 |
+| GetAsync_BothExpirations         | 1,255.8 μs | 197.2 μs | 130.44 μs | 1,107.1 μs | 1,529.6 μs | 1,215.3 μs | 1,387.5 μs | 1,458.5 μs |  1.30 |    0.17 |    1 | No       |  23.93 KB |        1.59 |
+| GetAsync_ShortExpiration         | 1,232.0 μs | 143.2 μs |  94.71 μs | 1,070.5 μs | 1,368.3 μs | 1,244.2 μs | 1,358.8 μs | 1,363.5 μs |  1.28 |    0.14 |    1 | No       |  23.47 KB |        1.56 |
+| RefreshAsync_SlidingExpiration   |   819.2 μs | 186.2 μs |  97.38 μs |   669.7 μs |   944.9 μs |   793.2 μs |   938.5 μs |   941.7 μs |  0.85 |    0.12 |    1 | No       |  22.59 KB |        1.50 |
+| RefreshAsync_BothExpirations     |   716.1 μs | 138.3 μs |  91.46 μs |   612.8 μs |   860.1 μs |   690.0 μs |   842.9 μs |   851.5 μs |  0.74 |    0.11 |    1 | No       |  17.01 KB |        1.13 |
+| RefreshAsync_ShortExpiration     |   791.5 μs | 144.9 μs |  86.24 μs |   678.8 μs |   932.0 μs |   773.4 μs |   906.4 μs |   919.2 μs |  0.82 |    0.11 |    1 | No       |  19.23 KB |        1.28 |
+| SetSync_NoExpiration             |   944.9 μs | 167.7 μs | 110.95 μs |   807.5 μs | 1,166.5 μs |   944.1 μs | 1,068.2 μs | 1,117.4 μs |  0.98 |    0.14 |    1 | No       |  18.05 KB |        1.20 |
+| SetSync_SlidingExpiration        |   875.9 μs | 233.4 μs | 154.35 μs |   693.8 μs | 1,055.2 μs |   902.2 μs | 1,047.4 μs | 1,051.3 μs |  0.91 |    0.17 |    1 | No       |  25.49 KB |        1.70 |
+| SetSync_AbsoluteExpiration       |   983.7 μs | 310.1 μs | 184.54 μs |   755.2 μs | 1,280.6 μs | 1,012.8 μs | 1,164.9 μs | 1,222.8 μs |  1.02 |    0.20 |    1 | No       |  12.95 KB |        0.86 |
+| SetSync_BothExpirations          |   828.6 μs | 198.0 μs | 130.98 μs |   672.0 μs | 1,037.9 μs |   801.8 μs |   996.1 μs | 1,017.0 μs |  0.86 |    0.15 |    1 | No       |  21.61 KB |        1.44 |
+| GetSync_SlidingExpiration        | 1,267.3 μs | 230.2 μs | 137.00 μs | 1,099.5 μs | 1,475.5 μs | 1,230.8 μs | 1,464.8 μs | 1,470.2 μs |  1.31 |    0.17 |    1 | No       |  21.41 KB |        1.43 |
+| GetSync_AbsoluteExpiration       | 1,529.9 μs | 431.2 μs | 285.19 μs | 1,233.5 μs | 2,037.6 μs | 1,438.2 μs | 1,927.3 μs | 1,982.4 μs |  1.59 |    0.31 |    1 | No       |   16.7 KB |        1.11 |
+| RefreshSync_SlidingExpiration    |   804.0 μs | 163.4 μs |  85.45 μs |   704.2 μs |   963.8 μs |   799.4 μs |   899.5 μs |   931.6 μs |  0.83 |    0.11 |    1 | No       |  15.67 KB |        1.04 |
+| RefreshSync_BothExpirations      |   787.5 μs | 230.9 μs | 120.75 μs |   615.9 μs |   953.7 μs |   788.1 μs |   931.0 μs |   942.3 μs |  0.82 |    0.14 |    1 | No       |  15.39 KB |        1.02 |
