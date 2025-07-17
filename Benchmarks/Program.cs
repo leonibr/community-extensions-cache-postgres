@@ -38,11 +38,11 @@ Console.WriteLine("PostgreSQL Distributed Cache Benchmarks");
 Console.WriteLine("========================================");
 Console.WriteLine();
 Console.WriteLine("Available benchmark classes:");
-Console.WriteLine("1. CoreOperationsBenchmark - Basic cache operations (Get, Set, Delete, Refresh)");
-Console.WriteLine("2. DataSizeBenchmark - Performance with different payload sizes");
-Console.WriteLine("3. ExpirationBenchmark - Different expiration strategies");
-Console.WriteLine("4. ConcurrencyBenchmark - Concurrent access patterns");
-Console.WriteLine("5. BulkOperationsBenchmark - Bulk operations and high-throughput scenarios");
+Console.WriteLine("1. CoreOperationsBenchmark - Basic cache operations (Get, Set, Delete, Refresh) [~10 minutes]");
+Console.WriteLine("2. DataSizeBenchmark - Performance with different payload sizes [~10 minutes]");
+Console.WriteLine("3. ExpirationBenchmark - Different expiration strategies [~10 minutes]");
+Console.WriteLine("4. ConcurrencyBenchmark - Concurrent access patterns [~15 minutes]");
+Console.WriteLine("5. BulkOperationsBenchmark - Bulk operations and high-throughput scenarios [~15 minutes]");
 Console.WriteLine();
 
 // Check if user provided specific benchmark class
