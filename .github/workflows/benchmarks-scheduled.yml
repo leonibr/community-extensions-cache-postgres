@@ -77,13 +77,10 @@ jobs:
 
       - name: Show current directory
         run: pwd
-
       - name: List results directory
-        run: ls -lha $(pwd)/Benchmarks
+        run: ls -lha $(pwd)/BenchmarkDotNet.Artifacts
       - name: List results directory
-        run: ls -lha $(pwd)/Benchmarks/BenchmarkDotNet.Artifacts
-      - name: List results directory
-        run: ls -lha $(pwd)/Benchmarks/BenchmarkDotNet.Artifacts/results
+        run: ls -lha $(pwd)/BenchmarkDotNet.Artifacts/results
 
       - name: Store benchmark result
         uses: benchmark-action/github-action-benchmark@v1
