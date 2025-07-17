@@ -79,7 +79,7 @@ jobs:
         run: pwd
 
       - name: List results directory
-        run: ls -l Benchmarks/BenchmarkDotNet.Artifacts/results/
+        run: ls -lha $(pwd)
 
       - name: Store benchmark result
         uses: benchmark-action/github-action-benchmark@v1
