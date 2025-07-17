@@ -31,38 +31,34 @@ jobs:
   benchmark:
     runs-on: ubuntu-latest
     timeout-minutes: 90
-    
+
     permissions:
       contents: write
       deployments: write
       pages: write
-    
+
     strategy:
       matrix:
-        benchmark: ${{ fromJson(
-          github.event.inputs.benchmark_suite == 'all' && '["core", "datasize", "expiration", "concurrency", "bulk"]' ||
-          github.event.inputs.benchmark_suite && format('["{0}"]', github.event.inputs.benchmark_suite) ||
-          '["core"]'
-        ) }}
-    
+        benchmark: ${{ fromJson(github.event.inputs.benchmark_suite == 'all' && '["core", "datasize", "expiration", "concurrency", "bulk"]' || github.event.inputs.benchmark_suite && format('["{0}"]', github.event.inputs.benchmark_suite) || '["core"]') }}
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        
+
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: ${{ env.DOTNET_VERSION }}
-          
+
       - name: Restore dependencies
         run: dotnet restore Benchmarks/Benchmarks.csproj
-        
+
       - name: Build benchmarks
         run: dotnet build Benchmarks/Benchmarks.csproj --configuration Release --no-restore
-        
+
       - name: Run ${{ matrix.benchmark }} benchmark
         run: dotnet run --project Benchmarks/Benchmarks.csproj --configuration Release --no-build -- ${{ matrix.benchmark }}
-        
+
       - name: Store benchmark result
         uses: benchmark-action/github-action-benchmark@v1
         with:
@@ -78,14 +74,14 @@ jobs:
           # Store data in gh-pages branch
           gh-pages-branch: 'gh-pages'
           benchmark-data-dir-path: 'benchmarks'
-          
+
       - name: Upload benchmark results
         uses: actions/upload-artifact@v4
         with:
           name: benchmark-results-${{ matrix.benchmark }}-${{ github.run_number }}
           path: Benchmarks/BenchmarkDotNet.Artifacts/results/
           retention-days: 30
-          
+
       - name: Create benchmark summary
         run: |
           echo "# Benchmark Results: ${{ matrix.benchmark }}" >> $GITHUB_STEP_SUMMARY
@@ -94,7 +90,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "📊 **[View Historical Trends](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/benchmarks/)**" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           # Find and include the GitHub markdown report
           REPORT_FILE=$(find Benchmarks/BenchmarkDotNet.Artifacts/results/ -name "*github.md" | head -1)
           if [ -f "$REPORT_FILE" ]; then
@@ -107,7 +103,7 @@ jobs:
     needs: benchmark
     runs-on: ubuntu-latest
     if: always()
-    
+
     steps:
       - name: Download all benchmark results
         uses: actions/download-artifact@v4
@@ -115,11 +111,11 @@ jobs:
           pattern: benchmark-results-*
           merge-multiple: true
           path: ./benchmark-results
-          
+
       - name: Generate consolidated report
         run: |
           mkdir -p reports
-          
+
           echo "# PostgreSQL Cache Performance Report" > reports/performance-summary.md
           echo "**Generated:** $(date)" >> reports/performance-summary.md
           echo "**Commit:** ${{ github.sha }}" >> reports/performance-summary.md
@@ -127,7 +123,7 @@ jobs:
           echo "" >> reports/performance-summary.md
           echo "📊 **[View Historical Dashboard](https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/benchmarks/)**" >> reports/performance-summary.md
           echo "" >> reports/performance-summary.md
-          
+
           # Process each benchmark type
           for md_file in benchmark-results/*github.md; do
             if [ -f "$md_file" ]; then
@@ -136,10 +132,10 @@ jobs:
               echo "" >> reports/performance-summary.md
             fi
           done
-          
+
       - name: Upload consolidated report
         uses: actions/upload-artifact@v4
         with:
           name: performance-report-${{ github.run_number }}
           path: reports/performance-summary.md
-          retention-days: 90 
+          retention-days: 90

@@ -34,11 +34,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        benchmark: ${{ fromJson(
-          github.event.inputs.benchmark_filter == 'all' && '["core", "datasize", "expiration", "concurrency", "bulk"]' ||
-          github.event.inputs.benchmark_filter && format('["{0}"]', github.event.inputs.benchmark_filter) ||
-          '["core", "datasize", "expiration", "concurrency", "bulk"]'
-        ) }}
+        benchmark: ${{ fromJson(github.event.inputs.benchmark_filter == 'all' && '["core", "datasize", "expiration", "concurrency", "bulk"]' || github.event.inputs.benchmark_filter && format('["{0}"]', github.event.inputs.benchmark_filter) || '["core", "datasize", "expiration", "concurrency", "bulk"]') }}
     
     steps:
       - name: Checkout repository
