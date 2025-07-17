@@ -262,4 +262,5 @@ paket-files/
 __pycache__/
 *.pyc
 
-Benchmarks/BenchmarkDotNet.Artifacts/**/*
+Benchmarks/BenchmarkDotNet.Artifacts/*
+Benchmarks/BenchmarkDotNet.Artifacts/results/*
