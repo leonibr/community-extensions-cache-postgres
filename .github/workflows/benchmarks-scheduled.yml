@@ -75,11 +75,11 @@ jobs:
             *) echo "class_name=Unknown" >> $GITHUB_OUTPUT ;;
           esac
 
-      - name: List results directory
-        run: ls -l Benchmarks/BenchmarkDotNet.Artifacts/results/
-
       - name: Show current directory
         run: pwd
+
+      - name: List results directory
+        run: ls -l Benchmarks/BenchmarkDotNet.Artifacts/results/
 
       - name: Store benchmark result
         uses: benchmark-action/github-action-benchmark@v1
