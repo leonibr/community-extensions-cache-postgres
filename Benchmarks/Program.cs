@@ -31,7 +31,7 @@ var config = ManualConfig.Create(DefaultConfig.Instance)
     .AddExporter(MarkdownExporter.GitHub)
     .AddExporter(HtmlExporter.Default)
     .AddExporter(CsvExporter.Default)
-    .AddExporter(JsonExporter.Brief)
+    .AddExporter(JsonExporter.Default)
     .AddLogger(ConsoleLogger.Default);
 
 Console.WriteLine("PostgreSQL Distributed Cache Benchmarks");
