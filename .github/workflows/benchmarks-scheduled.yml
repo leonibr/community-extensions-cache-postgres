@@ -63,12 +63,24 @@ jobs:
       - name: Run ${{ matrix.benchmark }} benchmark
         run: dotnet run --project Benchmarks/Benchmarks.csproj --configuration Release --no-build -- ${{ matrix.benchmark }}
 
+      - name: Set benchmark class name
+        id: benchmark-class
+        run: |
+          case "${{ matrix.benchmark }}" in
+            "core") echo "class_name=CoreOperationsBenchmark" >> $GITHUB_OUTPUT ;;
+            "datasize") echo "class_name=DataSizeBenchmark" >> $GITHUB_OUTPUT ;;
+            "expiration") echo "class_name=ExpirationBenchmark" >> $GITHUB_OUTPUT ;;
+            "concurrency") echo "class_name=ConcurrencyBenchmark" >> $GITHUB_OUTPUT ;;
+            "bulk") echo "class_name=BulkOperationsBenchmark" >> $GITHUB_OUTPUT ;;
+            *) echo "class_name=Unknown" >> $GITHUB_OUTPUT ;;
+          esac
+
       - name: Store benchmark result
         uses: benchmark-action/github-action-benchmark@v1
         with:
           name: ${{ matrix.benchmark }}-benchmark
           tool: 'benchmarkdotnet'
-          output-file-path: Benchmarks/BenchmarkDotNet.Artifacts/results/Benchmarks.UseCases.*${{ matrix.benchmark }}*-report.json
+          output-file-path: Benchmarks/BenchmarkDotNet.Artifacts/results/Benchmarks.UseCases.${{ steps.benchmark-class.outputs.class_name }}-report.json
           github-token: ${{ secrets.GITHUB_TOKEN }}
           auto-push: true
           # Show alert with commit comment on detecting possible performance regression

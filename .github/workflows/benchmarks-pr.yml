@@ -76,7 +76,7 @@ jobs:
         with:
           name: 'core-benchmark-pr'
           tool: 'benchmarkdotnet'
-          output-file-path: Benchmarks/BenchmarkDotNet.Artifacts/results/Benchmarks.UseCases.*Core*-report.json
+          output-file-path: Benchmarks/BenchmarkDotNet.Artifacts/results/Benchmarks.UseCases.CoreOperationsBenchmark-report.json
           github-token: ${{ secrets.GITHUB_TOKEN }}
           auto-push: false # Don't push PR results to main data
           # Show comparison with baseline in PR comments

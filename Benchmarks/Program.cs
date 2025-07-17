@@ -6,6 +6,7 @@ using BenchmarkDotNet.Columns;
 using BenchmarkDotNet.Diagnosers;
 using BenchmarkDotNet.Exporters;
 using BenchmarkDotNet.Exporters.Csv;
+using BenchmarkDotNet.Exporters.Json;
 using BenchmarkDotNet.Loggers;
 using Benchmarks.UseCases;
 
@@ -30,6 +31,7 @@ var config = ManualConfig.Create(DefaultConfig.Instance)
     .AddExporter(MarkdownExporter.GitHub)
     .AddExporter(HtmlExporter.Default)
     .AddExporter(CsvExporter.Default)
+    .AddExporter(JsonExporter.Brief)
     .AddLogger(ConsoleLogger.Default);
 
 Console.WriteLine("PostgreSQL Distributed Cache Benchmarks");
