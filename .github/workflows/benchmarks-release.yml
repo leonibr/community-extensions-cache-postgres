@@ -152,7 +152,7 @@ jobs:
 
           echo "## Recommendations" >> "$REPORT_FILE"
           echo "" >> "$REPORT_FILE"
-          echo "1. **Production Testing**: Validate performance in your production-like environment" >> "$REPORT_FILE"
+          echo "1. **Production Testing**: Validate performance in your  production-like environment" >> "$REPORT_FILE"
           echo "2. **Monitoring**: Implement performance monitoring to track trends over time" >> "$REPORT_FILE"
           echo "3. **Tuning**: Consider connection pooling and PostgreSQL configuration optimization" >> "$REPORT_FILE"
           echo "4. **Scaling**: Review concurrent operation performance for your expected load" >> "$REPORT_FILE"
