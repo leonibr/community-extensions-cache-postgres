@@ -273,17 +273,34 @@ public class DatabaseOperationsTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task SetCacheItem_WithNoExpiration_ThrowsInvalidOperationException()
+    public async Task SetCacheItem_WithNoExpiration_Should_Work()
     {
         // Arrange
         await InitializeAsync();
         Assert.NotNull(_databaseOperations);
         var key = "no-expiration-test";
-        var value = new byte[] { 1, 2, 3 };
+        var value = new byte[]
+        {
+            1, 2, 3
+        };
 
-        // Act & Assert
-        await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            _databaseOperations!.SetCacheItemAsync(key, value, new DistributedCacheEntryOptions(), CancellationToken.None));
+        var operations = new DatabaseOperations(Options.Create(
+                new PostgreSqlCacheOptions
+            {
+                ConnectionString = _postgresContainer.GetConnectionString(),
+                SchemaName = "cache",
+                TableName = "distributed_cache",
+                CreateInfrastructure = true
+            }),
+            _logger);
+
+        // Act
+        await operations.SetCacheItemAsync(key, value, new DistributedCacheEntryOptions(), CancellationToken.None);
+
+        var result = await operations.GetCacheItemAsync(key, CancellationToken.None);
+
+        // Assert
+        Assert.NotNull(result);
     }
 
     [Fact]

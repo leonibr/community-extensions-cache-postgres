@@ -46,7 +46,7 @@ public class SqlCommandsTests
         // Assert
         Assert.Contains("SELECT \"Value\"", sql);
         Assert.Contains("FROM \"test_schema\".\"test_table\"", sql);
-        Assert.Contains("WHERE \"Id\" = @Id AND @UtcNow <= \"ExpiresAtTime\"", sql);
+        Assert.Contains("WHERE \"Id\" = @Id AND (\"ExpiresAtTime\" IS NULL OR @UtcNow <= \"ExpiresAtTime\")", sql);
     }
 
     [Fact]
@@ -83,7 +83,7 @@ public class SqlCommandsTests
         Assert.Contains("UPDATE \"test_schema\".\"test_table\"", sql);
         Assert.Contains("SET \"ExpiresAtTime\" = LEAST(\"AbsoluteExpiration\", @UtcNow + \"SlidingExpirationInSeconds\" * interval '1 second')", sql);
         Assert.Contains("WHERE \"Id\" = @Id", sql);
-        Assert.Contains("AND @UtcNow <= \"ExpiresAtTime\"", sql);
+        Assert.Contains("AND (\"ExpiresAtTime\" IS NULL OR @UtcNow <= \"ExpiresAtTime\")", sql);
         Assert.Contains("AND \"SlidingExpirationInSeconds\" IS NOT NULL", sql);
         Assert.Contains("AND (\"AbsoluteExpiration\" IS NULL OR \"AbsoluteExpiration\" <> \"ExpiresAtTime\")", sql);
     }

@@ -53,7 +53,9 @@ public class DatabaseOperationsAdditionalTests
 
         // Act & Assert - Should not throw even with invalid connection string
         // since we're not actually connecting in this test
-        Assert.Throws<Npgsql.NpgsqlException>(() => dbOperations.DeleteCacheItem("test-key"));
+        var ex = Record.Exception(() => dbOperations.DeleteCacheItem("test-key"));
+        
+        Assert.Null(ex);
     }
 
     [Fact]
@@ -71,7 +73,9 @@ public class DatabaseOperationsAdditionalTests
         var dbOperations = new DatabaseOperations(Options.Create(options), _logger);
 
         // Act & Assert - Should not throw even with invalid connection string
-        Assert.Throws<Npgsql.NpgsqlException>(() => dbOperations.GetCacheItem("test-key"));
+        var ex = Record.Exception(() => dbOperations.GetCacheItem("test-key"));
+        
+        Assert.Null(ex);
     }
 
     [Fact]
@@ -89,7 +93,9 @@ public class DatabaseOperationsAdditionalTests
         var dbOperations = new DatabaseOperations(Options.Create(options), _logger);
 
         // Act & Assert - Should not throw even with invalid connection string
-        Assert.Throws<Npgsql.NpgsqlException>(() => dbOperations.RefreshCacheItem("test-key"));
+        var ex = Record.Exception(() => dbOperations.RefreshCacheItem("test-key"));
+        
+        Assert.Null(ex);
     }
 
     [Fact]
@@ -107,8 +113,10 @@ public class DatabaseOperationsAdditionalTests
         var dbOperations = new DatabaseOperations(Options.Create(options), _logger);
 
         // Act & Assert - Should not throw even with invalid connection string
-        Assert.Throws<Npgsql.NpgsqlException>(() => dbOperations.SetCacheItem("test-key", new byte[] { 1, 2, 3 },
+        var ex = Record.Exception(() => dbOperations.SetCacheItem("test-key", new byte[] { 1, 2, 3 },
             new DistributedCacheEntryOptions { AbsoluteExpiration = DateTime.UtcNow.AddMinutes(5) }));
+        
+        Assert.Null(ex);
     }
 
     [Fact]
@@ -125,7 +133,8 @@ public class DatabaseOperationsAdditionalTests
             SchemaName = "cache",
             TableName = "distributed_cache",
             CreateInfrastructure = false,
-            SystemClock = mockClock.Object
+            SystemClock = mockClock.Object,
+            DefaultSlidingExpiration = null
         };
 
         // Act

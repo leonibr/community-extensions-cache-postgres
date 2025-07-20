@@ -29,7 +29,7 @@ public class SqlCommands
         $"""
         SELECT "Value"
         FROM "{_schemaName}"."{_tableName}"
-        WHERE "Id" = @Id AND @UtcNow <= "ExpiresAtTime"
+        WHERE "Id" = @Id AND ("ExpiresAtTime" IS NULL OR @UtcNow <= "ExpiresAtTime")
         """;
 
     public string SetCacheSql =>
@@ -49,7 +49,7 @@ public class SqlCommands
         UPDATE "{_schemaName}"."{_tableName}"
         SET "ExpiresAtTime" = LEAST("AbsoluteExpiration", @UtcNow + "SlidingExpirationInSeconds" * interval '1 second')
         WHERE "Id" = @Id
-            AND @UtcNow <= "ExpiresAtTime" 
+            AND ("ExpiresAtTime" IS NULL OR @UtcNow <= "ExpiresAtTime")
             AND "SlidingExpirationInSeconds" IS NOT NULL
             AND ("AbsoluteExpiration" IS NULL OR "AbsoluteExpiration" <> "ExpiresAtTime")
         """;
