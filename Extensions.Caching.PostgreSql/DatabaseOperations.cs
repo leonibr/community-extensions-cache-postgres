@@ -160,12 +160,11 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
             var utcNow = SystemClock.UtcNow;
 
             var absoluteExpiration = GetAbsoluteExpiration(utcNow, options);
-            ValidateOptions(options.SlidingExpiration, absoluteExpiration);
 
             using var connection = ConnectionFactory();
 
             var expiresAtTime = options.SlidingExpiration == null
-                ? absoluteExpiration!.Value
+                ? absoluteExpiration
                 : utcNow.Add(options.SlidingExpiration.Value);
 
             var setCache = new CommandDefinition(
@@ -190,12 +189,11 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
             var utcNow = SystemClock.UtcNow;
 
             var absoluteExpiration = GetAbsoluteExpiration(utcNow, options);
-            ValidateOptions(options.SlidingExpiration, absoluteExpiration);
 
             await using var connection = ConnectionFactory();
 
             var expiresAtTime = options.SlidingExpiration == null
-                ? absoluteExpiration!.Value
+                ? absoluteExpiration
                 : utcNow.Add(options.SlidingExpiration.Value);
 
             var setCache = new CommandDefinition(
@@ -285,15 +283,6 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
                 absoluteExpiration = options.AbsoluteExpiration.Value;
             }
             return absoluteExpiration;
-        }
-
-        private void ValidateOptions(TimeSpan? slidingExpiration, DateTimeOffset? absoluteExpiration)
-        {
-            if (!slidingExpiration.HasValue && !absoluteExpiration.HasValue)
-            {
-                throw new InvalidOperationException("Either absolute or sliding expiration needs " +
-                    "to be provided.");
-            }
         }
     }
 }
