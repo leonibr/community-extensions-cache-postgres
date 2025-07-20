@@ -290,7 +290,8 @@ public class DatabaseOperationsTests : IAsyncLifetime
                 ConnectionString = _postgresContainer.GetConnectionString(),
                 SchemaName = "cache",
                 TableName = "distributed_cache",
-                CreateInfrastructure = true
+                CreateInfrastructure = true,
+                DefaultSlidingExpiration = null
             }),
             _logger);
 
