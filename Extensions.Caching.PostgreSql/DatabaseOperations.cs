@@ -205,13 +205,10 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
                 var utcNow = SystemClock.UtcNow;
 
                 var absoluteExpiration = GetAbsoluteExpiration(utcNow, options);
-                ValidateOptions(options.SlidingExpiration, absoluteExpiration);
 
                 using var connection = ConnectionFactory();
 
-                var expiresAtTime = options.SlidingExpiration == null
-                    ? absoluteExpiration!.Value
-                    : utcNow.Add(options.SlidingExpiration.Value);
+                var expiresAtTime = GetExpiresAtTime(utcNow, absoluteExpiration, options.SlidingExpiration);
 
                 var setCache = new CommandDefinition(
                     SqlCommands.SetCacheSql,
@@ -238,13 +235,10 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
                 var utcNow = SystemClock.UtcNow;
 
                 var absoluteExpiration = GetAbsoluteExpiration(utcNow, options);
-                ValidateOptions(options.SlidingExpiration, absoluteExpiration);
 
                 await using var connection = ConnectionFactory();
 
-                var expiresAtTime = options.SlidingExpiration == null
-                    ? absoluteExpiration!.Value
-                    : utcNow.Add(options.SlidingExpiration.Value);
+                var expiresAtTime = GetExpiresAtTime(utcNow, absoluteExpiration, options.SlidingExpiration);
 
                 var setCache = new CommandDefinition(
                     SqlCommands.SetCacheSql,
@@ -336,13 +330,17 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
             return absoluteExpiration;
         }
 
-        private void ValidateOptions(TimeSpan? slidingExpiration, DateTimeOffset? absoluteExpiration)
+        private DateTimeOffset? GetExpiresAtTime(DateTimeOffset utcNow, DateTimeOffset? absoluteExpiration, TimeSpan? slidingExpiration)
         {
-            if (!slidingExpiration.HasValue && !absoluteExpiration.HasValue)
+            if (!slidingExpiration.HasValue)
             {
-                throw new InvalidOperationException("Either absolute or sliding expiration needs " +
-                    "to be provided.");
+                return absoluteExpiration;
             }
+            
+            var expiration = utcNow.Add(slidingExpiration.Value);
+
+            // Pick whichever comes first: the absolute or the sliding deadline
+            return absoluteExpiration.HasValue && expiration > absoluteExpiration.Value ? absoluteExpiration : expiration;
         }
 
         /// <summary>

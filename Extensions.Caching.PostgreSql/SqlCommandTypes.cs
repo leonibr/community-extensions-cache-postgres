@@ -12,7 +12,7 @@ public record ItemIdUtcNow
 public record ItemFull
 {
     public string Id { get; internal set; }
-    public DateTimeOffset ExpiresAtTime { get; internal set; }
+    public DateTimeOffset? ExpiresAtTime { get; internal set; }
     public byte[] Value { get; internal set; }
     public double? SlidingExpirationInSeconds { get; internal set; }
     public DateTimeOffset? AbsoluteExpiration { get; internal set; }

@@ -172,10 +172,6 @@ public class DatabaseResilienceIntegrationTests : IAsyncLifetime
             dbOperations.SetCacheItem("test-key", new byte[] { 1, 2, 3 },
                 new DistributedCacheEntryOptions { AbsoluteExpiration = DateTime.UtcNow.AddMinutes(-1) }));
 
-        Assert.Throws<InvalidOperationException>(() =>
-            dbOperations.SetCacheItem("test-key", new byte[] { 1, 2, 3 },
-                new DistributedCacheEntryOptions()));
-
         await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() =>
             dbOperations.SetCacheItemAsync("test-key", new byte[] { 1, 2, 3 },
                 new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(-1) },

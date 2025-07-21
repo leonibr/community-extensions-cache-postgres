@@ -79,7 +79,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
         /// The default sliding expiration set for a cache entry if neither Absolute or SlidingExpiration has been set explicitly.
         /// By default, its 20 minutes.
         /// </summary>
-        public TimeSpan DefaultSlidingExpiration { get; set; } = TimeSpan.FromMinutes(20);
+        public TimeSpan? DefaultSlidingExpiration { get; set; } = TimeSpan.FromMinutes(20);
 
         /// <summary>
         /// If set to true this instance of the cache will not remove expired items. 

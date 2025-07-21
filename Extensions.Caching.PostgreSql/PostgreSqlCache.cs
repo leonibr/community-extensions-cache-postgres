@@ -9,7 +9,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
     internal sealed class PostgreSqlCache : IDistributedCache
     {
         private readonly IDatabaseOperations _dbOperations;
-        private readonly TimeSpan _defaultSlidingExpiration;
+        private readonly TimeSpan? _defaultSlidingExpiration;
 
         [Obsolete("Do not use constructor directly instead pull IDistributedCache from DI. For this add 'services.AddDistributedPostgreSqlCache'")]
         public PostgreSqlCache(
