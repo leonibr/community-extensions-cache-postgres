@@ -8,20 +8,42 @@ using Moq;
 
 namespace CachingTest;
 
-public class ExpirationEdgeCaseTests
+using Testcontainers.PostgreSql;
+
+public class ExpirationEdgeCaseTests: IAsyncLifetime
 {
+    private readonly PostgreSqlContainer _postgresContainer;
+    
     private readonly ILogger<DatabaseOperations> _logger = new NullLoggerFactory().CreateLogger<DatabaseOperations>();
 
+    public ExpirationEdgeCaseTests()
+    {
+        _postgresContainer = new PostgreSqlBuilder()
+            .WithImage("postgres:latest")
+            .WithPassword("Strong_password_123!")
+            .Build();
+    }
+    
+    public async Task InitializeAsync()
+    {
+        await _postgresContainer.StartAsync();
+    }
+   
+    public async Task DisposeAsync()
+    {
+        await _postgresContainer.DisposeAsync();
+    } 
+    
     [Fact]
     public void SetCacheItem_WithAbsoluteExpirationRelativeToNow_UsesRelativeExpiration()
     {
         // Arrange
         var options = new PostgreSqlCacheOptions
         {
-            ConnectionString = "Host=localhost;Database=test;Username=test;Password=test",
+            ConnectionString = _postgresContainer.GetConnectionString(),
             SchemaName = "cache",
             TableName = "distributed_cache",
-            CreateInfrastructure = false
+            CreateInfrastructure = true
         };
 
         var dbOperations = new DatabaseOperations(Options.Create(options), _logger);
@@ -39,10 +61,10 @@ public class ExpirationEdgeCaseTests
         // Arrange
         var options = new PostgreSqlCacheOptions
         {
-            ConnectionString = "Host=localhost;Database=test;Username=test;Password=test",
+            ConnectionString = _postgresContainer.GetConnectionString(),
             SchemaName = "cache",
             TableName = "distributed_cache",
-            CreateInfrastructure = false
+            CreateInfrastructure = true
         };
 
         var dbOperations = new DatabaseOperations(Options.Create(options), _logger);
@@ -64,10 +86,10 @@ public class ExpirationEdgeCaseTests
         // Arrange
         var options = new PostgreSqlCacheOptions
         {
-            ConnectionString = "Host=localhost;Database=test;Username=test;Password=test",
+            ConnectionString = _postgresContainer.GetConnectionString(),
             SchemaName = "cache",
             TableName = "distributed_cache",
-            CreateInfrastructure = false
+            CreateInfrastructure = true
         };
 
         var dbOperations = new DatabaseOperations(Options.Create(options), _logger);
@@ -85,10 +107,10 @@ public class ExpirationEdgeCaseTests
         // Arrange
         var options = new PostgreSqlCacheOptions
         {
-            ConnectionString = "Host=localhost;Database=test;Username=test;Password=test",
+            ConnectionString = _postgresContainer.GetConnectionString(),
             SchemaName = "cache",
             TableName = "distributed_cache",
-            CreateInfrastructure = false
+            CreateInfrastructure = true
         };
 
         var dbOperations = new DatabaseOperations(Options.Create(options), _logger);
@@ -104,10 +126,10 @@ public class ExpirationEdgeCaseTests
         // Arrange
         var options = new PostgreSqlCacheOptions
         {
-            ConnectionString = "Host=localhost;Database=test;Username=test;Password=test",
+            ConnectionString = _postgresContainer.GetConnectionString(),
             SchemaName = "cache",
             TableName = "distributed_cache",
-            CreateInfrastructure = false
+            CreateInfrastructure = true
         };
 
         var dbOperations = new DatabaseOperations(Options.Create(options), _logger);
@@ -123,10 +145,10 @@ public class ExpirationEdgeCaseTests
         // Arrange
         var options = new PostgreSqlCacheOptions
         {
-            ConnectionString = "Host=localhost;Database=test;Username=test;Password=test",
+            ConnectionString = _postgresContainer.GetConnectionString(),
             SchemaName = "cache",
             TableName = "distributed_cache",
-            CreateInfrastructure = false
+            CreateInfrastructure = true
         };
 
         var dbOperations = new DatabaseOperations(Options.Create(options), _logger);
@@ -144,10 +166,10 @@ public class ExpirationEdgeCaseTests
         // Arrange
         var options = new PostgreSqlCacheOptions
         {
-            ConnectionString = "Host=localhost;Database=test;Username=test;Password=test",
+            ConnectionString = _postgresContainer.GetConnectionString(),
             SchemaName = "cache",
             TableName = "distributed_cache",
-            CreateInfrastructure = false
+            CreateInfrastructure = true
         };
 
         var dbOperations = new DatabaseOperations(Options.Create(options), _logger);
@@ -163,10 +185,10 @@ public class ExpirationEdgeCaseTests
         // Arrange
         var options = new PostgreSqlCacheOptions
         {
-            ConnectionString = "Host=localhost;Database=test;Username=test;Password=test",
+            ConnectionString = _postgresContainer.GetConnectionString(),
             SchemaName = "cache",
             TableName = "distributed_cache",
-            CreateInfrastructure = false
+            CreateInfrastructure = true
         };
 
         var dbOperations = new DatabaseOperations(Options.Create(options), _logger);
@@ -182,10 +204,10 @@ public class ExpirationEdgeCaseTests
         // Arrange
         var options = new PostgreSqlCacheOptions
         {
-            ConnectionString = "Host=localhost;Database=test;Username=test;Password=test",
+            ConnectionString = _postgresContainer.GetConnectionString(),
             SchemaName = "cache",
             TableName = "distributed_cache",
-            CreateInfrastructure = false
+            CreateInfrastructure = true
         };
 
         var dbOperations = new DatabaseOperations(Options.Create(options), _logger);
@@ -201,10 +223,10 @@ public class ExpirationEdgeCaseTests
         // Arrange
         var options = new PostgreSqlCacheOptions
         {
-            ConnectionString = "Host=localhost;Database=test;Username=test;Password=test",
+            ConnectionString = _postgresContainer.GetConnectionString(),
             SchemaName = "cache",
             TableName = "distributed_cache",
-            CreateInfrastructure = false
+            CreateInfrastructure = true
         };
 
         var dbOperations = new DatabaseOperations(Options.Create(options), _logger);
@@ -220,10 +242,10 @@ public class ExpirationEdgeCaseTests
         // Arrange
         var options = new PostgreSqlCacheOptions
         {
-            ConnectionString = "Host=localhost;Database=test;Username=test;Password=test",
+            ConnectionString = _postgresContainer.GetConnectionString(),
             SchemaName = "cache",
             TableName = "distributed_cache",
-            CreateInfrastructure = false
+            CreateInfrastructure = true
         };
 
         var dbOperations = new DatabaseOperations(Options.Create(options), _logger);
@@ -241,10 +263,10 @@ public class ExpirationEdgeCaseTests
         // Arrange
         var options = new PostgreSqlCacheOptions
         {
-            ConnectionString = "Host=localhost;Database=test;Username=test;Password=test",
+            ConnectionString = _postgresContainer.GetConnectionString(),
             SchemaName = "cache",
             TableName = "distributed_cache",
-            CreateInfrastructure = false
+            CreateInfrastructure = true
         };
 
         var dbOperations = new DatabaseOperations(Options.Create(options), _logger);
@@ -262,10 +284,10 @@ public class ExpirationEdgeCaseTests
         // Arrange
         var options = new PostgreSqlCacheOptions
         {
-            ConnectionString = "Host=localhost;Database=test;Username=test;Password=test",
+            ConnectionString = _postgresContainer.GetConnectionString(),
             SchemaName = "cache",
             TableName = "distributed_cache",
-            CreateInfrastructure = false
+            CreateInfrastructure = true
         };
 
         var dbOperations = new DatabaseOperations(Options.Create(options), _logger);
@@ -283,10 +305,10 @@ public class ExpirationEdgeCaseTests
         // Arrange
         var options = new PostgreSqlCacheOptions
         {
-            ConnectionString = "Host=localhost;Database=test;Username=test;Password=test",
+            ConnectionString = _postgresContainer.GetConnectionString(),
             SchemaName = "cache",
             TableName = "distributed_cache",
-            CreateInfrastructure = false
+            CreateInfrastructure = true
         };
 
         var dbOperations = new DatabaseOperations(Options.Create(options), _logger);
