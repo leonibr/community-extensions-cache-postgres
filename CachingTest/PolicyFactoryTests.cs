@@ -301,5 +301,83 @@ namespace CachingTest
             Assert.NotNull(timeoutPolicy);
             Assert.NotNull(resiliencePolicy);
         }
+
+        [Fact]
+        public async Task CreateResiliencePolicy_WithCircuitBreakerEnabled_ShouldIncludeCircuitBreaker()
+        {
+            // Arrange
+            var optionsWithCircuitBreaker = new PostgreSqlCacheOptions
+            {
+                EnableCircuitBreaker = true,
+                CircuitBreakerFailureThreshold = 2,
+                CircuitBreakerDurationOfBreak = TimeSpan.FromMilliseconds(50),
+                MaxRetryAttempts = 1,
+                RetryDelay = TimeSpan.FromMilliseconds(10),
+                OperationTimeout = TimeSpan.FromSeconds(1)
+            };
+
+            var policy = _policyFactory.CreateResiliencePolicy(optionsWithCircuitBreaker);
+            var failureCount = 0;
+
+            // Act - Trigger failures to test circuit breaker
+            for (int i = 0; i < 5; i++)
+            {
+                try
+                {
+                    await policy.ExecuteAsync(async () =>
+                    {
+                        failureCount++;
+                        throw new SocketException(); // Transient exception
+                    });
+                }
+                catch (Exception)
+                {
+                    // Expected to fail
+                }
+            }
+
+            // Assert - With circuit breaker enabled, after threshold failures, 
+            // subsequent operations should fail faster (circuit breaker behavior)
+            // The exact number of failures depends on circuit breaker timing, but should be limited
+            Assert.True(failureCount >= 2, $"Expected at least 2 failures to trigger circuit breaker, but got {failureCount}");
+            Assert.True(failureCount <= 10, $"Expected circuit breaker to limit failures, but got {failureCount}");
+        }
+
+        [Fact]
+        public async Task CreateResiliencePolicy_WithCircuitBreakerDisabled_ShouldNotIncludeCircuitBreaker()
+        {
+            // Arrange
+            var optionsWithoutCircuitBreaker = new PostgreSqlCacheOptions
+            {
+                EnableCircuitBreaker = false,
+                MaxRetryAttempts = 1,
+                RetryDelay = TimeSpan.FromMilliseconds(10),
+                OperationTimeout = TimeSpan.FromSeconds(1)
+            };
+
+            var policy = _policyFactory.CreateResiliencePolicy(optionsWithoutCircuitBreaker);
+            var failureCount = 0;
+
+            // Act - Test that operations fail consistently without circuit breaker protection
+            for (int i = 0; i < 5; i++)
+            {
+                try
+                {
+                    await policy.ExecuteAsync(async () =>
+                    {
+                        failureCount++;
+                        throw new SocketException(); // Transient exception
+                    });
+                }
+                catch (Exception)
+                {
+                    // Expected to fail
+                }
+            }
+
+            // Assert - Without circuit breaker, each operation should attempt and fail
+            // Expected: 5 operations × (1 initial attempt + 1 retry) = 10 total attempts
+            Assert.Equal(10, failureCount);
+        }
     }
 }

@@ -276,5 +276,60 @@ namespace CachingTest
             // Validation should pass with defaults
             options.ValidateResilienceConfiguration();
         }
+
+        [Fact]
+        public void ResiliencePatterns_InteractionWithCircuitBreaker_ShouldWorkAsExpected()
+        {
+            // Test the hierarchical relationship between EnableResiliencePatterns and EnableCircuitBreaker
+
+            // Scenario 1: EnableResiliencePatterns = false, EnableCircuitBreaker = false
+            var options1 = new PostgreSqlCacheOptions
+            {
+                EnableResiliencePatterns = false,
+                EnableCircuitBreaker = false
+            };
+            // Should not validate sub-options when resilience patterns are disabled
+            options1.ValidateResilienceConfiguration();
+
+            // Scenario 2: EnableResiliencePatterns = false, EnableCircuitBreaker = true
+            var options2 = new PostgreSqlCacheOptions
+            {
+                EnableResiliencePatterns = false,
+                EnableCircuitBreaker = true,  // This will be IGNORED
+                CircuitBreakerFailureThreshold = 0  // Invalid value, but should not throw
+            };
+            // Should not validate sub-options when resilience patterns are disabled
+            options2.ValidateResilienceConfiguration();
+
+            // Scenario 3: EnableResiliencePatterns = true, EnableCircuitBreaker = false
+            var options3 = new PostgreSqlCacheOptions
+            {
+                EnableResiliencePatterns = true,
+                EnableCircuitBreaker = false,  // Circuit breaker will be excluded from policy chain
+                CircuitBreakerFailureThreshold = 5  // Valid value (will be ignored in policy creation)
+            };
+            // Should validate all options when resilience patterns are enabled
+            options3.ValidateResilienceConfiguration();
+
+            // Scenario 4: EnableResiliencePatterns = true, EnableCircuitBreaker = true
+            var options4 = new PostgreSqlCacheOptions
+            {
+                EnableResiliencePatterns = true,
+                EnableCircuitBreaker = true,  // Circuit breaker will be included in policy chain
+                CircuitBreakerFailureThreshold = 5  // Valid value
+            };
+            // Should validate all options when resilience patterns are enabled
+            options4.ValidateResilienceConfiguration();
+
+            // Scenario 5: EnableResiliencePatterns = true, EnableCircuitBreaker = true with invalid settings
+            var options5 = new PostgreSqlCacheOptions
+            {
+                EnableResiliencePatterns = true,
+                EnableCircuitBreaker = true,
+                CircuitBreakerFailureThreshold = 0  // Invalid value
+            };
+            // Should throw when resilience patterns are enabled and circuit breaker settings are invalid
+            Assert.Throws<ArgumentException>(() => options5.ValidateResilienceConfiguration());
+        }
     }
 }

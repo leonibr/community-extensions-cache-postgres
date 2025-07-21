@@ -444,4 +444,78 @@ public class DatabaseOperationsUpdateOnGetTests : IAsyncLifetime
         Assert.NotNull(result2);
         Assert.Equal(value, result2);
     }
+
+    [Fact]
+    public async Task SetCacheItem_WithBothAbsoluteAndSlidingExpiration_ShouldWork()
+    {
+        // Arrange
+        await InitializeAsync();
+        Assert.NotNull(_databaseOperations);
+        var key = "both-expiration-test";
+        var value = new byte[] { 1, 2, 3 };
+
+        // Act - Should work with both expiration types set
+        await _databaseOperations!.SetCacheItemAsync(key, value, new DistributedCacheEntryOptions
+        {
+            AbsoluteExpiration = DateTime.UtcNow.AddMinutes(10),
+            SlidingExpiration = TimeSpan.FromMinutes(5)
+        }, CancellationToken.None);
+
+        var result = await _databaseOperations.GetCacheItemAsync(key, CancellationToken.None);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal(value, result);
+    }
+
+    [Fact]
+    public async Task SetCacheItem_WithZeroSlidingExpiration_ThrowsArgumentOutOfRangeException()
+    {
+        // Arrange
+        await InitializeAsync();
+        Assert.NotNull(_databaseOperations);
+        var key = "zero-sliding-test";
+        var value = new byte[] { 1, 2, 3 };
+
+        // Act & Assert
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() =>
+            _databaseOperations!.SetCacheItemAsync(key, value, new DistributedCacheEntryOptions
+            {
+                SlidingExpiration = TimeSpan.Zero
+            }, CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task SetCacheItem_WithNegativeSlidingExpiration_ThrowsArgumentOutOfRangeException()
+    {
+        // Arrange
+        await InitializeAsync();
+        Assert.NotNull(_databaseOperations);
+        var key = "negative-sliding-test";
+        var value = new byte[] { 1, 2, 3 };
+
+        // Act & Assert
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() =>
+            _databaseOperations!.SetCacheItemAsync(key, value, new DistributedCacheEntryOptions
+            {
+                SlidingExpiration = TimeSpan.FromMinutes(-1)
+            }, CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task SetCacheItem_WithExactCurrentTimeAbsoluteExpiration_ThrowsInvalidOperationException()
+    {
+        // Arrange
+        await InitializeAsync();
+        Assert.NotNull(_databaseOperations);
+        var key = "exact-time-test";
+        var value = new byte[] { 1, 2, 3 };
+
+        // Act & Assert
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            _databaseOperations!.SetCacheItemAsync(key, value, new DistributedCacheEntryOptions
+            {
+                AbsoluteExpiration = DateTime.UtcNow
+            }, CancellationToken.None));
+    }
 }
