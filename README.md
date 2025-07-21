@@ -276,7 +276,7 @@ We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.
 
 ## License
 
-[MIT License](LICENSE)
+[Apache-2.0](LICENSE)
 
 ## FAQ
 
