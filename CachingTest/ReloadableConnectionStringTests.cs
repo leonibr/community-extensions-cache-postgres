@@ -43,7 +43,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql.Tests
             var connectionStringKey = "TestConnectionString";
             var reloadInterval = TimeSpan.FromMinutes(5);
 
-            configuration.Setup(c => c[connectionStringKey]).Returns((string)null);
+            configuration.Setup(c => c[connectionStringKey]).Returns((string)null!);
 
             // Act
             using var provider = new ReloadableConnectionStringProvider(
