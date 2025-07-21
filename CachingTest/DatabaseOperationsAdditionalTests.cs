@@ -9,10 +9,31 @@ using Npgsql;
 
 namespace CachingTest;
 
-public class DatabaseOperationsAdditionalTests
+using Testcontainers.PostgreSql;
+
+public class DatabaseOperationsAdditionalTests : IAsyncLifetime
 {
+    private readonly PostgreSqlContainer _postgresContainer;
+
     private readonly ILogger<DatabaseOperations> _logger = new NullLoggerFactory().CreateLogger<DatabaseOperations>();
 
+    public DatabaseOperationsAdditionalTests()
+    {
+        _postgresContainer = new PostgreSqlBuilder()
+            .WithImage("postgres:latest")
+            .WithPassword("Strong_password_123!")
+            .Build();
+    }
+    
+    public async Task InitializeAsync()
+    {
+        await _postgresContainer.StartAsync();
+    }
+   
+    public async Task DisposeAsync()
+    {
+        await _postgresContainer.DisposeAsync();
+    } 
     [Fact]
     public void Constructor_WithDataSourceFactory_UsesDataSourceFactory()
     {
@@ -43,10 +64,10 @@ public class DatabaseOperationsAdditionalTests
         // Arrange
         var options = new PostgreSqlCacheOptions
         {
-            ConnectionString = "Host=localhost;Database=test;Username=test;Password=test",
+            ConnectionString = _postgresContainer.GetConnectionString(),
             SchemaName = "cache",
             TableName = "distributed_cache",
-            CreateInfrastructure = false
+            CreateInfrastructure = true
         };
 
         var dbOperations = new DatabaseOperations(Options.Create(options), _logger);
@@ -64,10 +85,10 @@ public class DatabaseOperationsAdditionalTests
         // Arrange
         var options = new PostgreSqlCacheOptions
         {
-            ConnectionString = "Host=localhost;Database=test;Username=test;Password=test",
+            ConnectionString = _postgresContainer.GetConnectionString(),
             SchemaName = "cache",
             TableName = "distributed_cache",
-            CreateInfrastructure = false
+            CreateInfrastructure = true
         };
 
         var dbOperations = new DatabaseOperations(Options.Create(options), _logger);
@@ -84,10 +105,10 @@ public class DatabaseOperationsAdditionalTests
         // Arrange
         var options = new PostgreSqlCacheOptions
         {
-            ConnectionString = "Host=localhost;Database=test;Username=test;Password=test",
+            ConnectionString = _postgresContainer.GetConnectionString(),
             SchemaName = "cache",
             TableName = "distributed_cache",
-            CreateInfrastructure = false
+            CreateInfrastructure = true
         };
 
         var dbOperations = new DatabaseOperations(Options.Create(options), _logger);
@@ -104,10 +125,10 @@ public class DatabaseOperationsAdditionalTests
         // Arrange
         var options = new PostgreSqlCacheOptions
         {
-            ConnectionString = "Host=localhost;Database=test;Username=test;Password=test",
+            ConnectionString = _postgresContainer.GetConnectionString(),
             SchemaName = "cache",
             TableName = "distributed_cache",
-            CreateInfrastructure = false
+            CreateInfrastructure = true
         };
 
         var dbOperations = new DatabaseOperations(Options.Create(options), _logger);
@@ -129,7 +150,7 @@ public class DatabaseOperationsAdditionalTests
 
         var options = new PostgreSqlCacheOptions
         {
-            ConnectionString = "Host=localhost;Database=test;Username=test;Password=test",
+            ConnectionString = _postgresContainer.GetConnectionString(),
             SchemaName = "cache",
             TableName = "distributed_cache",
             CreateInfrastructure = false,
@@ -150,7 +171,7 @@ public class DatabaseOperationsAdditionalTests
         // Arrange
         var options = new PostgreSqlCacheOptions
         {
-            ConnectionString = "Host=localhost;Database=test;Username=test;Password=test",
+            ConnectionString = _postgresContainer.GetConnectionString(),
             SchemaName = "cache",
             TableName = "distributed_cache",
             CreateInfrastructure = false

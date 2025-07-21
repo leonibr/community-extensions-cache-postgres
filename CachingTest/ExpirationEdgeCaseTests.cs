@@ -10,7 +10,7 @@ namespace CachingTest;
 
 using Testcontainers.PostgreSql;
 
-public class ExpirationEdgeCaseTests: IAsyncLifetime
+public class ExpirationEdgeCaseTests : IAsyncLifetime
 {
     private readonly PostgreSqlContainer _postgresContainer;
     
