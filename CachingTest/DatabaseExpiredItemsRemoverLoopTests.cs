@@ -193,7 +193,7 @@ public class DatabaseExpiredItemsRemoverLoopIntegrationTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Start_WithValidInterval_StartsLoop()
+    public void Start_WithValidInterval_StartsLoop()
     {
         // Arrange
         if (_removerLoop == null) throw new InvalidOperationException("RemoverLoop is null");
@@ -206,7 +206,7 @@ public class DatabaseExpiredItemsRemoverLoopIntegrationTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Start_WithExceptionSetup_StartsLoop()
+    public void Start_WithExceptionSetup_StartsLoop()
     {
         // Arrange
         if (_removerLoop == null) throw new InvalidOperationException("RemoverLoop is null");
@@ -222,7 +222,7 @@ public class DatabaseExpiredItemsRemoverLoopIntegrationTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Dispose_WithRunningLoop_StopsLoop()
+    public void Dispose_WithRunningLoop_StopsLoop()
     {
         // Arrange
         if (_removerLoop == null) throw new InvalidOperationException("RemoverLoop is null");
