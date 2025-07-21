@@ -4,11 +4,11 @@
     <AssemblyName>Community.Microsoft.Extensions.Caching.PostgreSql</AssemblyName>
     <RootNamespace>Community.Microsoft.Extensions.Caching.PostgreSql</RootNamespace>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
-    <Version>5.0.0</Version>
+    <Version>5.1.0-next</Version>
     <Authors>Ashley Marques</Authors>
     <Company />
     <Description>DistributedCache using postgres</Description>
-    <PackageReleaseNotes>Dependencies updated to latest and now supports .NET 6.0, 8.0, and 9.0</PackageReleaseNotes>
+    <PackageReleaseNotes>Added Azure Key Vault rotation support with reloadable connection strings. Dependencies updated to latest and now supports .NET 6.0, 8.0, and 9.0</PackageReleaseNotes>
     <PackageProjectUrl>https://github.com/leonibr/community-extensions-cache-postgres</PackageProjectUrl>
     <RepositoryUrl>https://github.com/leonibr/community-extensions-cache-postgres.git</RepositoryUrl>
     <RepositoryType>Github</RepositoryType>

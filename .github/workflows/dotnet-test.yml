@@ -87,6 +87,14 @@ jobs:
           name: html-coverage-report
           path: ./TestResults/coverage/report
 
+      - name: Deploy Coverage Report to GitHub Pages
+        if: env.COVERAGE_FILE_PATH != '' && github.ref == 'refs/heads/main'
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./TestResults/coverage/report
+          destination_dir: coverage
+
       - name: Display Coverage Summary
         if: env.COVERAGE_FILE_PATH != ''
         run: |

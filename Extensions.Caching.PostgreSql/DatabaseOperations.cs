@@ -13,20 +13,23 @@ using Microsoft.Extensions.Logging;
 
 namespace Community.Microsoft.Extensions.Caching.PostgreSql
 {
-    internal sealed class DatabaseOperations : IDatabaseOperations
+    internal sealed class DatabaseOperations : IDatabaseOperations, IDisposable
     {
         private readonly ILogger<DatabaseOperations> _logger;
         private readonly bool _updateOnGetCacheItem;
         private readonly bool _readOnlyMode;
+        private readonly ReloadableConnectionStringProvider _connectionStringProvider;
 
         public DatabaseOperations(IOptions<PostgreSqlCacheOptions> options, ILogger<DatabaseOperations> logger)
         {
             var cacheOptions = options.Value;
 
-            if (string.IsNullOrEmpty(cacheOptions.ConnectionString) && cacheOptions.DataSourceFactory is null)
+            if (string.IsNullOrEmpty(cacheOptions.ConnectionString) &&
+                string.IsNullOrEmpty(cacheOptions.ConnectionStringKey) &&
+                cacheOptions.DataSourceFactory is null)
             {
                 throw new ArgumentException(
-                    $"Either {nameof(PostgreSqlCacheOptions.ConnectionString)} or {nameof(PostgreSqlCacheOptions.DataSourceFactory)} must be set.");
+                    $"Either {nameof(PostgreSqlCacheOptions.ConnectionString)}, {nameof(PostgreSqlCacheOptions.ConnectionStringKey)}, or {nameof(PostgreSqlCacheOptions.DataSourceFactory)} must be set.");
             }
             if (string.IsNullOrEmpty(cacheOptions.SchemaName))
             {
@@ -39,9 +42,21 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
                     $"{nameof(PostgreSqlCacheOptions.TableName)} cannot be empty or null.");
             }
 
+            // Initialize connection string provider if using reloadable connection strings
+            if (!string.IsNullOrEmpty(cacheOptions.ConnectionStringKey) &&
+                cacheOptions.EnableConnectionStringReloading &&
+                cacheOptions.Configuration != null)
+            {
+                _connectionStringProvider = new ReloadableConnectionStringProvider(
+                    cacheOptions.Configuration,
+                    cacheOptions.Logger ?? logger,
+                    cacheOptions.ConnectionStringKey,
+                    cacheOptions.ConnectionStringReloadInterval);
+            }
+
             ConnectionFactory = cacheOptions.DataSourceFactory != null
                 ? () => cacheOptions.DataSourceFactory.Invoke().CreateConnection()
-                : new Func<NpgsqlConnection>(() => new NpgsqlConnection(cacheOptions.ConnectionString));
+                : new Func<NpgsqlConnection>(() => new NpgsqlConnection(GetConnectionString(cacheOptions)));
 
             SystemClock = cacheOptions.SystemClock;
 
@@ -54,6 +69,15 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
             {
                 CreateSchemaAndTableIfNotExist();
             }
+        }
+
+        private string GetConnectionString(PostgreSqlCacheOptions options)
+        {
+            if (_connectionStringProvider != null)
+            {
+                return _connectionStringProvider.GetConnectionString();
+            }
+            return options.ConnectionString;
         }
 
         private SqlCommands SqlCommands { get; }
@@ -294,6 +318,11 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
                 throw new InvalidOperationException("Either absolute or sliding expiration needs " +
                     "to be provided.");
             }
+        }
+
+        public void Dispose()
+        {
+            _connectionStringProvider?.Dispose();
         }
     }
 }
