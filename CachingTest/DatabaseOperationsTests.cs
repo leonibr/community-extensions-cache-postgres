@@ -346,7 +346,7 @@ public class DatabaseOperationsReadOnlyTests : IAsyncLifetime
         var key = "readonly-delete-test";
 
         // Act - Should not throw
-        await _databaseOperations.DeleteCacheItemAsync(key, CancellationToken.None);
+        await _databaseOperations!.DeleteCacheItemAsync(key, CancellationToken.None);
 
         // Assert - No exception thrown
         Assert.True(true);
@@ -361,7 +361,7 @@ public class DatabaseOperationsReadOnlyTests : IAsyncLifetime
         var value = new byte[] { 1, 2, 3 };
 
         // Act - Should not throw
-        await _databaseOperations.SetCacheItemAsync(key, value, new DistributedCacheEntryOptions
+        await _databaseOperations!.SetCacheItemAsync(key, value, new DistributedCacheEntryOptions
         {
             AbsoluteExpiration = DateTime.UtcNow.AddMinutes(5)
         }, CancellationToken.None);
@@ -377,7 +377,7 @@ public class DatabaseOperationsReadOnlyTests : IAsyncLifetime
         await InitializeAsync();
 
         // Act - Should not throw
-        await _databaseOperations.DeleteExpiredCacheItemsAsync(CancellationToken.None);
+        await _databaseOperations!.DeleteExpiredCacheItemsAsync(CancellationToken.None);
 
         // Assert - No exception thrown
         Assert.True(true);

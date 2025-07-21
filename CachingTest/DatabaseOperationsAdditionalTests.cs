@@ -51,9 +51,9 @@ public class DatabaseOperationsAdditionalTests
 
         var dbOperations = new DatabaseOperations(Options.Create(options), _logger);
 
-        // Act & Assert - Should not throw even with invalid connection string
-        // since we're not actually connecting in this test
-        Assert.Throws<Npgsql.NpgsqlException>(() => dbOperations.DeleteCacheItem("test-key"));
+        // Act & Assert - Should not throw even with invalid connection string due to resilience
+        dbOperations.DeleteCacheItem("test-key");
+        // If we reach here without exception, the test passes
     }
 
     [Fact]
@@ -70,8 +70,10 @@ public class DatabaseOperationsAdditionalTests
 
         var dbOperations = new DatabaseOperations(Options.Create(options), _logger);
 
-        // Act & Assert - Should not throw even with invalid connection string
-        Assert.Throws<Npgsql.NpgsqlException>(() => dbOperations.GetCacheItem("test-key"));
+        // Act & Assert - Should not throw even with invalid connection string due to resilience
+        var result = dbOperations.GetCacheItem("test-key");
+        // Should return null when connection fails
+        Assert.Null(result);
     }
 
     [Fact]
@@ -88,8 +90,9 @@ public class DatabaseOperationsAdditionalTests
 
         var dbOperations = new DatabaseOperations(Options.Create(options), _logger);
 
-        // Act & Assert - Should not throw even with invalid connection string
-        Assert.Throws<Npgsql.NpgsqlException>(() => dbOperations.RefreshCacheItem("test-key"));
+        // Act & Assert - Should not throw even with invalid connection string due to resilience
+        dbOperations.RefreshCacheItem("test-key");
+        // If we reach here without exception, the test passes
     }
 
     [Fact]
@@ -106,9 +109,10 @@ public class DatabaseOperationsAdditionalTests
 
         var dbOperations = new DatabaseOperations(Options.Create(options), _logger);
 
-        // Act & Assert - Should not throw even with invalid connection string
-        Assert.Throws<Npgsql.NpgsqlException>(() => dbOperations.SetCacheItem("test-key", new byte[] { 1, 2, 3 },
-            new DistributedCacheEntryOptions { AbsoluteExpiration = DateTime.UtcNow.AddMinutes(5) }));
+        // Act & Assert - Should not throw even with invalid connection string due to resilience
+        dbOperations.SetCacheItem("test-key", new byte[] { 1, 2, 3 },
+            new DistributedCacheEntryOptions { AbsoluteExpiration = DateTime.UtcNow.AddMinutes(5) });
+        // If we reach here without exception, the test passes
     }
 
     [Fact]
@@ -173,24 +177,30 @@ public class PostgreSqlCacheAdditionalTests
     public void Constructor_WithNullDatabaseOperations_ThrowsArgumentNullException()
     {
         // Act & Assert
+#pragma warning disable CS0618 // Type or member is obsolete
         Assert.Throws<ArgumentNullException>(() => new PostgreSqlCache(
             Options.Create(_options), null!, _mockRemoverLoop.Object));
+#pragma warning restore CS0618 // Type or member is obsolete
     }
 
     [Fact]
     public void Constructor_WithNullRemoverLoop_ThrowsArgumentNullException()
     {
         // Act & Assert
+#pragma warning disable CS0618 // Type or member is obsolete
         Assert.Throws<ArgumentNullException>(() => new PostgreSqlCache(
             Options.Create(_options), _mockDbOperations.Object, null!));
+#pragma warning restore CS0618 // Type or member is obsolete
     }
 
     [Fact]
     public void Constructor_WithNullOptions_ThrowsArgumentNullException()
     {
         // Act & Assert
+#pragma warning disable CS0618 // Type or member is obsolete
         Assert.Throws<ArgumentNullException>(() => new PostgreSqlCache(
             null!, _mockDbOperations.Object, _mockRemoverLoop.Object));
+#pragma warning restore CS0618 // Type or member is obsolete
     }
 
     [Fact]
@@ -203,8 +213,10 @@ public class PostgreSqlCacheAdditionalTests
         };
 
         // Act & Assert
+#pragma warning disable CS0618 // Type or member is obsolete
         Assert.Throws<ArgumentOutOfRangeException>(() => new PostgreSqlCache(
             Options.Create(invalidOptions), _mockDbOperations.Object, _mockRemoverLoop.Object));
+#pragma warning restore CS0618 // Type or member is obsolete
     }
 
     [Fact]
@@ -217,15 +229,19 @@ public class PostgreSqlCacheAdditionalTests
         };
 
         // Act & Assert
+#pragma warning disable CS0618 // Type or member is obsolete
         Assert.Throws<ArgumentOutOfRangeException>(() => new PostgreSqlCache(
             Options.Create(invalidOptions), _mockDbOperations.Object, _mockRemoverLoop.Object));
+#pragma warning restore CS0618 // Type or member is obsolete
     }
 
     [Fact]
     public void Get_WithNullKey_ThrowsArgumentNullException()
     {
         // Arrange
+#pragma warning disable CS0618 // Type or member is obsolete
         var cache = new PostgreSqlCache(Options.Create(_options), _mockDbOperations.Object, _mockRemoverLoop.Object);
+#pragma warning restore CS0618 // Type or member is obsolete
 
         // Act & Assert
         Assert.Throws<ArgumentNullException>(() => cache.Get(null!));
@@ -235,7 +251,9 @@ public class PostgreSqlCacheAdditionalTests
     public async Task GetAsync_WithNullKey_ThrowsArgumentNullException()
     {
         // Arrange
+#pragma warning disable CS0618 // Type or member is obsolete
         var cache = new PostgreSqlCache(Options.Create(_options), _mockDbOperations.Object, _mockRemoverLoop.Object);
+#pragma warning restore CS0618 // Type or member is obsolete
 
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentNullException>(() => cache.GetAsync(null!, CancellationToken.None));
@@ -245,7 +263,9 @@ public class PostgreSqlCacheAdditionalTests
     public void Refresh_WithNullKey_ThrowsArgumentNullException()
     {
         // Arrange
+#pragma warning disable CS0618 // Type or member is obsolete
         var cache = new PostgreSqlCache(Options.Create(_options), _mockDbOperations.Object, _mockRemoverLoop.Object);
+#pragma warning restore CS0618 // Type or member is obsolete
 
         // Act & Assert
         Assert.Throws<ArgumentNullException>(() => cache.Refresh(null!));
@@ -255,7 +275,9 @@ public class PostgreSqlCacheAdditionalTests
     public async Task RefreshAsync_WithNullKey_ThrowsArgumentNullException()
     {
         // Arrange
+#pragma warning disable CS0618 // Type or member is obsolete
         var cache = new PostgreSqlCache(Options.Create(_options), _mockDbOperations.Object, _mockRemoverLoop.Object);
+#pragma warning restore CS0618 // Type or member is obsolete
 
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentNullException>(() => cache.RefreshAsync(null!, CancellationToken.None));
@@ -265,7 +287,9 @@ public class PostgreSqlCacheAdditionalTests
     public void Remove_WithNullKey_ThrowsArgumentNullException()
     {
         // Arrange
+#pragma warning disable CS0618 // Type or member is obsolete
         var cache = new PostgreSqlCache(Options.Create(_options), _mockDbOperations.Object, _mockRemoverLoop.Object);
+#pragma warning restore CS0618 // Type or member is obsolete
 
         // Act & Assert
         Assert.Throws<ArgumentNullException>(() => cache.Remove(null!));
@@ -275,7 +299,9 @@ public class PostgreSqlCacheAdditionalTests
     public async Task RemoveAsync_WithNullKey_ThrowsArgumentNullException()
     {
         // Arrange
+#pragma warning disable CS0618 // Type or member is obsolete
         var cache = new PostgreSqlCache(Options.Create(_options), _mockDbOperations.Object, _mockRemoverLoop.Object);
+#pragma warning restore CS0618 // Type or member is obsolete
 
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentNullException>(() => cache.RemoveAsync(null!, CancellationToken.None));
@@ -285,7 +311,9 @@ public class PostgreSqlCacheAdditionalTests
     public void Set_WithNullKey_ThrowsArgumentNullException()
     {
         // Arrange
+#pragma warning disable CS0618 // Type or member is obsolete
         var cache = new PostgreSqlCache(Options.Create(_options), _mockDbOperations.Object, _mockRemoverLoop.Object);
+#pragma warning restore CS0618 // Type or member is obsolete
 
         // Act & Assert
         Assert.Throws<ArgumentNullException>(() => cache.Set(null!, new byte[] { 1, 2, 3 }, new DistributedCacheEntryOptions()));
@@ -295,7 +323,9 @@ public class PostgreSqlCacheAdditionalTests
     public void Set_WithNullValue_ThrowsArgumentNullException()
     {
         // Arrange
+#pragma warning disable CS0618 // Type or member is obsolete
         var cache = new PostgreSqlCache(Options.Create(_options), _mockDbOperations.Object, _mockRemoverLoop.Object);
+#pragma warning restore CS0618 // Type or member is obsolete
 
         // Act & Assert
         Assert.Throws<ArgumentNullException>(() => cache.Set("test-key", null!, new DistributedCacheEntryOptions()));
@@ -305,7 +335,9 @@ public class PostgreSqlCacheAdditionalTests
     public void Set_WithNullOptions_ThrowsArgumentNullException()
     {
         // Arrange
+#pragma warning disable CS0618 // Type or member is obsolete
         var cache = new PostgreSqlCache(Options.Create(_options), _mockDbOperations.Object, _mockRemoverLoop.Object);
+#pragma warning restore CS0618 // Type or member is obsolete
 
         // Act & Assert
         Assert.Throws<ArgumentNullException>(() => cache.Set("test-key", new byte[] { 1, 2, 3 }, null!));
@@ -315,7 +347,9 @@ public class PostgreSqlCacheAdditionalTests
     public async Task SetAsync_WithNullKey_ThrowsArgumentNullException()
     {
         // Arrange
+#pragma warning disable CS0618 // Type or member is obsolete
         var cache = new PostgreSqlCache(Options.Create(_options), _mockDbOperations.Object, _mockRemoverLoop.Object);
+#pragma warning restore CS0618 // Type or member is obsolete
 
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentNullException>(() => cache.SetAsync(null!, new byte[] { 1, 2, 3 }, new DistributedCacheEntryOptions(), CancellationToken.None));
@@ -325,7 +359,9 @@ public class PostgreSqlCacheAdditionalTests
     public async Task SetAsync_WithNullValue_ThrowsArgumentNullException()
     {
         // Arrange
+#pragma warning disable CS0618 // Type or member is obsolete
         var cache = new PostgreSqlCache(Options.Create(_options), _mockDbOperations.Object, _mockRemoverLoop.Object);
+#pragma warning restore CS0618 // Type or member is obsolete
 
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentNullException>(() => cache.SetAsync("test-key", null!, new DistributedCacheEntryOptions(), CancellationToken.None));
@@ -335,7 +371,9 @@ public class PostgreSqlCacheAdditionalTests
     public async Task SetAsync_WithNullOptions_ThrowsArgumentNullException()
     {
         // Arrange
+#pragma warning disable CS0618 // Type or member is obsolete
         var cache = new PostgreSqlCache(Options.Create(_options), _mockDbOperations.Object, _mockRemoverLoop.Object);
+#pragma warning restore CS0618 // Type or member is obsolete
 
         // Act & Assert
         await Assert.ThrowsAsync<ArgumentNullException>(() => cache.SetAsync("test-key", new byte[] { 1, 2, 3 }, null!, CancellationToken.None));
@@ -345,7 +383,9 @@ public class PostgreSqlCacheAdditionalTests
     public void Set_WithNoExpirationOptions_UsesDefaultSlidingExpiration()
     {
         // Arrange
+#pragma warning disable CS0618 // Type or member is obsolete
         var cache = new PostgreSqlCache(Options.Create(_options), _mockDbOperations.Object, _mockRemoverLoop.Object);
+#pragma warning restore CS0618 // Type or member is obsolete
         var options = new DistributedCacheEntryOptions();
 
         // Act
@@ -359,7 +399,9 @@ public class PostgreSqlCacheAdditionalTests
     public async Task SetAsync_WithNoExpirationOptions_UsesDefaultSlidingExpiration()
     {
         // Arrange
+#pragma warning disable CS0618 // Type or member is obsolete
         var cache = new PostgreSqlCache(Options.Create(_options), _mockDbOperations.Object, _mockRemoverLoop.Object);
+#pragma warning restore CS0618 // Type or member is obsolete
         var options = new DistributedCacheEntryOptions();
 
         // Act

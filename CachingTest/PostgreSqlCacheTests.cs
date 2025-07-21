@@ -23,31 +23,39 @@ public class PostgreSqlCacheTests
         {
             DefaultSlidingExpiration = TimeSpan.FromMinutes(20)
         };
+#pragma warning disable CS0618 // Type or member is obsolete
         _cache = new PostgreSqlCache(Options.Create(_options), _mockDbOperations.Object, _mockRemoverLoop.Object);
+#pragma warning restore CS0618 // Type or member is obsolete
     }
 
     [Fact]
     public void Constructor_WithNullDatabaseOperations_ThrowsArgumentNullException()
     {
         // Act & Assert
+#pragma warning disable CS0618 // Type or member is obsolete
         Assert.Throws<ArgumentNullException>(() =>
             new PostgreSqlCache(Options.Create(_options), null!, _mockRemoverLoop.Object));
+#pragma warning restore CS0618 // Type or member is obsolete
     }
 
     [Fact]
     public void Constructor_WithNullRemoverLoop_ThrowsArgumentNullException()
     {
         // Act & Assert
+#pragma warning disable CS0618 // Type or member is obsolete
         Assert.Throws<ArgumentNullException>(() =>
             new PostgreSqlCache(Options.Create(_options), _mockDbOperations.Object, null!));
+#pragma warning restore CS0618 // Type or member is obsolete
     }
 
     [Fact]
     public void Constructor_WithNullOptions_ThrowsArgumentNullException()
     {
         // Act & Assert
+#pragma warning disable CS0618 // Type or member is obsolete
         Assert.Throws<ArgumentNullException>(() =>
             new PostgreSqlCache(null!, _mockDbOperations.Object, _mockRemoverLoop.Object));
+#pragma warning restore CS0618 // Type or member is obsolete
     }
 
     [Fact]
@@ -60,8 +68,10 @@ public class PostgreSqlCacheTests
         };
 
         // Act & Assert
+#pragma warning disable CS0618 // Type or member is obsolete
         Assert.Throws<ArgumentOutOfRangeException>(() =>
             new PostgreSqlCache(Options.Create(invalidOptions), _mockDbOperations.Object, _mockRemoverLoop.Object));
+#pragma warning restore CS0618 // Type or member is obsolete
     }
 
     [Fact]
