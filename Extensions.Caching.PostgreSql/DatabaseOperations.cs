@@ -10,7 +10,6 @@ using System.Threading;
 using Dapper;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
 using Polly;
 
 namespace Community.Microsoft.Extensions.Caching.PostgreSql
@@ -22,8 +21,8 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
         private readonly bool _readOnlyMode;
         private readonly ReloadableConnectionStringProvider _connectionStringProvider;
         private readonly PostgreSqlCacheOptions _options;
-        private readonly IAsyncPolicy? _resiliencePolicy;
-        private readonly IPolicyFactory? _policyFactory;
+        private readonly IAsyncPolicy _resiliencePolicy;
+        private readonly IPolicyFactory _policyFactory;
 
         public DatabaseOperations(IOptions<PostgreSqlCacheOptions> options, ILogger<DatabaseOperations> logger)
         {
@@ -76,7 +75,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
             if (cacheOptions.EnableResiliencePatterns)
             {
                 cacheOptions.ValidateResilienceConfiguration();
-                _policyFactory = new PolicyFactory((ILogger<PolicyFactory>)logger);
+                _policyFactory = new PolicyFactory(logger);
                 _resiliencePolicy = _policyFactory.CreateResiliencePolicy(cacheOptions);
             }
 
@@ -372,16 +371,8 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
             }
             else
             {
-                try
-                {
-                    return await operation();
-                }
-                catch (Exception ex) when (IsConnectionFailure(ex))
-                {
-                    _logger.Log(_options.ConnectionFailureLogLevel, ex,
-                        "Database connection failed for {Operation} operation. Key: {Key}", operationName, key);
-                    return defaultValue;
-                }
+                // When resilience patterns are disabled, execute operation directly without catching exceptions
+                return await operation();
             }
         }
 
@@ -401,7 +392,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
                     }
 
                     // Convert sync operation to async for Polly
-                    return _resiliencePolicy.ExecuteAsync(async (ctx) => operation(), context).GetAwaiter().GetResult();
+                    return _resiliencePolicy.ExecuteAsync(async (ctx) => await Task.Run(operation), context).GetAwaiter().GetResult();
                 }
                 catch (Exception ex) when (IsConnectionFailure(ex))
                 {
@@ -412,16 +403,8 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
             }
             else
             {
-                try
-                {
-                    return operation();
-                }
-                catch (Exception ex) when (IsConnectionFailure(ex))
-                {
-                    _logger.Log(_options.ConnectionFailureLogLevel, ex,
-                        "Database connection failed for {Operation} operation. Key: {Key}", operationName, key);
-                    return defaultValue;
-                }
+                // When resilience patterns are disabled, execute operation directly without catching exceptions
+                return operation();
             }
         }
 
@@ -451,16 +434,8 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
             }
             else
             {
-                try
-                {
-                    await operation();
-                }
-                catch (Exception ex) when (IsConnectionFailure(ex))
-                {
-                    _logger.Log(_options.ConnectionFailureLogLevel, ex,
-                        "Database connection failed for {Operation} operation. Key: {Key}", operationName, key);
-                    // Silently fail for void operations
-                }
+                // When resilience patterns are disabled, execute operation directly without catching exceptions
+                await operation();
             }
         }
 
@@ -480,7 +455,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
                     }
 
                     // Convert sync operation to async for Polly
-                    _resiliencePolicy.ExecuteAsync(async (ctx) => { operation(); return Task.CompletedTask; }, context).GetAwaiter().GetResult();
+                    _resiliencePolicy.ExecuteAsync(async (ctx) => await Task.Run(operation), context).GetAwaiter().GetResult();
                 }
                 catch (Exception ex) when (IsConnectionFailure(ex))
                 {
@@ -491,16 +466,8 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
             }
             else
             {
-                try
-                {
-                    operation();
-                }
-                catch (Exception ex) when (IsConnectionFailure(ex))
-                {
-                    _logger.Log(_options.ConnectionFailureLogLevel, ex,
-                        "Database connection failed for {Operation} operation. Key: {Key}", operationName, key);
-                    // Silently fail for void operations
-                }
+                // When resilience patterns are disabled, execute operation directly without catching exceptions
+                operation();
             }
         }
 
@@ -511,7 +478,16 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
         {
             return ex is PostgresException pgEx &&
                    (IsTransientException(pgEx) || IsPermanentException(pgEx)) ||
+                   ex is NpgsqlException npgsqlEx &&
+                   (npgsqlEx.Message.Contains("reading from stream") ||
+                    npgsqlEx.Message.Contains("connection") ||
+                    npgsqlEx.InnerException is System.IO.IOException ||
+                    npgsqlEx.InnerException is System.Net.Sockets.SocketException) ||
                    ex is TimeoutException ||
+                   ex is Polly.Timeout.TimeoutRejectedException ||
+                   ex is Polly.CircuitBreaker.BrokenCircuitException ||
+                   ex is System.Net.Sockets.SocketException ||
+                   ex is System.IO.IOException && ex.Message.Contains("transport connection") ||
                    ex is InvalidOperationException && ex.Message.Contains("connection") ||
                    ex is ObjectDisposedException && ex.Message.Contains("connection");
         }

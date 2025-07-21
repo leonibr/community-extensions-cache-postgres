@@ -1,7 +1,6 @@
 using Microsoft.Extensions.Logging;
 using Npgsql;
 using Polly;
-using Polly.CircuitBreaker;
 using Polly.Timeout;
 using System;
 using System.Threading.Tasks;
@@ -13,9 +12,9 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql;
 /// </summary>
 public class PolicyFactory : IPolicyFactory
 {
-    private readonly ILogger<PolicyFactory> _logger;
+    private readonly ILogger _logger;
 
-    public PolicyFactory(ILogger<PolicyFactory> logger)
+    public PolicyFactory(ILogger logger)
     {
         _logger = logger;
     }
@@ -28,6 +27,10 @@ public class PolicyFactory : IPolicyFactory
         return Policy
             .Handle<PostgresException>(IsTransientException)
             .Or<TimeoutException>()
+            .Or<System.Net.Sockets.SocketException>() // Network failures
+            .Or<System.Net.NetworkInformation.NetworkInformationException>() // Network info failures
+            .Or<NpgsqlException>(ex => IsTransientNpgsqlException(ex)) // Npgsql-specific transient errors
+            .Or<InvalidOperationException>(ex => IsTransientInvalidOperationException(ex)) // Connection state issues
             .WaitAndRetryAsync(
                 options.MaxRetryAttempts,
                 retryAttempt => CalculateBackoff(retryAttempt, options.RetryDelay),
@@ -50,22 +53,35 @@ public class PolicyFactory : IPolicyFactory
         return Policy
             .Handle<PostgresException>(IsTransientException)
             .Or<TimeoutException>()
+            .Or<System.Net.Sockets.SocketException>() // Network failures
+            .Or<System.Net.NetworkInformation.NetworkInformationException>() // Network info failures
+            .Or<NpgsqlException>(ex => IsTransientNpgsqlException(ex)) // Npgsql-specific transient errors
+            .Or<InvalidOperationException>(ex => IsTransientInvalidOperationException(ex)) // Connection state issues
             .CircuitBreakerAsync(
                 exceptionsAllowedBeforeBreaking: options.CircuitBreakerFailureThreshold,
                 durationOfBreak: options.CircuitBreakerDurationOfBreak,
                 onBreak: (exception, duration) =>
                 {
-                    _logger.LogWarning(exception,
-                        "Circuit breaker opened after {FailureCount} failures. Will reset after {Duration}",
-                        options.CircuitBreakerFailureThreshold, duration);
+                    if (options.EnableResilienceLogging)
+                    {
+                        _logger.LogWarning(exception,
+                            "Circuit breaker opened after {FailureCount} failures. Will reset after {Duration}",
+                            options.CircuitBreakerFailureThreshold, duration);
+                    }
                 },
                 onReset: () =>
                 {
-                    _logger.LogInformation("Circuit breaker reset - attempting normal operation");
+                    if (options.EnableResilienceLogging)
+                    {
+                        _logger.LogInformation("Circuit breaker reset - attempting normal operation");
+                    }
                 },
                 onHalfOpen: () =>
                 {
-                    _logger.LogDebug("Circuit breaker half-open - testing connection");
+                    if (options.EnableResilienceLogging)
+                    {
+                        _logger.LogDebug("Circuit breaker half-open - testing connection");
+                    }
                 });
     }
 
@@ -76,11 +92,14 @@ public class PolicyFactory : IPolicyFactory
     {
         return Policy.TimeoutAsync(
             options.OperationTimeout,
-            TimeoutStrategy.Optimistic,
+            TimeoutStrategy.Pessimistic,
             onTimeoutAsync: (context, timeSpan, task) =>
             {
-                _logger.LogWarning("Database operation {Operation} timed out after {Timeout}ms",
-                    context.OperationKey, timeSpan.TotalMilliseconds);
+                if (options.EnableResilienceLogging)
+                {
+                    _logger.LogWarning("Database operation {Operation} timed out after {Timeout}ms",
+                        context.OperationKey, timeSpan.TotalMilliseconds);
+                }
                 return Task.CompletedTask;
             });
     }
@@ -92,10 +111,18 @@ public class PolicyFactory : IPolicyFactory
     {
         var timeoutPolicy = CreateTimeoutPolicy(options);
         var retryPolicy = CreateRetryPolicy(options);
-        var circuitBreakerPolicy = CreateCircuitBreakerPolicy(options);
 
-        // Order: Timeout -> Circuit Breaker -> Retry
-        return Policy.WrapAsync(timeoutPolicy, circuitBreakerPolicy, retryPolicy);
+        if (options.EnableCircuitBreaker)
+        {
+            var circuitBreakerPolicy = CreateCircuitBreakerPolicy(options);
+            // Order: Timeout -> Circuit Breaker -> Retry
+            return Policy.WrapAsync(timeoutPolicy, circuitBreakerPolicy, retryPolicy);
+        }
+        else
+        {
+            // Order: Timeout -> Retry (no circuit breaker)
+            return Policy.WrapAsync(timeoutPolicy, retryPolicy);
+        }
     }
 
     /// <summary>
@@ -140,5 +167,76 @@ public class PolicyFactory : IPolicyFactory
 
             _ => false
         };
+    }
+
+    /// <summary>
+    /// Determines if a permanent PostgreSQL exception should not be retried.
+    /// </summary>
+    private static bool IsPermanentException(PostgresException ex)
+    {
+        return ex.SqlState switch
+        {
+            // Authentication/authorization failures (permanent)
+            "28P01" => true, // Invalid password
+            "28P02" => true, // Invalid authorization
+            "28P03" => true, // No such role
+            "28P04" => true, // Database does not exist
+
+            // Permission errors (permanent)
+            "42501" => true, // Insufficient privilege
+            "42502" => true, // Syntax error or access rule violation
+            "42503" => true, // Insufficient resources - permanent resource limit
+            "42504" => true, // Invalid cursor name
+            "42505" => true, // Invalid prepare statement name
+            "42506" => true, // Invalid schema name
+
+            // Schema/object errors (permanent)
+            "3D000" => true, // Invalid catalog name
+            "3F000" => true, // Invalid schema name
+            "42P01" => true, // Undefined table
+            "42P02" => true, // Undefined parameter
+            "42P03" => true, // Duplicate cursor
+            "42P04" => true, // Duplicate database
+
+            // Data type/format errors (permanent)
+            "22P02" => true, // Invalid text representation
+            "22P03" => true, // Invalid binary representation
+            "22P04" => true, // Bad copy file format
+            "22P05" => true, // Untranslatable character
+
+            _ => false
+        };
+    }
+
+    /// <summary>
+    /// Determines if an NpgsqlException is transient and should be retried.
+    /// </summary>
+    private static bool IsTransientNpgsqlException(NpgsqlException ex)
+    {
+        // Check if the inner exception is a PostgresException
+        if (ex.InnerException is PostgresException pgEx)
+        {
+            return IsTransientException(pgEx);
+        }
+
+        // Check for common transient error messages
+        var message = ex.Message.ToLowerInvariant();
+        return message.Contains("timeout") ||
+               message.Contains("connection") ||
+               message.Contains("network") ||
+               message.Contains("host") ||
+               message.Contains("socket");
+    }
+
+    /// <summary>
+    /// Determines if an InvalidOperationException is transient and should be retried.
+    /// </summary>
+    private static bool IsTransientInvalidOperationException(InvalidOperationException ex)
+    {
+        var message = ex.Message.ToLowerInvariant();
+        return message.Contains("connection") ||
+               message.Contains("timeout") ||
+               message.Contains("pool") ||
+               message.Contains("network");
     }
 }

@@ -162,6 +162,45 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
         /// </summary>
         public void ValidateResilienceConfiguration()
         {
+            if (!EnableResiliencePatterns)
+            {
+                // Log warning if sub-options are configured but master switch is off
+                if (Logger != null && (EnableCircuitBreaker || MaxRetryAttempts != 3 || !RetryDelay.Equals(TimeSpan.FromSeconds(1)) ||
+                    CircuitBreakerFailureThreshold != 5 || !CircuitBreakerDurationOfBreak.Equals(TimeSpan.FromMinutes(1)) ||
+                    !OperationTimeout.Equals(TimeSpan.FromSeconds(30))))
+                {
+                    var scope = Logger.BeginScope("Resilience patterns are disabled but one or more sub-options are configured. This will have no effect.");
+
+                    Logger.LogWarning("EnableResiliencePatterns: {EnableResiliencePatterns}", EnableResiliencePatterns);
+                    if (EnableCircuitBreaker)
+                    {
+                        Logger.LogWarning("Not effective: EnableCircuitBreaker: {EnableCircuitBreaker}", EnableCircuitBreaker);
+                    }
+                    if (MaxRetryAttempts != 3)
+                    {
+                        Logger.LogWarning("Not effective: MaxRetryAttempts: {MaxRetryAttempts}", MaxRetryAttempts);
+                    }
+                    if (!RetryDelay.Equals(TimeSpan.FromSeconds(1)))
+                    {
+                        Logger.LogWarning("Not effective: RetryDelay: {RetryDelay}", RetryDelay);
+                    }
+                    if (CircuitBreakerFailureThreshold != 5)
+                    {
+                        Logger.LogWarning("Not effective: CircuitBreakerFailureThreshold: {CircuitBreakerFailureThreshold}", CircuitBreakerFailureThreshold);
+                    }
+                    if (!CircuitBreakerDurationOfBreak.Equals(TimeSpan.FromMinutes(1)))
+                    {
+                        Logger.LogWarning("Not effective: CircuitBreakerDurationOfBreak: {CircuitBreakerDurationOfBreak}", CircuitBreakerDurationOfBreak);
+                    }
+                    if (!OperationTimeout.Equals(TimeSpan.FromSeconds(30)))
+                    {
+                        Logger.LogWarning("Not effective: OperationTimeout: {OperationTimeout}", OperationTimeout);
+                    }
+                    scope.Dispose();
+                }
+                return;
+            }
+
             if (MaxRetryAttempts < 0)
                 throw new ArgumentException($"{nameof(MaxRetryAttempts)} must be non-negative.");
 
