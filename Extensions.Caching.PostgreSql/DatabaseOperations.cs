@@ -10,6 +10,8 @@ using System.Threading;
 using Dapper;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+using Polly;
 
 namespace Community.Microsoft.Extensions.Caching.PostgreSql
 {
@@ -19,6 +21,9 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
         private readonly bool _updateOnGetCacheItem;
         private readonly bool _readOnlyMode;
         private readonly ReloadableConnectionStringProvider _connectionStringProvider;
+        private readonly PostgreSqlCacheOptions _options;
+        private readonly IAsyncPolicy? _resiliencePolicy;
+        private readonly IPolicyFactory? _policyFactory;
 
         public DatabaseOperations(IOptions<PostgreSqlCacheOptions> options, ILogger<DatabaseOperations> logger)
         {
@@ -65,6 +70,16 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
             this._logger = logger;
             this._updateOnGetCacheItem = cacheOptions.UpdateOnGetCacheItem;
             this._readOnlyMode = cacheOptions.ReadOnlyMode;
+            this._options = cacheOptions;
+
+            // Initialize resilience patterns if enabled
+            if (cacheOptions.EnableResiliencePatterns)
+            {
+                cacheOptions.ValidateResilienceConfiguration();
+                _policyFactory = new PolicyFactory((ILogger<PolicyFactory>)logger);
+                _resiliencePolicy = _policyFactory.CreateResiliencePolicy(cacheOptions);
+            }
+
             if (cacheOptions.CreateInfrastructure)
             {
                 CreateSchemaAndTableIfNotExist();
@@ -119,14 +134,15 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
                 return;
             }
 
-            using var connection = ConnectionFactory();
-
-            var deleteCacheItem = new CommandDefinition(
-                SqlCommands.DeleteCacheItemSql,
-                new ItemIdOnly { Id = key });
-            connection.Execute(deleteCacheItem);
-
-            _logger.LogDebug($"Cache key deleted: {key}");
+            ExecuteWithResilience(() =>
+            {
+                using var connection = ConnectionFactory();
+                var deleteCacheItem = new CommandDefinition(
+                    SqlCommands.DeleteCacheItemSql,
+                    new ItemIdOnly { Id = key });
+                connection.Execute(deleteCacheItem);
+                _logger.LogDebug($"Cache key deleted: {key}");
+            }, "DeleteCacheItem", key);
         }
 
         public async Task DeleteCacheItemAsync(string key, CancellationToken cancellationToken)
@@ -136,28 +152,30 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
                 _logger.LogDebug("DeleteCacheItem skipped due to ReadOnlyMode");
                 return;
             }
-            await using var connection = ConnectionFactory();
 
-            var deleteCacheItem = new CommandDefinition(
-                SqlCommands.DeleteCacheItemSql,
-                new ItemIdOnly { Id = key },
-                cancellationToken: cancellationToken);
-            await connection.ExecuteAsync(deleteCacheItem);
-
-            _logger.LogDebug($"Cache key deleted: {key}");
+            await ExecuteWithResilienceAsync(async () =>
+            {
+                await using var connection = ConnectionFactory();
+                var deleteCacheItem = new CommandDefinition(
+                    SqlCommands.DeleteCacheItemSql,
+                    new ItemIdOnly { Id = key },
+                    cancellationToken: cancellationToken);
+                await connection.ExecuteAsync(deleteCacheItem);
+                _logger.LogDebug($"Cache key deleted: {key}");
+            }, "DeleteCacheItemAsync", key);
         }
 
         public byte[] GetCacheItem(string key) =>
-            GetCacheItem(key, includeValue: true);
+            ExecuteWithResilience(() => GetCacheItem(key, includeValue: true), null, "GetCacheItem", key);
 
         public async Task<byte[]> GetCacheItemAsync(string key, CancellationToken cancellationToken) =>
-            await GetCacheItemAsync(key, includeValue: true, cancellationToken);
+            await ExecuteWithResilienceAsync(() => GetCacheItemAsync(key, includeValue: true, cancellationToken), null, "GetCacheItemAsync", key);
 
         public void RefreshCacheItem(string key) =>
-            GetCacheItem(key, includeValue: false);
+            ExecuteWithResilience(() => GetCacheItem(key, includeValue: false), null, "RefreshCacheItem", key);
 
         public async Task RefreshCacheItemAsync(string key, CancellationToken cancellationToken) =>
-            await GetCacheItemAsync(key, includeValue: false, cancellationToken);
+            await ExecuteWithResilienceAsync(() => GetCacheItemAsync(key, includeValue: false, cancellationToken), null, "RefreshCacheItemAsync", key);
 
 
         public async Task DeleteExpiredCacheItemsAsync(CancellationToken cancellationToken)
@@ -165,15 +183,17 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
             if (_readOnlyMode)
                 return;
 
-            var utcNow = SystemClock.UtcNow;
+            await ExecuteWithResilienceAsync(async () =>
+            {
+                var utcNow = SystemClock.UtcNow;
+                await using var connection = ConnectionFactory();
 
-            await using var connection = ConnectionFactory();
-
-            var deleteExpiredCache = new CommandDefinition(
-                SqlCommands.DeleteExpiredCacheSql,
-                new CurrentUtcNow { UtcNow = utcNow },
-                cancellationToken: cancellationToken);
-            await connection.ExecuteAsync(deleteExpiredCache);
+                var deleteExpiredCache = new CommandDefinition(
+                    SqlCommands.DeleteExpiredCacheSql,
+                    new CurrentUtcNow { UtcNow = utcNow },
+                    cancellationToken: cancellationToken);
+                await connection.ExecuteAsync(deleteExpiredCache);
+            }, "DeleteExpiredCacheItemsAsync");
         }
 
         public void SetCacheItem(string key, byte[] value, DistributedCacheEntryOptions options)
@@ -181,29 +201,32 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
             if (_readOnlyMode)
                 return;
 
-            var utcNow = SystemClock.UtcNow;
+            ExecuteWithResilience(() =>
+            {
+                var utcNow = SystemClock.UtcNow;
 
-            var absoluteExpiration = GetAbsoluteExpiration(utcNow, options);
-            ValidateOptions(options.SlidingExpiration, absoluteExpiration);
+                var absoluteExpiration = GetAbsoluteExpiration(utcNow, options);
+                ValidateOptions(options.SlidingExpiration, absoluteExpiration);
 
-            using var connection = ConnectionFactory();
+                using var connection = ConnectionFactory();
 
-            var expiresAtTime = options.SlidingExpiration == null
-                ? absoluteExpiration!.Value
-                : utcNow.Add(options.SlidingExpiration.Value);
+                var expiresAtTime = options.SlidingExpiration == null
+                    ? absoluteExpiration!.Value
+                    : utcNow.Add(options.SlidingExpiration.Value);
 
-            var setCache = new CommandDefinition(
-                SqlCommands.SetCacheSql,
-                new ItemFull
-                {
-                    Id = key,
-                    Value = value,
-                    ExpiresAtTime = expiresAtTime,
-                    SlidingExpirationInSeconds = options.SlidingExpiration?.TotalSeconds,
-                    AbsoluteExpiration = absoluteExpiration
-                });
+                var setCache = new CommandDefinition(
+                    SqlCommands.SetCacheSql,
+                    new ItemFull
+                    {
+                        Id = key,
+                        Value = value,
+                        ExpiresAtTime = expiresAtTime,
+                        SlidingExpirationInSeconds = options.SlidingExpiration?.TotalSeconds,
+                        AbsoluteExpiration = absoluteExpiration
+                    });
 
-            connection.Execute(setCache);
+                connection.Execute(setCache);
+            }, "SetCacheItem", key);
         }
 
         public async Task SetCacheItemAsync(string key, byte[] value, DistributedCacheEntryOptions options, CancellationToken cancellationToken)
@@ -211,30 +234,33 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
             if (_readOnlyMode)
                 return;
 
-            var utcNow = SystemClock.UtcNow;
+            await ExecuteWithResilienceAsync(async () =>
+            {
+                var utcNow = SystemClock.UtcNow;
 
-            var absoluteExpiration = GetAbsoluteExpiration(utcNow, options);
-            ValidateOptions(options.SlidingExpiration, absoluteExpiration);
+                var absoluteExpiration = GetAbsoluteExpiration(utcNow, options);
+                ValidateOptions(options.SlidingExpiration, absoluteExpiration);
 
-            await using var connection = ConnectionFactory();
+                await using var connection = ConnectionFactory();
 
-            var expiresAtTime = options.SlidingExpiration == null
-                ? absoluteExpiration!.Value
-                : utcNow.Add(options.SlidingExpiration.Value);
+                var expiresAtTime = options.SlidingExpiration == null
+                    ? absoluteExpiration!.Value
+                    : utcNow.Add(options.SlidingExpiration.Value);
 
-            var setCache = new CommandDefinition(
-                SqlCommands.SetCacheSql,
-                new ItemFull
-                {
-                    Id = key,
-                    Value = value,
-                    ExpiresAtTime = expiresAtTime,
-                    SlidingExpirationInSeconds = options.SlidingExpiration?.TotalSeconds,
-                    AbsoluteExpiration = absoluteExpiration
-                },
-                cancellationToken: cancellationToken);
+                var setCache = new CommandDefinition(
+                    SqlCommands.SetCacheSql,
+                    new ItemFull
+                    {
+                        Id = key,
+                        Value = value,
+                        ExpiresAtTime = expiresAtTime,
+                        SlidingExpirationInSeconds = options.SlidingExpiration?.TotalSeconds,
+                        AbsoluteExpiration = absoluteExpiration
+                    },
+                    cancellationToken: cancellationToken);
 
-            await connection.ExecuteAsync(setCache);
+                await connection.ExecuteAsync(setCache);
+            }, "SetCacheItemAsync", key);
         }
 
         private byte[] GetCacheItem(string key, bool includeValue)
@@ -318,6 +344,249 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
                 throw new InvalidOperationException("Either absolute or sliding expiration needs " +
                     "to be provided.");
             }
+        }
+
+        /// <summary>
+        /// Executes an async operation with resilience policies if enabled.
+        /// </summary>
+        private async Task<T> ExecuteWithResilienceAsync<T>(Func<Task<T>> operation, T defaultValue, string operationName, string key = null)
+        {
+            if (_resiliencePolicy != null)
+            {
+                try
+                {
+                    var context = new Context(operationName);
+                    if (!string.IsNullOrEmpty(key))
+                    {
+                        context["Key"] = key;
+                    }
+
+                    return await _resiliencePolicy.ExecuteAsync(async (ctx) => await operation(), context);
+                }
+                catch (Exception ex) when (IsConnectionFailure(ex))
+                {
+                    _logger.Log(_options.ConnectionFailureLogLevel, ex,
+                        "Database connection failed for {Operation} operation. Key: {Key}", operationName, key);
+                    return defaultValue;
+                }
+            }
+            else
+            {
+                try
+                {
+                    return await operation();
+                }
+                catch (Exception ex) when (IsConnectionFailure(ex))
+                {
+                    _logger.Log(_options.ConnectionFailureLogLevel, ex,
+                        "Database connection failed for {Operation} operation. Key: {Key}", operationName, key);
+                    return defaultValue;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Executes a sync operation with resilience policies if enabled.
+        /// </summary>
+        private T ExecuteWithResilience<T>(Func<T> operation, T defaultValue, string operationName, string key = null)
+        {
+            if (_resiliencePolicy != null)
+            {
+                try
+                {
+                    var context = new Context(operationName);
+                    if (!string.IsNullOrEmpty(key))
+                    {
+                        context["Key"] = key;
+                    }
+
+                    // Convert sync operation to async for Polly
+                    return _resiliencePolicy.ExecuteAsync(async (ctx) => operation(), context).GetAwaiter().GetResult();
+                }
+                catch (Exception ex) when (IsConnectionFailure(ex))
+                {
+                    _logger.Log(_options.ConnectionFailureLogLevel, ex,
+                        "Database connection failed for {Operation} operation. Key: {Key}", operationName, key);
+                    return defaultValue;
+                }
+            }
+            else
+            {
+                try
+                {
+                    return operation();
+                }
+                catch (Exception ex) when (IsConnectionFailure(ex))
+                {
+                    _logger.Log(_options.ConnectionFailureLogLevel, ex,
+                        "Database connection failed for {Operation} operation. Key: {Key}", operationName, key);
+                    return defaultValue;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Executes a void async operation with resilience policies if enabled.
+        /// </summary>
+        private async Task ExecuteWithResilienceAsync(Func<Task> operation, string operationName, string key = null)
+        {
+            if (_resiliencePolicy != null)
+            {
+                try
+                {
+                    var context = new Context(operationName);
+                    if (!string.IsNullOrEmpty(key))
+                    {
+                        context["Key"] = key;
+                    }
+
+                    await _resiliencePolicy.ExecuteAsync(async (ctx) => await operation(), context);
+                }
+                catch (Exception ex) when (IsConnectionFailure(ex))
+                {
+                    _logger.Log(_options.ConnectionFailureLogLevel, ex,
+                        "Database connection failed for {Operation} operation. Key: {Key}", operationName, key);
+                    // Silently fail for void operations
+                }
+            }
+            else
+            {
+                try
+                {
+                    await operation();
+                }
+                catch (Exception ex) when (IsConnectionFailure(ex))
+                {
+                    _logger.Log(_options.ConnectionFailureLogLevel, ex,
+                        "Database connection failed for {Operation} operation. Key: {Key}", operationName, key);
+                    // Silently fail for void operations
+                }
+            }
+        }
+
+        /// <summary>
+        /// Executes a void sync operation with resilience policies if enabled.
+        /// </summary>
+        private void ExecuteWithResilience(Action operation, string operationName, string key = null)
+        {
+            if (_resiliencePolicy != null)
+            {
+                try
+                {
+                    var context = new Context(operationName);
+                    if (!string.IsNullOrEmpty(key))
+                    {
+                        context["Key"] = key;
+                    }
+
+                    // Convert sync operation to async for Polly
+                    _resiliencePolicy.ExecuteAsync(async (ctx) => { operation(); return Task.CompletedTask; }, context).GetAwaiter().GetResult();
+                }
+                catch (Exception ex) when (IsConnectionFailure(ex))
+                {
+                    _logger.Log(_options.ConnectionFailureLogLevel, ex,
+                        "Database connection failed for {Operation} operation. Key: {Key}", operationName, key);
+                    // Silently fail for void operations
+                }
+            }
+            else
+            {
+                try
+                {
+                    operation();
+                }
+                catch (Exception ex) when (IsConnectionFailure(ex))
+                {
+                    _logger.Log(_options.ConnectionFailureLogLevel, ex,
+                        "Database connection failed for {Operation} operation. Key: {Key}", operationName, key);
+                    // Silently fail for void operations
+                }
+            }
+        }
+
+        /// <summary>
+        /// Determines if an exception is a connection failure that should be handled gracefully.
+        /// </summary>
+        private static bool IsConnectionFailure(Exception ex)
+        {
+            return ex is PostgresException pgEx &&
+                   (IsTransientException(pgEx) || IsPermanentException(pgEx)) ||
+                   ex is TimeoutException ||
+                   ex is InvalidOperationException && ex.Message.Contains("connection") ||
+                   ex is ObjectDisposedException && ex.Message.Contains("connection");
+        }
+
+        /// <summary>
+        /// Determines if a PostgreSQL exception is transient and should be retried.
+        /// </summary>
+        private static bool IsTransientException(PostgresException ex)
+        {
+            return ex.SqlState switch
+            {
+                // Connection failures (likely temporary)
+                "08001" => true, // Connection failed - server unavailable or network issue
+                "08006" => true, // Connection failure - connection lost during operation
+                "08000" => true, // Connection exception - general connection problem
+                "08003" => true, // Connection does not exist - connection was closed
+                "08004" => true, // SQL server rejected establishment of SQL connection - server overload
+                "08007" => true, // Connection failure during transaction - network interruption
+
+                // Resource exhaustion (likely temporary)
+                "53300" => true, // Too many connections - connection pool exhausted
+                "57014" => true, // Query canceled - server canceled due to resource constraints
+                "57000" => true, // Statement timeout - query took too long, server busy
+
+                // Server issues (likely temporary)
+                "57P01" => true, // Admin shutdown - server shutting down for maintenance
+                "57P02" => true, // Crash shutdown - server crashed, will restart
+                "57P03" => true, // Cannot connect now - server temporarily unavailable
+                "57P04" => true, // Database shutdown - database shutting down
+                "57P05" => true, // Database restart - database restarting
+
+                // Network issues (likely temporary)
+                "XX000" => true, // Internal error - some internal errors are transient
+
+                _ => false
+            };
+        }
+
+        /// <summary>
+        /// Determines if a PostgreSQL exception is permanent and should not be retried.
+        /// </summary>
+        private static bool IsPermanentException(PostgresException ex)
+        {
+            return ex.SqlState switch
+            {
+                // Authentication failures
+                "28P01" => true, // Password authentication failed
+                "28P02" => true, // Password authentication failed
+                "28P03" => true, // Password authentication failed
+                "28P04" => true, // Password authentication failed
+
+                // Authorization failures
+                "42501" => true, // Insufficient privilege
+                "42502" => true, // Insufficient privilege
+                "42503" => true, // Insufficient privilege
+                "42504" => true, // Insufficient privilege
+                "42505" => true, // Insufficient privilege
+                "42506" => true, // Insufficient privilege
+
+                // Configuration errors
+                "3D000" => true, // Invalid catalog name
+                "3F000" => true, // Invalid schema name
+                "42P01" => true, // Undefined table
+                "42P02" => true, // Undefined parameter
+                "42P03" => true, // Undefined column
+                "42P04" => true, // Undefined object
+
+                // Data type errors
+                "22P02" => true, // Invalid text representation
+                "22P03" => true, // Invalid binary representation
+                "22P04" => true, // Bad copy file format
+                "22P05" => true, // Untranslatable character
+
+                _ => false
+            };
         }
 
         public void Dispose()

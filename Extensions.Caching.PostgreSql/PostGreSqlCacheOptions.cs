@@ -103,6 +103,96 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
         /// </summary>
         public bool ReadOnlyMode { get; set; } = false;
 
+        /// <summary>
+        /// Enables Polly-based resilience patterns for database operations.
+        /// Default is true.
+        /// </summary>
+        public bool EnableResiliencePatterns { get; set; } = true;
+
+        /// <summary>
+        /// Maximum number of retry attempts for transient failures.
+        /// Default is 3.
+        /// </summary>
+        public int MaxRetryAttempts { get; set; } = 3;
+
+        /// <summary>
+        /// Base delay for retry attempts. Uses exponential backoff.
+        /// Default is 1 second.
+        /// </summary>
+        public TimeSpan RetryDelay { get; set; } = TimeSpan.FromSeconds(1);
+
+        /// <summary>
+        /// Enables circuit breaker pattern to prevent cascading failures.
+        /// Default is true.
+        /// </summary>
+        public bool EnableCircuitBreaker { get; set; } = true;
+
+        /// <summary>
+        /// Number of consecutive failures before opening circuit breaker.
+        /// Default is 5.
+        /// </summary>
+        public int CircuitBreakerFailureThreshold { get; set; } = 5;
+
+        /// <summary>
+        /// Duration to keep circuit breaker open before attempting reset.
+        /// Default is 1 minute.
+        /// </summary>
+        public TimeSpan CircuitBreakerDurationOfBreak { get; set; } = TimeSpan.FromMinutes(1);
+
+        /// <summary>
+        /// Log level for connection failure messages.
+        /// Default is Warning.
+        /// </summary>
+        public LogLevel ConnectionFailureLogLevel { get; set; } = LogLevel.Warning;
+
+        /// <summary>
+        /// Timeout for database operations.
+        /// Default is 30 seconds.
+        /// </summary>
+        public TimeSpan OperationTimeout { get; set; } = TimeSpan.FromSeconds(30);
+
+        /// <summary>
+        /// Enables detailed logging of resilience pattern execution.
+        /// Default is false.
+        /// </summary>
+        public bool EnableResilienceLogging { get; set; } = false;
+
+        /// <summary>
+        /// Validates the resilience configuration options.
+        /// </summary>
+        public void ValidateResilienceConfiguration()
+        {
+            if (MaxRetryAttempts < 0)
+                throw new ArgumentException($"{nameof(MaxRetryAttempts)} must be non-negative.");
+
+            if (MaxRetryAttempts > 10)
+                throw new ArgumentException($"{nameof(MaxRetryAttempts)} cannot exceed 10.");
+
+            if (RetryDelay <= TimeSpan.Zero)
+                throw new ArgumentException($"{nameof(RetryDelay)} must be positive.");
+
+            if (RetryDelay > TimeSpan.FromMinutes(5))
+                throw new ArgumentException($"{nameof(RetryDelay)} cannot exceed 5 minutes.");
+
+            if (CircuitBreakerFailureThreshold < 1)
+                throw new ArgumentException($"{nameof(CircuitBreakerFailureThreshold)} must be at least 1.");
+
+            if (CircuitBreakerFailureThreshold > 100)
+                throw new ArgumentException($"{nameof(CircuitBreakerFailureThreshold)} cannot exceed 100.");
+
+            if (CircuitBreakerDurationOfBreak <= TimeSpan.Zero)
+                throw new ArgumentException($"{nameof(CircuitBreakerDurationOfBreak)} must be positive.");
+
+            if (CircuitBreakerDurationOfBreak > TimeSpan.FromHours(1))
+                throw new ArgumentException($"{nameof(CircuitBreakerDurationOfBreak)} cannot exceed 1 hour.");
+
+            if (OperationTimeout <= TimeSpan.Zero)
+                throw new ArgumentException($"{nameof(OperationTimeout)} must be positive.");
+
+            if (OperationTimeout > TimeSpan.FromMinutes(10))
+                throw new ArgumentException($"{nameof(OperationTimeout)} cannot exceed 10 minutes.");
+        }
+
         PostgreSqlCacheOptions IOptions<PostgreSqlCacheOptions>.Value => this;
     }
 }
