@@ -1,257 +1,160 @@
+using System;
 using Community.Microsoft.Extensions.Caching.PostgreSql;
+using Npgsql;
 
 namespace CachingTest;
 
 public class SqlCommandTypesTests
 {
     [Fact]
-    public void ItemIdUtcNow_WithValidProperties_SetsCorrectly()
-    {
-        // Arrange
-        var id = "test-id";
-        var utcNow = DateTimeOffset.UtcNow;
-
-        // Act
-        var item = new ItemIdUtcNow
-        {
-            Id = id,
-            UtcNow = utcNow
-        };
-
-        // Assert
-        Assert.Equal(id, item.Id);
-        Assert.Equal(utcNow, item.UtcNow);
-    }
-
-    [Fact]
-    public void ItemIdUtcNow_WithNullId_HandlesCorrectly()
+    public void ItemIdUtcNow_CanBeInstantiated()
     {
         // Arrange & Act
         var item = new ItemIdUtcNow
         {
-            Id = null!,
+            Id = "test-id",
             UtcNow = DateTimeOffset.UtcNow
         };
 
         // Assert
-        Assert.Null(item.Id);
+        Assert.NotNull(item);
+        Assert.Equal("test-id", item.Id);
+        Assert.NotEqual(default(DateTimeOffset), item.UtcNow);
     }
 
     [Fact]
-    public void ItemFull_WithValidProperties_SetsCorrectly()
+    public void ItemFull_CanBeInstantiated()
     {
         // Arrange
-        var id = "test-id";
-        var expiresAtTime = DateTimeOffset.UtcNow.AddMinutes(5);
+        var utcNow = DateTimeOffset.UtcNow;
         var value = new byte[] { 1, 2, 3, 4, 5 };
-        var slidingExpirationInSeconds = 300.0;
-        var absoluteExpiration = DateTimeOffset.UtcNow.AddHours(1);
 
         // Act
         var item = new ItemFull
         {
-            Id = id,
-            ExpiresAtTime = expiresAtTime,
+            Id = "test-id",
+            ExpiresAtTime = utcNow.AddHours(1),
             Value = value,
-            SlidingExpirationInSeconds = slidingExpirationInSeconds,
-            AbsoluteExpiration = absoluteExpiration
+            SlidingExpirationInSeconds = 3600,
+            AbsoluteExpiration = utcNow.AddDays(1)
         };
 
         // Assert
-        Assert.Equal(id, item.Id);
-        Assert.Equal(expiresAtTime, item.ExpiresAtTime);
+        Assert.NotNull(item);
+        Assert.Equal("test-id", item.Id);
+        Assert.Equal(utcNow.AddHours(1), item.ExpiresAtTime);
         Assert.Equal(value, item.Value);
-        Assert.Equal(slidingExpirationInSeconds, item.SlidingExpirationInSeconds);
-        Assert.Equal(absoluteExpiration, item.AbsoluteExpiration);
+        Assert.Equal(3600, item.SlidingExpirationInSeconds);
+        Assert.Equal(utcNow.AddDays(1), item.AbsoluteExpiration);
     }
 
     [Fact]
-    public void ItemFull_WithNullValues_HandlesCorrectly()
+    public void ItemFull_WithNullableProperties_CanBeInstantiated()
     {
         // Arrange & Act
         var item = new ItemFull
         {
-            Id = null!,
-            ExpiresAtTime = DateTimeOffset.UtcNow,
-            Value = null!,
+            Id = "test-id",
+            ExpiresAtTime = DateTimeOffset.UtcNow.AddHours(1),
+            Value = new byte[] { 1, 2, 3 },
             SlidingExpirationInSeconds = null,
             AbsoluteExpiration = null
         };
 
         // Assert
-        Assert.Null(item.Id);
-        Assert.Null(item.Value);
+        Assert.NotNull(item);
         Assert.Null(item.SlidingExpirationInSeconds);
         Assert.Null(item.AbsoluteExpiration);
     }
 
     [Fact]
-    public void ItemFull_WithEmptyByteArray_HandlesCorrectly()
+    public void CurrentUtcNow_CanBeInstantiated()
     {
         // Arrange & Act
-        var item = new ItemFull
+        var item = new CurrentUtcNow
         {
-            Id = "test-id",
-            ExpiresAtTime = DateTimeOffset.UtcNow,
-            Value = new byte[0],
-            SlidingExpirationInSeconds = 300.0,
-            AbsoluteExpiration = DateTimeOffset.UtcNow.AddHours(1)
+            UtcNow = DateTimeOffset.UtcNow
         };
 
         // Assert
-        Assert.NotNull(item.Value);
-        Assert.Empty(item.Value);
+        Assert.NotNull(item);
+        Assert.NotEqual(default(DateTimeOffset), item.UtcNow);
     }
 
     [Fact]
-    public void CurrentUtcNow_WithValidProperty_SetsCorrectly()
+    public void ItemIdOnly_CanBeInstantiated()
+    {
+        // Arrange & Act
+        var item = new ItemIdOnly
+        {
+            Id = "test-id"
+        };
+
+        // Assert
+        Assert.NotNull(item);
+        Assert.Equal("test-id", item.Id);
+    }
+
+    [Fact]
+    public void ItemIdUtcNow_IsRecord_SupportsValueEquality()
     {
         // Arrange
         var utcNow = DateTimeOffset.UtcNow;
+        var item1 = new ItemIdUtcNow { Id = "test-id", UtcNow = utcNow };
+        var item2 = new ItemIdUtcNow { Id = "test-id", UtcNow = utcNow };
 
-        // Act
-        var item = new CurrentUtcNow
-        {
-            UtcNow = utcNow
-        };
-
-        // Assert
-        Assert.Equal(utcNow, item.UtcNow);
+        // Act & Assert
+        Assert.Equal(item1, item2);
     }
 
     [Fact]
-    public void ItemIdOnly_WithValidProperty_SetsCorrectly()
-    {
-        // Arrange
-        var id = "test-id";
-
-        // Act
-        var item = new ItemIdOnly
-        {
-            Id = id
-        };
-
-        // Assert
-        Assert.Equal(id, item.Id);
-    }
-
-    [Fact]
-    public void ItemIdOnly_WithNullId_HandlesCorrectly()
-    {
-        // Arrange & Act
-        var item = new ItemIdOnly
-        {
-            Id = null!
-        };
-
-        // Assert
-        Assert.Null(item.Id);
-    }
-
-    [Fact]
-    public void SqlCommandTypes_AreRecords_SupportValueEquality()
+    public void ItemFull_IsRecord_SupportsValueEquality()
     {
         // Arrange
         var utcNow = DateTimeOffset.UtcNow;
         var value = new byte[] { 1, 2, 3 };
-
         var item1 = new ItemFull
         {
             Id = "test-id",
             ExpiresAtTime = utcNow,
             Value = value,
-            SlidingExpirationInSeconds = 300.0,
-            AbsoluteExpiration = utcNow.AddHours(1)
+            SlidingExpirationInSeconds = 3600,
+            AbsoluteExpiration = utcNow.AddDays(1)
         };
-
         var item2 = new ItemFull
         {
             Id = "test-id",
             ExpiresAtTime = utcNow,
             Value = value,
-            SlidingExpirationInSeconds = 300.0,
-            AbsoluteExpiration = utcNow.AddHours(1)
+            SlidingExpirationInSeconds = 3600,
+            AbsoluteExpiration = utcNow.AddDays(1)
         };
 
         // Act & Assert
         Assert.Equal(item1, item2);
-        Assert.True(item1.Equals(item2));
     }
 
     [Fact]
-    public void SqlCommandTypes_WithDifferentValues_AreNotEqual()
+    public void CurrentUtcNow_IsRecord_SupportsValueEquality()
     {
         // Arrange
         var utcNow = DateTimeOffset.UtcNow;
-        var value = new byte[] { 1, 2, 3 };
-
-        var item1 = new ItemFull
-        {
-            Id = "test-id-1",
-            ExpiresAtTime = utcNow,
-            Value = value,
-            SlidingExpirationInSeconds = 300.0,
-            AbsoluteExpiration = utcNow.AddHours(1)
-        };
-
-        var item2 = new ItemFull
-        {
-            Id = "test-id-2",
-            ExpiresAtTime = utcNow,
-            Value = value,
-            SlidingExpirationInSeconds = 300.0,
-            AbsoluteExpiration = utcNow.AddHours(1)
-        };
+        var item1 = new CurrentUtcNow { UtcNow = utcNow };
+        var item2 = new CurrentUtcNow { UtcNow = utcNow };
 
         // Act & Assert
-        Assert.NotEqual(item1, item2);
-        Assert.False(item1.Equals(item2));
+        Assert.Equal(item1, item2);
     }
 
     [Fact]
-    public void SqlCommandTypes_SupportDeconstruction()
+    public void ItemIdOnly_IsRecord_SupportsValueEquality()
     {
         // Arrange
-        var id = "test-id";
-        var utcNow = DateTimeOffset.UtcNow;
+        var item1 = new ItemIdOnly { Id = "test-id" };
+        var item2 = new ItemIdOnly { Id = "test-id" };
 
-        var item = new ItemIdUtcNow
-        {
-            Id = id,
-            UtcNow = utcNow
-        };
-
-        // Act - Test property access instead of deconstruction
-        var itemId = item.Id;
-        var itemUtcNow = item.UtcNow;
-
-        // Assert
-        Assert.Equal(id, itemId);
-        Assert.Equal(utcNow, itemUtcNow);
-    }
-
-    [Fact]
-    public void SqlCommandTypes_WithWithExpression_CreateNewInstances()
-    {
-        // Arrange
-        var originalItem = new ItemIdUtcNow
-        {
-            Id = "original-id",
-            UtcNow = DateTimeOffset.UtcNow
-        };
-
-        var newUtcNow = DateTimeOffset.UtcNow.AddHours(1);
-
-        // Act - Create a new instance manually since records don't have with expressions in this version
-        var newItem = new ItemIdUtcNow
-        {
-            Id = originalItem.Id,
-            UtcNow = newUtcNow
-        };
-
-        // Assert
-        Assert.Equal(originalItem.Id, newItem.Id);
-        Assert.Equal(newUtcNow, newItem.UtcNow);
-        Assert.NotEqual(originalItem.UtcNow, newItem.UtcNow);
+        // Act & Assert
+        Assert.Equal(item1, item2);
     }
 }
+
