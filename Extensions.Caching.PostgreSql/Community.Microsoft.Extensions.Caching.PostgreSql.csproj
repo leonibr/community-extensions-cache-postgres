@@ -25,7 +25,6 @@
 
   <!-- Common package references for all frameworks -->
   <ItemGroup>
-    <PackageReference Include="Dapper" Version="2.1.66" />
     <PackageReference Include="Npgsql" Version="10.0.0" />
   </ItemGroup>
 
