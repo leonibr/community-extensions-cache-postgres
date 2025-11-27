@@ -99,7 +99,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
             connection.Open();
 
             using var deleteCacheItem = new NpgsqlCommand(SqlCommands.DeleteCacheItemSql, connection);
-            deleteCacheItem.Parameters.Add(new ItemIdOnly { Id = key });
+            deleteCacheItem.Parameters.Add(new NpgsqlParameter<string>(nameof(ItemIdOnly.Id), key));
             deleteCacheItem.ExecuteNonQuery();
 
             _logger.LogDebug($"Cache key deleted: {key}");
@@ -116,7 +116,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
             await connection.OpenAsync(cancellationToken);
 
             await using var deleteCacheItem = new NpgsqlCommand(SqlCommands.DeleteCacheItemSql, connection);
-            deleteCacheItem.Parameters.Add(new ItemIdOnly { Id = key });
+            deleteCacheItem.Parameters.Add(new NpgsqlParameter<string>(nameof(ItemIdOnly.Id), key));
             await deleteCacheItem.ExecuteNonQueryAsync(cancellationToken);
 
             _logger.LogDebug($"Cache key deleted: {key}");
@@ -146,7 +146,7 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
             await connection.OpenAsync(cancellationToken);
 
             await using var deleteExpiredCache = new NpgsqlCommand(SqlCommands.DeleteExpiredCacheSql, connection);
-            deleteExpiredCache.Parameters.Add(new CurrentUtcNow { UtcNow = utcNow });
+            deleteExpiredCache.Parameters.Add(new NpgsqlParameter<DateTimeOffset>(nameof(CurrentUtcNow.UtcNow), utcNow));
             await deleteExpiredCache.ExecuteNonQueryAsync(cancellationToken);
         }
 
@@ -168,15 +168,11 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
                 : utcNow.Add(options.SlidingExpiration.Value);
 
             using var setCache = new NpgsqlCommand(SqlCommands.SetCacheSql, connection);
-            setCache.Parameters.Add(new ItemFull
-            {
-                Id = key,
-                Value = value,
-                ExpiresAtTime = expiresAtTime,
-                SlidingExpirationInSeconds = options.SlidingExpiration?.TotalSeconds,
-                AbsoluteExpiration = absoluteExpiration
-            });
-
+            setCache.Parameters.Add(new NpgsqlParameter<string>(nameof(ItemFull.Id), key));
+            setCache.Parameters.Add(new NpgsqlParameter<byte[]>(nameof(ItemFull.Value), value));
+            setCache.Parameters.Add(new NpgsqlParameter<DateTimeOffset>(nameof(ItemFull.ExpiresAtTime), expiresAtTime));
+            setCache.Parameters.Add(new NpgsqlParameter<double?>(nameof(ItemFull.SlidingExpirationInSeconds), options.SlidingExpiration?.TotalSeconds));
+            setCache.Parameters.Add(new NpgsqlParameter<DateTimeOffset?>(nameof(ItemFull.AbsoluteExpiration), absoluteExpiration));
             setCache.ExecuteNonQuery();
         }
 
@@ -198,15 +194,11 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
                 : utcNow.Add(options.SlidingExpiration.Value);
 
             await using var setCache = new NpgsqlCommand(SqlCommands.SetCacheSql, connection);
-            setCache.Parameters.Add(new ItemFull
-            {
-                Id = key,
-                Value = value,
-                ExpiresAtTime = expiresAtTime,
-                SlidingExpirationInSeconds = options.SlidingExpiration?.TotalSeconds,
-                AbsoluteExpiration = absoluteExpiration
-            });
-
+            setCache.Parameters.Add(new NpgsqlParameter<string>(nameof(ItemFull.Id), key));
+            setCache.Parameters.Add(new NpgsqlParameter<byte[]>(nameof(ItemFull.Value), value));
+            setCache.Parameters.Add(new NpgsqlParameter<DateTimeOffset>(nameof(ItemFull.ExpiresAtTime), expiresAtTime));
+            setCache.Parameters.Add(new NpgsqlParameter<double?>(nameof(ItemFull.SlidingExpirationInSeconds), options.SlidingExpiration?.TotalSeconds));
+            setCache.Parameters.Add(new NpgsqlParameter<DateTimeOffset?>(nameof(ItemFull.AbsoluteExpiration), absoluteExpiration));
             await setCache.ExecuteNonQueryAsync(cancellationToken);
         }
 
@@ -221,14 +213,16 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
             if (!_readOnlyMode && (_updateOnGetCacheItem || !includeValue))
             {
                 using var updateCacheItem = new NpgsqlCommand(SqlCommands.UpdateCacheItemSql, connection);
-                updateCacheItem.Parameters.Add(new ItemIdUtcNow { Id = key, UtcNow = utcNow });
+                updateCacheItem.Parameters.Add(new NpgsqlParameter<string>(nameof(ItemIdUtcNow.Id), key));
+                updateCacheItem.Parameters.Add(new NpgsqlParameter<DateTimeOffset>(nameof(ItemIdUtcNow.UtcNow), utcNow));
                 updateCacheItem.ExecuteNonQuery();
             }
 
             if (includeValue)
             {
                 using var getCacheItem = new NpgsqlCommand(SqlCommands.GetCacheItemSql, connection);
-                getCacheItem.Parameters.Add(new ItemIdUtcNow { Id = key, UtcNow = utcNow });
+                getCacheItem.Parameters.Add(new NpgsqlParameter<string>(nameof(ItemIdUtcNow.Id), key));
+                getCacheItem.Parameters.Add(new NpgsqlParameter<DateTimeOffset>(nameof(ItemIdUtcNow.UtcNow), utcNow));
                 value = getCacheItem.ExecuteScalar() as byte[];
             }
 
@@ -246,14 +240,16 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
             if (!_readOnlyMode && (_updateOnGetCacheItem || !includeValue))
             {
                 await using var updateCacheItem = new NpgsqlCommand(SqlCommands.UpdateCacheItemSql, connection);
-                updateCacheItem.Parameters.Add(new ItemIdUtcNow { Id = key, UtcNow = utcNow });
+                updateCacheItem.Parameters.Add(new NpgsqlParameter<string>(nameof(ItemIdUtcNow.Id), key));
+                updateCacheItem.Parameters.Add(new NpgsqlParameter<DateTimeOffset>(nameof(ItemIdUtcNow.UtcNow), utcNow));
                 await updateCacheItem.ExecuteNonQueryAsync(cancellationToken);
             }
 
             if (includeValue)
             {
                 await using var getCacheItem = new NpgsqlCommand(SqlCommands.GetCacheItemSql, connection);
-                getCacheItem.Parameters.Add(new ItemIdUtcNow { Id = key, UtcNow = utcNow });
+                getCacheItem.Parameters.Add(new NpgsqlParameter<string>(nameof(ItemIdUtcNow.Id), key));
+                getCacheItem.Parameters.Add(new NpgsqlParameter<DateTimeOffset>(nameof(ItemIdUtcNow.UtcNow), utcNow));
                 value = await getCacheItem.ExecuteScalarAsync(cancellationToken) as byte[];
             }
 
