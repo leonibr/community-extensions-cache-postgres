@@ -254,6 +254,9 @@ prepare-database.cmd -erase // windows
 
 ## Change Log
 
+1.  v6.0.0 - Added support for .NET 10
+    1.  [BREAKING CHANGE] - Dropped support for .NET 6 (end-of-life)
+    1.  [BREAKING CHANGE] - Supports .NET 10, .NET 9, and .NET 8
 1.  v5.0.0 - Added support for .NET 9
     1.  [BREAKING CHANGE] - Dropped support for .NETStandard2.0
     1.  [BREAKING CHANGE] - Supports .NET 9, .NET 8 and .NET 6

@@ -6,7 +6,7 @@ Thank you for your interest in contributing to our PostgreSQL Distributed Cache 
 
 1. Install the following prerequisites:
 
-   - .NET SDK (versions 6.0, 8.0, and 9.0)
+   - .NET SDK (versions 8.0, 9.0, and 10.0)
    - PostgreSQL 11+
    - Your preferred IDE (Visual Studio, VS Code, Rider, etc.)
 
@@ -28,8 +28,8 @@ git clone https://github.com/leonibr/community-extensions-cache-postgres.git
 
 1. **Language Version**
 
-   - Use C# 11 features (`<LangVersion>11</LangVersion>`)
-   - Target multiple frameworks: net6.0, net8.0, and net9.0
+   - Use C# 12 features (`<LangVersion>12</LangVersion>`)
+   - Target multiple frameworks: net8.0, net9.0, and net10.0
 
 1. **Naming Conventions**
 
@@ -122,9 +122,9 @@ Keep dependencies up to date with the latest stable versions:
 1. Version numbers follow SemVer
 1. Update version in .csproj:
 
-    ```xml
-    <Version>4.0.0</Version>
-    ```
+   ```xml
+   <Version>4.0.0</Version>
+   ```
 
 1. Update PackageReleaseNotes in .csproj
 1. Document breaking changes in README.md
