@@ -1,20 +1,20 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk" ToolsVersion="16.0">
   <PropertyGroup>
-    <TargetFrameworks>net6.0;net8.0;net9.0</TargetFrameworks>
+    <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
     <AssemblyName>Community.Microsoft.Extensions.Caching.PostgreSql</AssemblyName>
     <RootNamespace>Community.Microsoft.Extensions.Caching.PostgreSql</RootNamespace>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
-    <Version>5.0.0</Version>
+    <Version>6.0.0</Version>
     <Authors>Ashley Marques</Authors>
     <Company />
     <Description>DistributedCache using postgres</Description>
-    <PackageReleaseNotes>Dependencies updated to latest and now supports .NET 6.0, 8.0, and 9.0</PackageReleaseNotes>
+    <PackageReleaseNotes>Added support for .NET 10. [BREAKING] Dropped support for .NET 6 (end-of-life). Now supports .NET 8.0, 9.0, and 10.0</PackageReleaseNotes>
     <PackageProjectUrl>https://github.com/leonibr/community-extensions-cache-postgres</PackageProjectUrl>
     <RepositoryUrl>https://github.com/leonibr/community-extensions-cache-postgres.git</RepositoryUrl>
     <RepositoryType>Github</RepositoryType>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <LangVersion>11</LangVersion>
+    <LangVersion>12</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -25,18 +25,11 @@
 
   <!-- Common package references for all frameworks -->
   <ItemGroup>
-    <PackageReference Include="Dapper" Version="2.1.35" />
-    <PackageReference Include="Npgsql" Version="8.0.7" />
+    <PackageReference Include="Dapper" Version="2.1.66" />
+    <PackageReference Include="Npgsql" Version="10.0.0" />
   </ItemGroup>
 
   <!-- Framework-specific package references -->
-  <ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
-    <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="6.0.1" />
-    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="6.0.1" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Options" Version="6.0.0" />
-  </ItemGroup>
-
   <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
     <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="8.0.0" />
@@ -49,6 +42,13 @@
     <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="9.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.0" />
     <PackageReference Include="Microsoft.Extensions.Options" Version="9.0.0" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
+    <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="10.0.0" />
   </ItemGroup>
 
   <ItemGroup>

@@ -53,7 +53,7 @@ public class DatabaseOperationsAdditionalTests
 
         // Act & Assert - Should not throw even with invalid connection string
         // since we're not actually connecting in this test
-        Assert.Throws<Npgsql.NpgsqlException>(() => dbOperations.DeleteCacheItem("test-key"));
+        Assert.Throws<Npgsql.PostgresException>(() => dbOperations.DeleteCacheItem("test-key"));
     }
 
     [Fact]
@@ -71,7 +71,7 @@ public class DatabaseOperationsAdditionalTests
         var dbOperations = new DatabaseOperations(Options.Create(options), _logger);
 
         // Act & Assert - Should not throw even with invalid connection string
-        Assert.Throws<Npgsql.NpgsqlException>(() => dbOperations.GetCacheItem("test-key"));
+        Assert.Throws<Npgsql.PostgresException>(() => dbOperations.GetCacheItem("test-key"));
     }
 
     [Fact]
@@ -89,7 +89,7 @@ public class DatabaseOperationsAdditionalTests
         var dbOperations = new DatabaseOperations(Options.Create(options), _logger);
 
         // Act & Assert - Should not throw even with invalid connection string
-        Assert.Throws<Npgsql.NpgsqlException>(() => dbOperations.RefreshCacheItem("test-key"));
+        Assert.Throws<Npgsql.PostgresException>(() => dbOperations.RefreshCacheItem("test-key"));
     }
 
     [Fact]
@@ -107,7 +107,7 @@ public class DatabaseOperationsAdditionalTests
         var dbOperations = new DatabaseOperations(Options.Create(options), _logger);
 
         // Act & Assert - Should not throw even with invalid connection string
-        Assert.Throws<Npgsql.NpgsqlException>(() => dbOperations.SetCacheItem("test-key", new byte[] { 1, 2, 3 },
+        Assert.Throws<Npgsql.PostgresException>(() => dbOperations.SetCacheItem("test-key", new byte[] { 1, 2, 3 },
             new DistributedCacheEntryOptions { AbsoluteExpiration = DateTime.UtcNow.AddMinutes(5) }));
     }
 

@@ -18,13 +18,18 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Verify Docker is available
+        run: |
+          docker --version
+          docker info
+
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: |
-            6.0.x
             8.0.x
             9.0.x
+            10.0.x
 
       - name: Restore dependencies
         run: dotnet restore
@@ -32,7 +37,16 @@ jobs:
       - name: Build
         run: dotnet build --no-restore --configuration Release
 
+      - name: Pull PostgreSQL Docker image
+        run: docker pull postgres:latest
+
       - name: Test with coverage
+        env:
+          # Testcontainers configuration for CI
+          TESTCONTAINERS_RYUK_DISABLED: false
+          TESTCONTAINERS_RYUK_CONTAINER_PRIVILEGED: true
+          DOCKER_HOST: unix:///var/run/docker.sock
+          TESTCONTAINERS_HOST_OVERRIDE: localhost
         run: >
           dotnet test CachingTest/CachingTest.csproj \
             --no-build --configuration Release \
@@ -75,10 +89,10 @@ jobs:
         uses: danielpalme/ReportGenerator-GitHub-Action@5.3.5
         if: env.COVERAGE_FILE_PATH != ''
         with:
-          reports: '${{ env.COVERAGE_FILE_PATH }}'
-          targetdir: './TestResults/coverage/report'
-          reporttypes: 'MarkdownSummary;Html'
-          verbosity: 'Info'
+          reports: "${{ env.COVERAGE_FILE_PATH }}"
+          targetdir: "./TestResults/coverage/report"
+          reporttypes: "MarkdownSummary;Html"
+          verbosity: "Info"
 
       - name: Upload HTML Coverage Report as Artifact
         uses: actions/upload-artifact@v4
