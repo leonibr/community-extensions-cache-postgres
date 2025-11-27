@@ -123,7 +123,7 @@ Keep dependencies up to date with the latest stable versions:
 1. Update version in .csproj:
 
    ```xml
-   <Version>4.0.0</Version>
+   <Version>6.0.0</Version>
    ```
 
 1. Update PackageReleaseNotes in .csproj
