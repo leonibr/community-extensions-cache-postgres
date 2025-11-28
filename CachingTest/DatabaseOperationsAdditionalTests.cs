@@ -6,12 +6,35 @@ using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Internal;
 using Moq;
 using Npgsql;
+using Testcontainers.PostgreSql;
 
 namespace CachingTest;
 
-public class DatabaseOperationsAdditionalTests
+public class DatabaseOperationsAdditionalTests : IAsyncLifetime
 {
+    private readonly PostgreSqlContainer _postgresContainer;
     private readonly ILogger<DatabaseOperations> _logger = new NullLoggerFactory().CreateLogger<DatabaseOperations>();
+
+    public DatabaseOperationsAdditionalTests()
+    {
+        _postgresContainer = new PostgreSqlBuilder()
+            .WithImage("postgres:latest")
+            .WithDatabase("testdb")
+            .WithUsername("testuser")
+            .WithPassword("testpass")
+            .WithCleanUp(true)
+            .Build();
+    }
+
+    public async Task InitializeAsync()
+    {
+        await _postgresContainer.StartAsync();
+    }
+
+    public async Task DisposeAsync()
+    {
+        await _postgresContainer.DisposeAsync();
+    }
 
     [Fact]
     public void Constructor_WithDataSourceFactory_UsesDataSourceFactory()
@@ -38,12 +61,17 @@ public class DatabaseOperationsAdditionalTests
     }
 
     [Fact]
-    public void DeleteCacheItem_Synchronous_Should_Not_Throw()
+    public async Task DeleteCacheItem_Synchronous_Should_Not_Throw()
     {
-        // Arrange
+        await InitializeAsync();
+
+        // Arrange - Use a modified version of the container's connection string with invalid credentials
+        var validConnectionString = _postgresContainer.GetConnectionString();
+        var invalidConnectionString = validConnectionString.Replace("Username=testuser", "Username=invaliduser").Replace("Password=testpass", "Password=invalidpass");
+
         var options = new PostgreSqlCacheOptions
         {
-            ConnectionString = "Host=localhost;Database=test;Username=test;Password=test",
+            ConnectionString = invalidConnectionString,
             SchemaName = "cache",
             TableName = "distributed_cache",
             CreateInfrastructure = false
@@ -51,18 +79,22 @@ public class DatabaseOperationsAdditionalTests
 
         var dbOperations = new DatabaseOperations(Options.Create(options), _logger);
 
-        // Act & Assert - Should not throw even with invalid connection string
-        // since we're not actually connecting in this test
+        // Act & Assert - Should throw PostgresException due to invalid credentials
         Assert.Throws<Npgsql.PostgresException>(() => dbOperations.DeleteCacheItem("test-key"));
     }
 
     [Fact]
-    public void GetCacheItem_Synchronous_Should_Not_Throw()
+    public async Task GetCacheItem_Synchronous_Should_Not_Throw()
     {
-        // Arrange
+        await InitializeAsync();
+
+        // Arrange - Use a modified version of the container's connection string with invalid credentials
+        var validConnectionString = _postgresContainer.GetConnectionString();
+        var invalidConnectionString = validConnectionString.Replace("Username=testuser", "Username=invaliduser").Replace("Password=testpass", "Password=invalidpass");
+
         var options = new PostgreSqlCacheOptions
         {
-            ConnectionString = "Host=localhost;Database=test;Username=test;Password=test",
+            ConnectionString = invalidConnectionString,
             SchemaName = "cache",
             TableName = "distributed_cache",
             CreateInfrastructure = false
@@ -75,12 +107,17 @@ public class DatabaseOperationsAdditionalTests
     }
 
     [Fact]
-    public void RefreshCacheItem_Synchronous_Should_Not_Throw()
+    public async Task RefreshCacheItem_Synchronous_Should_Not_Throw()
     {
-        // Arrange
+        await InitializeAsync();
+
+        // Arrange - Use a modified version of the container's connection string with invalid credentials
+        var validConnectionString = _postgresContainer.GetConnectionString();
+        var invalidConnectionString = validConnectionString.Replace("Username=testuser", "Username=invaliduser").Replace("Password=testpass", "Password=invalidpass");
+
         var options = new PostgreSqlCacheOptions
         {
-            ConnectionString = "Host=localhost;Database=test;Username=test;Password=test",
+            ConnectionString = invalidConnectionString,
             SchemaName = "cache",
             TableName = "distributed_cache",
             CreateInfrastructure = false
@@ -88,17 +125,22 @@ public class DatabaseOperationsAdditionalTests
 
         var dbOperations = new DatabaseOperations(Options.Create(options), _logger);
 
-        // Act & Assert - Should not throw even with invalid connection string
+        // Act & Assert - Should throw PostgresException due to invalid credentials
         Assert.Throws<Npgsql.PostgresException>(() => dbOperations.RefreshCacheItem("test-key"));
     }
 
     [Fact]
-    public void SetCacheItem_Synchronous_Should_Not_Throw()
+    public async Task SetCacheItem_Synchronous_Should_Not_Throw()
     {
-        // Arrange
+        await InitializeAsync();
+
+        // Arrange - Use a modified version of the container's connection string with invalid credentials
+        var validConnectionString = _postgresContainer.GetConnectionString();
+        var invalidConnectionString = validConnectionString.Replace("Username=testuser", "Username=invaliduser").Replace("Password=testpass", "Password=invalidpass");
+
         var options = new PostgreSqlCacheOptions
         {
-            ConnectionString = "Host=localhost;Database=test;Username=test;Password=test",
+            ConnectionString = invalidConnectionString,
             SchemaName = "cache",
             TableName = "distributed_cache",
             CreateInfrastructure = false
@@ -106,14 +148,16 @@ public class DatabaseOperationsAdditionalTests
 
         var dbOperations = new DatabaseOperations(Options.Create(options), _logger);
 
-        // Act & Assert - Should not throw even with invalid connection string
+        // Act & Assert - Should throw PostgresException due to invalid credentials
         Assert.Throws<Npgsql.PostgresException>(() => dbOperations.SetCacheItem("test-key", new byte[] { 1, 2, 3 },
             new DistributedCacheEntryOptions { AbsoluteExpiration = DateTime.UtcNow.AddMinutes(5) }));
     }
 
     [Fact]
-    public void Constructor_WithCustomSystemClock_UsesCustomClock()
+    public async Task Constructor_WithCustomSystemClock_UsesCustomClock()
     {
+        await InitializeAsync();
+
         // Arrange
         var mockClock = new Mock<ISystemClock>();
         var customTime = DateTimeOffset.UtcNow;
@@ -121,7 +165,7 @@ public class DatabaseOperationsAdditionalTests
 
         var options = new PostgreSqlCacheOptions
         {
-            ConnectionString = "Host=localhost;Database=test;Username=test;Password=test",
+            ConnectionString = _postgresContainer.GetConnectionString(),
             SchemaName = "cache",
             TableName = "distributed_cache",
             CreateInfrastructure = false,
@@ -136,12 +180,14 @@ public class DatabaseOperationsAdditionalTests
     }
 
     [Fact]
-    public void Constructor_WithCreateInfrastructureFalse_DoesNotCreateInfrastructure()
+    public async Task Constructor_WithCreateInfrastructureFalse_DoesNotCreateInfrastructure()
     {
+        await InitializeAsync();
+
         // Arrange
         var options = new PostgreSqlCacheOptions
         {
-            ConnectionString = "Host=localhost;Database=test;Username=test;Password=test",
+            ConnectionString = _postgresContainer.GetConnectionString(),
             SchemaName = "cache",
             TableName = "distributed_cache",
             CreateInfrastructure = false

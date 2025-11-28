@@ -21,7 +21,10 @@ public class DatabaseOperationsTests : IAsyncLifetime
     {
         _postgresContainer = new PostgreSqlBuilder()
             .WithImage("postgres:latest")
-            .WithPassword("Strong_password_123!")
+            .WithDatabase("testdb")
+            .WithUsername("testuser")
+            .WithPassword("testpass")
+            .WithCleanUp(true)
             .Build();
 
         _options = new PostgreSqlCacheOptions
@@ -313,7 +316,10 @@ public class DatabaseOperationsReadOnlyTests : IAsyncLifetime
     {
         _postgresContainer = new PostgreSqlBuilder()
             .WithImage("postgres:latest")
-            .WithPassword("Strong_password_123!")
+            .WithDatabase("testdb")
+            .WithUsername("testuser")
+            .WithPassword("testpass")
+            .WithCleanUp(true)
             .Build();
 
         _options = new PostgreSqlCacheOptions
@@ -395,7 +401,10 @@ public class DatabaseOperationsUpdateOnGetTests : IAsyncLifetime
     {
         _postgresContainer = new PostgreSqlBuilder()
             .WithImage("postgres:latest")
-            .WithPassword("Strong_password_123!")
+            .WithDatabase("testdb")
+            .WithUsername("testuser")
+            .WithPassword("testpass")
+            .WithCleanUp(true)
             .Build();
 
         _options = new PostgreSqlCacheOptions
