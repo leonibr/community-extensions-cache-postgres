@@ -7,7 +7,7 @@ public record ItemIdUtcNow
     public string Id { get; internal set; }
 
     public DateTimeOffset UtcNow { get; internal set; }
-};
+}
 
 public record ItemFull
 {
@@ -20,11 +20,10 @@ public record ItemFull
 
 public record CurrentUtcNow
 {
-    public DateTimeOffset UtcNow{ get; internal set; }
+    public DateTimeOffset UtcNow { get; internal set; }
 }
 
 public record ItemIdOnly
 {
     public string Id { get; internal set; }
- 
 }

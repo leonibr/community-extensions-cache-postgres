@@ -4,11 +4,11 @@
     <AssemblyName>Community.Microsoft.Extensions.Caching.PostgreSql</AssemblyName>
     <RootNamespace>Community.Microsoft.Extensions.Caching.PostgreSql</RootNamespace>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
-    <Version>6.0.0</Version>
+    <Version>6.0.1</Version>
     <Authors>Ashley Marques</Authors>
     <Company />
     <Description>DistributedCache using postgres</Description>
-    <PackageReleaseNotes>Added support for .NET 10. [BREAKING] Dropped support for .NET 6 (end-of-life). Now supports .NET 8.0, 9.0, and 10.0</PackageReleaseNotes>
+    <PackageReleaseNotes>Removed Dapper dependency. Now uses native Npgsql parameter handling for improved performance and reduced package size.</PackageReleaseNotes>
     <PackageProjectUrl>https://github.com/leonibr/community-extensions-cache-postgres</PackageProjectUrl>
     <RepositoryUrl>https://github.com/leonibr/community-extensions-cache-postgres.git</RepositoryUrl>
     <RepositoryType>Github</RepositoryType>
@@ -25,7 +25,6 @@
 
   <!-- Common package references for all frameworks -->
   <ItemGroup>
-    <PackageReference Include="Dapper" Version="2.1.66" />
     <PackageReference Include="Npgsql" Version="10.0.0" />
   </ItemGroup>
 

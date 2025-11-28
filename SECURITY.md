@@ -6,9 +6,10 @@ We maintain security updates for the following versions of Community.Microsoft.E
 
 | Version | Supported          |
 | ------- | ------------------ |
-| 4.0.x   | :white_check_mark: |
-| 3.x.x   | :x:                |
-| < 3.0   | :x:                |
+| 6.0.x   | :white_check_mark: |
+| 5.x.x   | :x:                |
+| 4.0.x   | :x:                |
+| < 4.0   | :x:                |
 
 ## Reporting a Vulnerability
 

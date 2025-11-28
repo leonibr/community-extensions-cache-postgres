@@ -254,6 +254,10 @@ prepare-database.cmd -erase // windows
 
 ## Change Log
 
+1.  v6.0.1 - Removed Dapper dependency
+    1.  Replaced Dapper with native Npgsql parameter handling
+    1.  Improved performance with custom NpgsqlCommandExtensions
+    1.  Reduced package size by removing external dependency
 1.  v6.0.0 - Added support for .NET 10
     1.  [BREAKING CHANGE] - Dropped support for .NET 6 (end-of-life)
     1.  [BREAKING CHANGE] - Supports .NET 10, .NET 9, and .NET 8

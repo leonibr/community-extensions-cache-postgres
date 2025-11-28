@@ -2,14 +2,13 @@
 // Licensed under the Apache License, Version 2.0. See License.txt in the project root for license information.
 
 using System;
-using Npgsql;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Internal;
-using System.Threading;
-using Dapper;
-using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Npgsql;
 
 namespace Community.Microsoft.Extensions.Caching.PostgreSql
 {
@@ -70,20 +69,27 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
                 return;
             }
 
-            using (var connection = ConnectionFactory())
+            using var connection = ConnectionFactory();
+            connection.Open();
+            using var transaction = connection.BeginTransaction();
+            try
             {
-                connection.Open();
-                using (var transaction = connection.BeginTransaction())
-                {
-                    var createSchemaAndTable = new CommandDefinition(
-                        SqlCommands.CreateSchemaAndTableSql,
-                        transaction: transaction);
-                    connection.Execute(createSchemaAndTable);
+                using var command = connection.CreateCommand();
+                command.Transaction = transaction;
+                command.CommandText = SqlCommands.CreateSchemaAndTableSql;
+                command.ExecuteNonQuery();
 
-                    transaction.Commit();
-                }
+                transaction.Commit();
             }
-
+            catch
+            {
+                transaction.Rollback();
+            }
+            finally
+            {
+                transaction.Dispose();
+                connection.Dispose();
+            }
             _logger.LogDebug("CreateTableIfNotExist executed");
         }
 
@@ -96,11 +102,12 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
             }
 
             using var connection = ConnectionFactory();
+            connection.Open();
 
-            var deleteCacheItem = new CommandDefinition(
-                SqlCommands.DeleteCacheItemSql,
-                new ItemIdOnly { Id = key });
-            connection.Execute(deleteCacheItem);
+            using var command = connection.CreateCommand();
+            command.CommandText = SqlCommands.DeleteCacheItemSql;
+            command.AddParameters(new ItemIdOnly { Id = key });
+            command.ExecuteNonQuery();
 
             _logger.LogDebug($"Cache key deleted: {key}");
         }
@@ -113,12 +120,14 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
                 return;
             }
             await using var connection = ConnectionFactory();
+            await connection.OpenAsync(cancellationToken);
 
-            var deleteCacheItem = new CommandDefinition(
-                SqlCommands.DeleteCacheItemSql,
-                new ItemIdOnly { Id = key },
-                cancellationToken: cancellationToken);
-            await connection.ExecuteAsync(deleteCacheItem);
+            await using var command = connection.CreateCommand();
+
+            command.CommandText = SqlCommands.DeleteCacheItemSql;
+            command.AddParameters(new ItemIdOnly { Id = key });
+            await command.ExecuteNonQueryAsync(cancellationToken);
+
 
             _logger.LogDebug($"Cache key deleted: {key}");
         }
@@ -144,12 +153,12 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
             var utcNow = SystemClock.UtcNow;
 
             await using var connection = ConnectionFactory();
+            await connection.OpenAsync(cancellationToken);
 
-            var deleteExpiredCache = new CommandDefinition(
-                SqlCommands.DeleteExpiredCacheSql,
-                new CurrentUtcNow { UtcNow = utcNow },
-                cancellationToken: cancellationToken);
-            await connection.ExecuteAsync(deleteExpiredCache);
+            await using var command = connection.CreateCommand();
+            command.CommandText = SqlCommands.DeleteExpiredCacheSql;
+            command.AddParameters(new CurrentUtcNow { UtcNow = utcNow });
+            await command.ExecuteNonQueryAsync(cancellationToken);
         }
 
         public void SetCacheItem(string key, byte[] value, DistributedCacheEntryOptions options)
@@ -163,23 +172,23 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
             ValidateOptions(options.SlidingExpiration, absoluteExpiration);
 
             using var connection = ConnectionFactory();
+            connection.Open();
 
             var expiresAtTime = options.SlidingExpiration == null
                 ? absoluteExpiration!.Value
                 : utcNow.Add(options.SlidingExpiration.Value);
 
-            var setCache = new CommandDefinition(
-                SqlCommands.SetCacheSql,
-                new ItemFull
-                {
-                    Id = key,
-                    Value = value,
-                    ExpiresAtTime = expiresAtTime,
-                    SlidingExpirationInSeconds = options.SlidingExpiration?.TotalSeconds,
-                    AbsoluteExpiration = absoluteExpiration
-                });
-
-            connection.Execute(setCache);
+            using var command = connection.CreateCommand();
+            command.CommandText = SqlCommands.SetCacheSql;
+            command.AddParameters(new ItemFull
+            {
+                Id = key,
+                Value = value,
+                ExpiresAtTime = expiresAtTime,
+                SlidingExpirationInSeconds = options.SlidingExpiration?.TotalSeconds,
+                AbsoluteExpiration = absoluteExpiration
+            });
+            command.ExecuteNonQuery();
         }
 
         public async Task SetCacheItemAsync(string key, byte[] value, DistributedCacheEntryOptions options, CancellationToken cancellationToken)
@@ -193,24 +202,23 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
             ValidateOptions(options.SlidingExpiration, absoluteExpiration);
 
             await using var connection = ConnectionFactory();
+            await connection.OpenAsync(cancellationToken);
 
             var expiresAtTime = options.SlidingExpiration == null
                 ? absoluteExpiration!.Value
                 : utcNow.Add(options.SlidingExpiration.Value);
 
-            var setCache = new CommandDefinition(
-                SqlCommands.SetCacheSql,
-                new ItemFull
-                {
-                    Id = key,
-                    Value = value,
-                    ExpiresAtTime = expiresAtTime,
-                    SlidingExpirationInSeconds = options.SlidingExpiration?.TotalSeconds,
-                    AbsoluteExpiration = absoluteExpiration
-                },
-                cancellationToken: cancellationToken);
-
-            await connection.ExecuteAsync(setCache);
+            await using var command = connection.CreateCommand();
+            command.CommandText = SqlCommands.SetCacheSql;
+            command.AddParameters(new ItemFull
+            {
+                Id = key,
+                Value = value,
+                ExpiresAtTime = expiresAtTime,
+                SlidingExpirationInSeconds = options.SlidingExpiration?.TotalSeconds,
+                AbsoluteExpiration = absoluteExpiration
+            });
+            await command.ExecuteNonQueryAsync(cancellationToken);
         }
 
         private byte[] GetCacheItem(string key, bool includeValue)
@@ -219,21 +227,27 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
             byte[] value = null;
 
             using var connection = ConnectionFactory();
+            connection.Open();
 
             if (!_readOnlyMode && (_updateOnGetCacheItem || !includeValue))
             {
-                var updateCacheItem = new CommandDefinition(
-                    SqlCommands.UpdateCacheItemSql,
-                    new ItemIdUtcNow { Id = key, UtcNow = utcNow });
-                connection.Execute(updateCacheItem);
+                using var command = connection.CreateCommand();
+                command.CommandText = SqlCommands.UpdateCacheItemSql;
+                command.AddParameters(new ItemIdUtcNow { Id = key, UtcNow = utcNow });
+                command.ExecuteNonQuery();
             }
 
             if (includeValue)
             {
-                var getCacheItem = new CommandDefinition(
-                    SqlCommands.GetCacheItemSql,
-                    new ItemIdUtcNow { Id = key, UtcNow = utcNow });
-                value = connection.QueryFirstOrDefault<byte[]>(getCacheItem);
+                using var command = connection.CreateCommand();
+                command.CommandText = SqlCommands.GetCacheItemSql;
+                command.AddParameters(new ItemIdUtcNow { Id = key, UtcNow = utcNow });
+
+                using var reader = command.ExecuteReader();
+                if (reader.Read())
+                {
+                    value = reader.IsDBNull(0) ? null : (byte[])reader.GetValue(0);
+                }
             }
 
             return value;
@@ -245,23 +259,27 @@ namespace Community.Microsoft.Extensions.Caching.PostgreSql
             byte[] value = null;
 
             await using var connection = ConnectionFactory();
+            await connection.OpenAsync(cancellationToken);
 
             if (!_readOnlyMode && (_updateOnGetCacheItem || !includeValue))
             {
-                var updateCacheItem = new CommandDefinition(
-                    SqlCommands.UpdateCacheItemSql,
-                    new ItemIdUtcNow { Id = key, UtcNow = utcNow },
-                    cancellationToken: cancellationToken);
-                await connection.ExecuteAsync(updateCacheItem);
+                await using var command = connection.CreateCommand();
+                command.CommandText = SqlCommands.UpdateCacheItemSql;
+                command.AddParameters(new ItemIdUtcNow { Id = key, UtcNow = utcNow });
+                await command.ExecuteNonQueryAsync(cancellationToken);
             }
 
             if (includeValue)
             {
-                var getCacheItem = new CommandDefinition(
-                    SqlCommands.GetCacheItemSql,
-                    new ItemIdUtcNow { Id = key, UtcNow = utcNow },
-                    cancellationToken: cancellationToken);
-                value = await connection.QueryFirstOrDefaultAsync<byte[]>(getCacheItem);
+                await using var command = connection.CreateCommand();
+                command.CommandText = SqlCommands.GetCacheItemSql;
+                command.AddParameters(new ItemIdUtcNow { Id = key, UtcNow = utcNow });
+
+                await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+                if (await reader.ReadAsync(cancellationToken))
+                {
+                    value = reader.IsDBNull(0) ? null : (byte[])reader.GetValue(0);
+                }
             }
 
             return value;
