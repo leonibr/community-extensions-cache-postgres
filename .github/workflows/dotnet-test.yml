@@ -3,7 +3,6 @@ name: .NET Test & Coverage
 permissions:
   checks: write
   contents: read
-  issues: write
 
 on:
   push:
@@ -39,11 +38,11 @@ jobs:
         run: dotnet build --no-restore --configuration Release
 
       - name: Pull PostgreSQL Docker image
-        run: docker pull postgres:latest
+        run: docker pull postgres:17
 
       - name: Test with coverage
         env:
-          # Testcontainers configuration for CI
+          # Ryuk cleanup is kept privileged so failed CI runs still remove sibling Docker resources.
           TESTCONTAINERS_RYUK_DISABLED: false
           TESTCONTAINERS_RYUK_CONTAINER_PRIVILEGED: true
           DOCKER_HOST: unix:///var/run/docker.sock
